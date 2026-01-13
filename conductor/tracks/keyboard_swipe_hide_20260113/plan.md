@@ -2,7 +2,7 @@
 
 ## Phase 1: Implementation
 
-- [ ] Task: Update `ContentView.swift` to apply `.scrollDismissesKeyboard(.interactively)` to the main `List`
+- [x] Task: Update `ContentView.swift` to apply `.scrollDismissesKeyboard(.interactively)` to the main `List` 83bc53d
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Implementation' (Protocol in workflow.md)
 
 ## Phase 2: Final Verification
