@@ -10,6 +10,6 @@
 
 ## Phase 2: Data Flow and Verification
 
-- [ ] Task: Ensure `TrendsView` correctly triggers data fetching when the passed `selectedTimeframe` changes
-- [ ] Task: Conduct a final visual check to ensure the pinned layout looks "masterpiece" quality
+- [~] Task: Ensure `TrendsView` correctly triggers data fetching when the passed `selectedTimeframe` changes
+- [~] Task: Conduct a final visual check to ensure the pinned layout looks "masterpiece" quality
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
