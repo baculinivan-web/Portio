@@ -2,8 +2,8 @@
 
 ## Phase 1: Data Preparation
 
-- [ ] Task: Update `InteractiveMacroCard` to accept an array of `FoodItem` objects
-- [ ] Task: Implement a computed property within the card to filter and sort items by their contribution to the specific macro
+- [~] Task: Update `InteractiveMacroCard` to accept an array of `FoodItem` objects
+- [~] Task: Implement a computed property within the card to filter and sort items by their contribution to the specific macro
 - [ ] Task: Conductor - User Manual Verification 'Data Preparation' (Protocol in workflow.md)
 
 ## Phase 2: Breakdown UI and Scroll Effect

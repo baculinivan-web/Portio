@@ -6,8 +6,23 @@ struct InteractiveMacroCard: View {
     let goal: Double
     let unit: String
     let color: Color
+    let items: [FoodItem]
     
     @State private var isExpanded = false
+    
+    private var filteredItems: [(name: String, value: Double)] {
+        items.compactMap { item in
+            let val: Double
+            switch title.lowercased() {
+            case "calories": val = item.calories
+            case "protein": val = item.protein
+            case "carbs": val = item.carbs
+            case "fat": val = item.fat
+            default: val = 0
+            }
+            return val > 0 ? (name: item.cleanFoodName, value: val) : nil
+        }.sorted { $0.value > $1.value }
+    }
     
     private var progress: Double {
         guard goal > 0 else { return 0 }
@@ -116,7 +131,7 @@ struct CircularProgressView: View {
 #Preview {
     ZStack {
         Color.blue.ignoresSafeArea()
-        InteractiveMacroCard(title: "Protein", value: 85, goal: 150, unit: "g", color: .purple)
+        InteractiveMacroCard(title: "Protein", value: 85, goal: 150, unit: "g", color: .purple, items: [])
             .padding()
     }
 }

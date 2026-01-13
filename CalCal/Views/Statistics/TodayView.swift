@@ -26,7 +26,8 @@ struct TodayView: View {
                     value: totalCalories,
                     goal: calorieGoal,
                     unit: "kcal",
-                    color: .orange
+                    color: .orange,
+                    items: todaysItems
                 )
                 
                 InteractiveMacroCard(
@@ -34,7 +35,8 @@ struct TodayView: View {
                     value: totalProtein,
                     goal: proteinGoal,
                     unit: "g",
-                    color: .purple
+                    color: .purple,
+                    items: todaysItems
                 )
                 
                 InteractiveMacroCard(
@@ -42,7 +44,8 @@ struct TodayView: View {
                     value: totalCarbs,
                     goal: carbsGoal,
                     unit: "g",
-                    color: .blue
+                    color: .blue,
+                    items: todaysItems
                 )
                 
                 InteractiveMacroCard(
@@ -50,7 +53,8 @@ struct TodayView: View {
                     value: totalFat,
                     goal: fatGoal,
                     unit: "g",
-                    color: .green
+                    color: .green,
+                    items: todaysItems
                 )
             }
             .padding()
