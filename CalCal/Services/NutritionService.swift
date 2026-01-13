@@ -10,7 +10,7 @@ enum NutritionError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey:
-            return "Invalid API Key. Please check your key in Gemini-Info.plist and ensure it is enabled in your Google AI Studio project."
+            return "Invalid OpenRouter API Key. Please check your key in Gemini-Info.plist."
         case .badRequest:
             return "The request to the server was malformed."
         case .badResponse:
@@ -24,11 +24,11 @@ enum NutritionError: Error, LocalizedError {
 // MARK: - Networking Service
 class NutritionService {
     private let apiKey: String
-    private let apiURL = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")!
+    private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
 
     init() {
-        guard let apiKey = APIKeyManager.getAPIKey() else {
-            fatalError("API Key not found. Please add it to Gemini-Info.plist")
+        guard let apiKey = APIKeyManager.getOpenRouterAPIKey() else {
+            fatalError("OpenRouter API Key not found. Please add it to Gemini-Info.plist")
         }
         self.apiKey = apiKey
     }
@@ -36,8 +36,11 @@ class NutritionService {
     func fetchNutrition(for query: String) async throws -> [NutritionResponse] {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Add HTTP Referer (required by OpenRouter for some tiers, good practice)
+        request.addValue("https://calcal.app", forHTTPHeaderField: "HTTP-Referer")
+        request.addValue("CalCal", forHTTPHeaderField: "X-Title")
 
         let prompt = """
         Analyze the food query: '\(query)'. Your task is to identify each distinct food item and return its nutritional information.
@@ -58,20 +61,30 @@ class NutritionService {
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
         
-        let requestBody = GeminiRequest(contents: [.init(parts: [.init(text: prompt)])])
-        request.httpBody = try JSONEncoder().encode(requestBody)
+        let openRouterRequest = OpenRouterRequest(
+            model: OpenRouterConstants.defaultModel,
+            messages: [.init(role: "user", content: [.text(prompt)])],
+            responseFormat: nil 
+        )
+        
+        request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            if let httpResponse = response as? HTTPURLResponse, (httpResponse.statusCode == 400 || httpResponse.statusCode == 403) {
-                throw NutritionError.invalidAPIKey
+            if let httpResponse = response as? HTTPURLResponse {
+                 print("--- NETWORKING ERROR (fetchNutrition) ---")
+                 print("Status Code: \(httpResponse.statusCode)")
+                 print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
+                 if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                    throw NutritionError.invalidAPIKey
+                 }
             }
             throw NutritionError.badResponse
         }
 
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard var nutritionJSONText = geminiResponse.candidates.first?.content.parts.first?.text else {
+        let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+        guard var nutritionJSONText = openRouterResponse.choices.first?.message.content else {
             throw NutritionError.badResponse
         }
 
@@ -89,10 +102,12 @@ class NutritionService {
     }
     
     func fetchAIGoals(userStats: String, userGoals: String, baselineTDEE: Double) async throws -> GoalResponse {
-        var request = URLRequest(url: apiURL)
+         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("https://calcal.app", forHTTPHeaderField: "HTTP-Referer")
+        request.addValue("CalCal", forHTTPHeaderField: "X-Title")
 
         let prompt = """
         Act as a nutrition planning expert. Based on the following user data, determine their daily nutritional goals.
@@ -114,8 +129,13 @@ class NutritionService {
         3.  Provide a simple, sample one-day meal plan (e.g., Breakfast, Lunch, Dinner, Snacks) with specific food examples that would help the user meet these new targets.
         """
 
-        let requestBody = GeminiRequest(contents: [.init(parts: [.init(text: prompt)])])
-        request.httpBody = try JSONEncoder().encode(requestBody)
+        let openRouterRequest = OpenRouterRequest(
+            model: OpenRouterConstants.defaultModel,
+            messages: [.init(role: "user", content: [.text(prompt)])],
+            responseFormat: nil 
+        )
+        
+        request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -124,16 +144,15 @@ class NutritionService {
                 print("--- NETWORKING ERROR (AIGoals) ---")
                 print("Status Code: \(httpResponse.statusCode)")
                 print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
-                print("-------------------------------------")
-                if httpResponse.statusCode == 400 || httpResponse.statusCode == 403 {
+                if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                     throw NutritionError.invalidAPIKey
                 }
             }
             throw NutritionError.badResponse
         }
 
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard var goalJSONText = geminiResponse.candidates.first?.content.parts.first?.text else {
+        let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+        guard var goalJSONText = openRouterResponse.choices.first?.message.content else {
             throw NutritionError.badResponse
         }
 
@@ -150,24 +169,7 @@ class NutritionService {
     }
 }
 
-// MARK: - Codable Structs for API
-
-struct GeminiRequest: Codable {
-    let contents: [Content]
-}
-struct Content: Codable {
-    let parts: [Part]
-}
-struct Part: Codable {
-    let text: String
-}
-
-struct GeminiResponse: Codable {
-    let candidates: [Candidate]
-}
-struct Candidate: Codable {
-    let content: Content
-}
+// MARK: - Codable Structs for Domain Models
 
 // This is the new top-level response for food queries
 struct FoodArrayResponse: Codable {
