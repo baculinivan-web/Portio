@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import UIKit
 import Photos
+import Combine
 
 class CameraManager: NSObject, ObservableObject {
     @Published var session = AVCaptureSession()
