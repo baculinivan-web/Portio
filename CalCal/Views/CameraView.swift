@@ -120,6 +120,14 @@ struct CameraView: View {
         } message: {
             Text("Please enable camera access in Settings to take photos of your food.")
         }
+        .alert("Camera Error", isPresented: .constant(cameraManager.cameraError != nil)) {
+            Button("OK") {
+                cameraManager.cameraError = nil
+                dismiss()
+            }
+        } message: {
+            Text(cameraManager.cameraError?.localizedDescription ?? "An unknown camera error occurred.")
+        }
         .onAppear {
             cameraManager.checkPermissionsAndSetup()
         }

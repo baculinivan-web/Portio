@@ -9,15 +9,29 @@ class CameraManager: NSObject, ObservableObject {
     @Published var capturedImage: UIImage?
     @Published var isSessionRunning = false
     @Published var latestThumbnail: UIImage?
+    @Published var cameraError: CameraError?
     
     private let output = AVCapturePhotoOutput()
     private var videoDeviceInput: AVCaptureDeviceInput?
     
-    enum CameraError: Error {
+    enum CameraError: Error, LocalizedError {
         case cameraUnavailable
         case cannotAddInput
         case cannotAddOutput
         case captureFailed
+        
+        var errorDescription: String? {
+            switch self {
+            case .cameraUnavailable:
+                return "Camera is not available on this device."
+            case .cannotAddInput:
+                return "Failed to connect to the camera input."
+            case .cannotAddOutput:
+                return "Failed to setup camera output."
+            case .captureFailed:
+                return "Failed to capture photo."
+            }
+        }
     }
     
     override init() {
@@ -25,6 +39,13 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func checkPermissionsAndSetup() {
+        #if targetEnvironment(simulator)
+        DispatchQueue.main.async {
+            self.cameraError = .cameraUnavailable
+        }
+        return
+        #endif
+        
         checkCameraPermissions()
         checkPhotoLibraryPermissions()
     }
@@ -39,38 +60,18 @@ class CameraManager: NSObject, ObservableObject {
                     DispatchQueue.main.async {
                         self.setupSession()
                     }
+                } else {
+                    DispatchQueue.main.async {
+                        self.cameraError = .cameraUnavailable
+                    }
                 }
             }
-        default:
+        case .denied, .restricted:
+            DispatchQueue.main.async {
+                self.cameraError = .cameraUnavailable
+            }
+        @unknown default:
             break
-        }
-    }
-    
-    private func checkPhotoLibraryPermissions() {
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
-            if status == .authorized || status == .limited {
-                self.fetchLatestPhoto()
-            }
-        }
-    }
-    
-    private func fetchLatestPhoto() {
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 1
-        
-        let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-        if let firstAsset = fetchResult.firstObject {
-            let manager = PHImageManager.default()
-            let option = PHImageRequestOptions()
-            option.isSynchronous = false
-            option.deliveryMode = .highQualityFormat
-            
-            manager.requestImage(for: firstAsset, targetSize: CGSize(width: 100, height: 100), contentMode: .aspectFill, options: option) { image, _ in
-                DispatchQueue.main.async {
-                    self.latestThumbnail = image
-                }
-            }
         }
     }
     
@@ -79,6 +80,7 @@ class CameraManager: NSObject, ObservableObject {
         
         // Add Input
         guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            self.cameraError = .cameraUnavailable
             return
         }
         
@@ -88,9 +90,11 @@ class CameraManager: NSObject, ObservableObject {
                 session.addInput(input)
                 self.videoDeviceInput = input
             } else {
+                self.cameraError = .cannotAddInput
                 return
             }
         } catch {
+            self.cameraError = .cannotAddInput
             return
         }
         
@@ -98,6 +102,7 @@ class CameraManager: NSObject, ObservableObject {
         if session.canAddOutput(output) {
             session.addOutput(output)
         } else {
+            self.cameraError = .cannotAddOutput
             return
         }
         
@@ -110,28 +115,3 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
     }
-    
-    func capturePhoto() {
-        let settings = AVCapturePhotoSettings()
-        output.capturePhoto(with: settings, delegate: self)
-    }
-    
-    func stopSession() {
-        if session.isRunning {
-            session.stopRunning()
-            isSessionRunning = session.isRunning
-        }
-    }
-}
-
-extension CameraManager: AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let error = error {
-            print("Error capturing photo: \(error.localizedDescription)")
-            return
-        }
-        
-        guard let imageData = photo.fileDataRepresentation() else { return }
-        self.capturedImage = UIImage(data: imageData)
-    }
-}
