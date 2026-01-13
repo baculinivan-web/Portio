@@ -60,19 +60,37 @@ struct CalCalWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        ZStack {
-            // Liquid Glass Background
-            AccessoryWidgetBackground()
-                .containerBackground(.thinMaterial, for: .widget)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                if family == .systemSmall {
-                    SmallWidgetView(entry: entry)
-                } else {
-                    MediumWidgetView(entry: entry)
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            if family == .systemSmall {
+                SmallWidgetView(entry: entry)
+            } else {
+                MediumWidgetView(entry: entry)
             }
-            .padding()
+        }
+        .containerBackground(.thinMaterial, for: .widget)
+    }
+}
+
+struct CalorieProgressView: View {
+    let calories: Double
+    let goal: Double
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Calories")
+                .font(.caption.bold())
+                .foregroundStyle(.orange)
+            
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(Int(calories))")
+                    .font(.title2.bold())
+                Text("/ \(Int(goal))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            ProgressView(value: min(calories / max(goal, 1), 1.0))
+                .tint(.orange)
         }
     }
 }
@@ -82,21 +100,8 @@ struct SmallWidgetView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Calories")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Text("\(Int(entry.calories))")
-                .font(.title2.bold())
-            
-            Text("/ \(Int(entry.calorieGoal))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
+            CalorieProgressView(calories: entry.calories, goal: entry.calorieGoal)
             Spacer()
-            
-            ProgressView(value: min(entry.calories / max(entry.calorieGoal, 1), 1.0))
-                .tint(.orange)
         }
     }
 }
