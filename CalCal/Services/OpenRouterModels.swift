@@ -1,8 +1,6 @@
 import Foundation
 
-struct OpenRouterConstants {
-    static let defaultModel = "nvidia/nemotron-3-nano-30b-a3b:free"
-}
+
 
 struct OpenRouterRequest: Encodable {
     let model: String
