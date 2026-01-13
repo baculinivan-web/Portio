@@ -1,0 +1,24 @@
+# CalCal App Development Plan
+
+## MVP Features:
+- [x] **Phase 1: Core Data Model:** Define the `FoodItem` structure using SwiftData.
+- [x] **Phase 2: Basic UI:** Create a main screen with a list, a text input field, and an "Add" button.
+- [x] **Phase 3: Mock Data:** Pressing "Add" will create a *sample* `FoodItem` and save it to the database. The list will update automatically.
+- [x] **Phase 4: LLM Integration:** Connect the "Add" button to a live LLM service to fetch real nutritional data.
+- [x] **Phase 5: UI Refinements:** Display total calories and other nutrients. Show loading and error states.
+
+## Completed Bonus Features:
+- [x] Advanced "Liquid Glass" UI with animations.
+- [x] Optimistic UI for instant feedback when adding items.
+- [x] Per-item processing indicators.
+- [x] Detail view for viewing and manually editing entries.
+- [x] Multi-image attachments with a gallery, full-screen viewer, and removal.
+- [x] Robust error handling for API calls.
+
+## Future Enhancements:
+- [ ] Historical data view (Calendar).
+- [ ] Charts and graphs for nutritional trends.
+- [ ] Advanced query handling (e.g., "2 eggs and a slice of toast").
+- [ ] Widget support.
+- [ ] Apple Watch companion app.
+- [ ] User accounts and cloud sync.

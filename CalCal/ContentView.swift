@@ -1,61 +1,140 @@
-//
-//  ContentView.swift
-//  CalCal
-//
-//  Created by Иван on 12.10.2025.
-//
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query(sort: \FoodItem.dateEaten, order: .reverse) private var items: [FoodItem]
+    
+    @StateObject private var viewModel = CalorieTrackerViewModel()
+    @State private var foodQuery: String = ""
+    @State private var isShowingSettings = false
+    @State private var showGoalSummary = false
+    
+    @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
+    @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
+    @AppStorage("carbsGoal") private var carbsGoal: Double = UserSettings.carbsGoal
+    @AppStorage("fatGoal") private var fatGoal: Double = UserSettings.fatGoal
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = UserSettings.hasCompletedOnboarding
+
+    private var todaysItems: [FoodItem] {
+        items.filter { Calendar.current.isDateInToday($0.dateEaten) }
+    }
+
+    private var totalCalories: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.calories } }
+    private var totalProtein: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.protein } }
+    private var totalCarbs: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.carbs } }
+    private var totalFat: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.fat } }
 
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
             List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                Section {
+                    NavigationLink(value: "stats") {
+                        TotalsCardView(
+                            calories: totalCalories,
+                            protein: totalProtein,
+                            carbs: totalCarbs,
+                            fat: totalFat,
+                            calorieGoal: calorieGoal,
+                            proteinGoal: proteinGoal,
+                            carbsGoal: carbsGoal,
+                            fatGoal: fatGoal
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                Section(header: Text("Today's Entries")) {
+                    ForEach(todaysItems) { item in
+                        NavigationLink(value: item) {
+                            FoodItemRowView(item: item)
+                        }
+                        .disabled(item.isProcessing)
+                    }
+                    .onDelete(perform: deleteItems)
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationDestination(for: FoodItem.self) { item in
+                FoodItemDetailView(item: item)
+            }
+            .navigationDestination(for: String.self) { value in
+                if value == "stats" {
+                    StatisticsView()
+                }
+            }
+            .navigationTitle("CalCal")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { isShowingSettings = true } label: {
+                        Image(systemName: "gear")
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     EditButton()
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+            }
+            .toolbarBackground(.visible, for: .navigationBar)
+            .safeAreaInset(edge: .bottom) {
+                ChatInputView(text: $foodQuery, onSend: addItem)
+            }
+            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
+                Button("OK") { viewModel.errorMessage = nil }
+            }, message: {
+                Text(viewModel.errorMessage ?? "An unknown error occurred.")
+            })
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsView()
+            }
+            .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
+                OnboardingView() {
+                    // This gets called when onboarding is finished.
+                    hasCompletedOnboarding = true
+                    showGoalSummary = true // Trigger the summary sheet.
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .sheet(isPresented: $showGoalSummary) {
+                GoalSummaryView()
+            }
         }
     }
 
     private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
+        guard !foodQuery.isEmpty else { return }
+        let query = foodQuery
+        foodQuery = ""
+        viewModel.addItem(query: query, context: modelContext)
+        
+        // Dismiss the keyboard
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private func deleteItems(offsets: IndexSet) {
-        withAnimation {
+        withAnimation(.spring()) {
             for index in offsets {
-                modelContext.delete(items[index])
+                let itemToDelete = todaysItems[index]
+                modelContext.delete(itemToDelete)
             }
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        do {
+            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            let container = try ModelContainer(for: FoodItem.self, configurations: config)
+            
+            let sampleData = [
+                FoodItem(name: "Chicken Salad", identifiedFood: "Chicken Salad", cleanFoodName: "Chicken Salad", dateEaten: .now, calories: 350, protein: 30, carbs: 10, fat: 20, weightGrams: 250, caloriesPer100g: 140, proteinPer100g: 12, carbsPer100g: 4, fatPer100g: 8),
+                FoodItem(name: "Apple", identifiedFood: "Apple", cleanFoodName: "Apple", dateEaten: .now, calories: 95, protein: 0.5, carbs: 25, fat: 0.3, weightGrams: 180, caloriesPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2)
+            ]
+            sampleData.forEach { container.mainContext.insert($0) }
+            
+            return AnyView(ContentView().modelContainer(container))
+        } catch {
+            return AnyView(Text("Failed to create preview: \(error.localizedDescription)"))
+        }
+    }
 }
