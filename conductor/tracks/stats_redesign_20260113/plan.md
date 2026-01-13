@@ -14,13 +14,13 @@
 - [x] Task: Integrate `InteractiveMacroCard` into the "Today" tab of `StatisticsView` ad1b188
 - [x] Task: Conductor - User Manual Verification 'Redesigned Today View' (Protocol in workflow.md) 3fb12dc
 
-## Phase 3: "All Time" Trends View (SwiftCharts)
+## Phase 3: "All Time" Trends View (SwiftCharts) [checkpoint: 2110a72]
 
 - [x] Task: Implement `CalorieTrendChart` using SwiftCharts with support for Week/Month/Year views 4770016
 - [x] Task: Implement `MacroDistributionChart` using SwiftCharts to show macro trends a04ca5c
 - [x] Task: Add goal lines and comparison metrics (e.g., "% change vs previous period") to the trends view 9369e5f
 - [x] Task: Integrate charts and timeframe selection UI into the "All Time" tab 8455ccd
-- [~] Task: Conductor - User Manual Verification 'All Time Trends View' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'All Time Trends View' (Protocol in workflow.md) 2110a72
 
 ## Phase 4: Final Polish and Integration
 
