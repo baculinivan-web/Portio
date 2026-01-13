@@ -19,46 +19,44 @@ struct TodayView: View {
     private var totalFat: Double { todaysItems.reduce(0) { $0 + $1.fat } }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                InteractiveMacroCard(
-                    title: "Calories",
-                    value: totalCalories,
-                    goal: calorieGoal,
-                    unit: "kcal",
-                    color: .orange,
-                    items: todaysItems
-                )
-                
-                InteractiveMacroCard(
-                    title: "Protein",
-                    value: totalProtein,
-                    goal: proteinGoal,
-                    unit: "g",
-                    color: .purple,
-                    items: todaysItems
-                )
-                
-                InteractiveMacroCard(
-                    title: "Carbs",
-                    value: totalCarbs,
-                    goal: carbsGoal,
-                    unit: "g",
-                    color: .blue,
-                    items: todaysItems
-                )
-                
-                InteractiveMacroCard(
-                    title: "Fat",
-                    value: totalFat,
-                    goal: fatGoal,
-                    unit: "g",
-                    color: .green,
-                    items: todaysItems
-                )
-            }
-            .padding()
+        VStack(spacing: 20) {
+            InteractiveMacroCard(
+                title: "Calories",
+                value: totalCalories,
+                goal: calorieGoal,
+                unit: "kcal",
+                color: .orange,
+                items: todaysItems
+            )
+            
+            InteractiveMacroCard(
+                title: "Protein",
+                value: totalProtein,
+                goal: proteinGoal,
+                unit: "g",
+                color: .purple,
+                items: todaysItems
+            )
+            
+            InteractiveMacroCard(
+                title: "Carbs",
+                value: totalCarbs,
+                goal: carbsGoal,
+                unit: "g",
+                color: .blue,
+                items: todaysItems
+            )
+            
+            InteractiveMacroCard(
+                title: "Fat",
+                value: totalFat,
+                goal: fatGoal,
+                unit: "g",
+                color: .green,
+                items: todaysItems
+            )
         }
+        .padding()
     }
 }
 

@@ -42,6 +42,19 @@ struct StatisticsView: View {
                     }
                     .padding(.top)
                 }
+                .scrollEdgeEffectStyle(.soft, for: .vertical)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black, location: 0.05),
+                            .init(color: .black, location: 0.95),
+                            .init(color: .clear, location: 1)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             }
         }
         .navigationTitle("Your Statistics")
