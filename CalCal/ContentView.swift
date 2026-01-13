@@ -88,7 +88,7 @@ struct ContentView: View {
                 SettingsView()
             }
             .fullScreenCover(isPresented: $isShowingCamera) {
-                Text("Camera View Placeholder") // Will be replaced in later tasks
+                CameraView()
             }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
                 OnboardingView() {
