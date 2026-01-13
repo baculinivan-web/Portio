@@ -1,11 +1,11 @@
 # Plan: Fix Stats Scroll Effect and Breakdown ID Bug
 
-## Phase 1: Fixing Breakdown Identification
+## Phase 1: Fixing Breakdown Identification [checkpoint: e7d2a82]
 
-- [ ] Task: Update `filteredItems` in `InteractiveMacroCard.swift` to include `UUID`
-- [ ] Task: Update breakdown list `ForEach` to use `id` for unique identification
-- [ ] Task: Verify that duplicate names are handled correctly in the UI
-- [ ] Task: Conductor - User Manual Verification 'Breakdown Identification' (Protocol in workflow.md)
+- [x] Task: Update `filteredItems` in `InteractiveMacroCard.swift` to include `UUID` e7d2a82
+- [x] Task: Update breakdown list `ForEach` to use `id` for unique identification e7d2a82
+- [x] Task: Verify that duplicate names are handled correctly in the UI e7d2a82
+- [x] Task: Conductor - User Manual Verification 'Breakdown Identification' (Protocol in workflow.md) e7d2a82
 
 ## Phase 2: Applying Global Scroll Effects
 
