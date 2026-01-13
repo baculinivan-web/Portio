@@ -13,33 +13,28 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
         let currentDate = Date()
         
-        // Fetch real data from SwiftData
-        let entry = fetchLatestData(for: currentDate)
-        entries.append(entry)
-
-        let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
-        let timeline = Timeline(entries: entries, policy: .after(nextUpdateDate))
-        completion(timeline)
-    }
-    
-    @MainActor
-    private func fetchLatestData(for date: Date) -> SimpleEntry {
-        let stats = SharedDataManager.shared.fetchTodaysStats()
-        
-        return SimpleEntry(
-            date: date,
-            calories: stats.calories,
-            calorieGoal: UserSettings.calorieGoal,
-            protein: stats.protein,
-            proteinGoal: UserSettings.proteinGoal,
-            carbs: stats.carbs,
-            carbsGoal: UserSettings.carbsGoal,
-            fat: stats.fat,
-            fatGoal: UserSettings.fatGoal
-        )
+        // We use Task to bridge the synchronous getTimeline to the @MainActor SharedDataManager
+        Task { @MainActor in
+            let stats = SharedDataManager.shared.fetchTodaysStats()
+            
+            let entry = SimpleEntry(
+                date: currentDate,
+                calories: stats.calories,
+                calorieGoal: UserSettings.calorieGoal,
+                protein: stats.protein,
+                proteinGoal: UserSettings.proteinGoal,
+                carbs: stats.carbs,
+                carbsGoal: UserSettings.carbsGoal,
+                fat: stats.fat,
+                fatGoal: UserSettings.fatGoal
+            )
+            
+            let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
+            let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
+            completion(timeline)
+        }
     }
 }
 
@@ -53,22 +48,6 @@ struct SimpleEntry: TimelineEntry {
     let carbsGoal: Double
     let fat: Double
     let fatGoal: Double
-}
-
-struct CalCalWidgetEntryView : View {
-    var entry: Provider.Entry
-    @Environment(\.widgetFamily) var family
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if family == .systemSmall {
-                SmallWidgetView(entry: entry)
-            } else {
-                MediumWidgetView(entry: entry)
-            }
-        }
-        .containerBackground(.thinMaterial, for: .widget)
-    }
 }
 
 struct CalorieProgressView: View {
@@ -91,17 +70,6 @@ struct CalorieProgressView: View {
             
             ProgressView(value: min(calories / max(goal, 1), 1.0))
                 .tint(.orange)
-        }
-    }
-}
-
-struct SmallWidgetView: View {
-    var entry: SimpleEntry
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            CalorieProgressView(calories: entry.calories, goal: entry.calorieGoal)
-            Spacer()
         }
     }
 }
@@ -137,6 +105,57 @@ struct MacroBreakdownView: View {
     }
 }
 
+struct MacroMiniView: View {
+    let label: String
+    let value: Double
+    let goal: Double
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(label)
+                    .font(.caption2.bold())
+                Spacer()
+                Text("\(Int(value))g")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            
+            ProgressView(value: min(value / max(goal, 1), 1.0))
+                .tint(color)
+                .scaleEffect(x: 1, y: 0.5, anchor: .center)
+        }
+    }
+}
+
+struct CalCalWidgetEntryView : View {
+    var entry: Provider.Entry
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if family == .systemSmall {
+                SmallWidgetView(entry: entry)
+            } else {
+                MediumWidgetView(entry: entry)
+            }
+        }
+        .containerBackground(.thinMaterial, for: .widget)
+    }
+}
+
+struct SmallWidgetView: View {
+    var entry: SimpleEntry
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            CalorieProgressView(calories: entry.calories, goal: entry.calorieGoal)
+            Spacer()
+        }
+    }
+}
+
 struct MediumWidgetView: View {
     var entry: SimpleEntry
     
@@ -166,30 +185,6 @@ struct MediumWidgetView: View {
     }
 }
 
-struct MacroMiniView: View {
-    let label: String
-    let value: Double
-    let goal: Double
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(label)
-                    .font(.caption2.bold())
-                Spacer()
-                Text("\(Int(value))g")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            
-            ProgressView(value: min(value / max(goal, 1), 1.0))
-                .tint(color)
-                .scaleEffect(x: 1, y: 0.5, anchor: .center)
-        }
-    }
-}
-
 struct CalCalWidget: Widget {
     let kind: String = "CalCalWidget"
 
@@ -203,8 +198,12 @@ struct CalCalWidget: Widget {
     }
 }
 
-#Preview(as: .systemSmall) {
-    CalCalWidget()
-} content: {
-    CalCalWidgetEntryView(entry: SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70))
+struct CalCalWidget_Previews: PreviewProvider {
+    static var previews: some View {
+        CalCalWidgetEntryView(entry: SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70))
+            .previewContext(WidgetPreviewContext(family: .systemSmall))
+        
+        CalCalWidgetEntryView(entry: SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70))
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+    }
 }
