@@ -9,7 +9,7 @@
 
 ## Phase 2: Custom Camera Interface
 
-- [ ] Task: Implement `CameraManager` (AVFoundation) for capturing photos and handling session
+- [x] Task: Implement `CameraManager` (AVFoundation) for capturing photos and handling session 2e10ced
 - [ ] Task: Implement `CameraPreview` view to show the live camera feed
 - [ ] Task: Implement the Gallery Button in the camera view with the latest photo thumbnail
 - [ ] Task: Implement Permission handling for Camera and Photo Library
