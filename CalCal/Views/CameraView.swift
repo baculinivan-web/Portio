@@ -3,37 +3,37 @@ import AVFoundation
 
 struct CameraView: View {
     @Environment(\.dismiss) var dismiss
+    @StateObject private var cameraManager = CameraManager()
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            CameraPreview(session: cameraManager.session)
+                .ignoresSafeArea()
             
             VStack {
                 HStack {
                     Button {
+                        cameraManager.stopSession()
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
                             .font(.title)
                             .foregroundColor(.white)
                             .padding()
+                            .background(Color.black.opacity(0.3))
+                            .clipShape(Circle())
                     }
+                    .padding()
                     Spacer()
                 }
                 
                 Spacer()
                 
-                // Placeholder for camera feed
-                Text("Camera Feed Placeholder")
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                // Bottom controls placeholder
+                // Bottom controls
                 HStack {
                     Spacer()
                     Button {
-                        // Capture action
+                        cameraManager.capturePhoto()
                     } label: {
                         Circle()
                             .strokeBorder(.white, lineWidth: 3)
@@ -48,6 +48,12 @@ struct CameraView: View {
                 }
                 .padding(.bottom, 30)
             }
+        }
+        .onAppear {
+            cameraManager.checkPermissionsAndSetup()
+        }
+        .onDisappear {
+            cameraManager.stopSession()
         }
     }
 }
