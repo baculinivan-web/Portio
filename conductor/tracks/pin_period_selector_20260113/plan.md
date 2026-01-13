@@ -8,8 +8,8 @@
 - [x] Task: Apply conditional visibility to the timeframe `Picker` (only show when `selectedTab == .allTime`) c4d2200
 - [x] Task: Conductor - User Manual Verification 'Interface Refactor' (Protocol in workflow.md) c4d2200
 
-## Phase 2: Data Flow and Verification
+## Phase 2: Data Flow and Verification [checkpoint: 17d6889]
 
-- [~] Task: Ensure `TrendsView` correctly triggers data fetching when the passed `selectedTimeframe` changes
-- [~] Task: Conduct a final visual check to ensure the pinned layout looks "masterpiece" quality
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [x] Task: Ensure `TrendsView` correctly triggers data fetching when the passed `selectedTimeframe` changes 17d6889
+- [x] Task: Conduct a final visual check to ensure the pinned layout looks "masterpiece" quality 17d6889
+- [x] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md) 17d6889
