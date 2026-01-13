@@ -33,7 +33,7 @@ class NutritionService {
         self.apiKey = apiKey
     }
 
-    func fetchNutrition(for query: String) async throws -> [NutritionResponse] {
+    func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -42,8 +42,16 @@ class NutritionService {
         request.addValue("https://calcal.app", forHTTPHeaderField: "HTTP-Referer")
         request.addValue("CalCal", forHTTPHeaderField: "X-Title")
 
-        let prompt = """
+        var prompt = """
         Analyze the food query: '\(query)'. Your task is to identify each distinct food item and return its nutritional information.
+        """
+        
+        if !images.isEmpty {
+            prompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
+        }
+        
+        prompt += """
+        
         CRITICAL: Your entire response must be ONLY a single, minified JSON object. Do not include backticks, the word 'json', or any other text before or after the JSON object.
         The JSON object must have a single key "foods" which is an array of objects. Each object in the array must have these exact keys and value types:
         - "identifiedFood": String (A descriptive name, e.g., "1 large apple")
@@ -61,9 +69,17 @@ class NutritionService {
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
         
+        var contentParts: [OpenRouterRequest.ContentPart] = [.text(prompt)]
+        
+        for imageData in images {
+            let base64 = imageData.base64EncodedString()
+            let url = "data:image/jpeg;base64,\(base64)"
+            contentParts.append(.imageUrl(url))
+        }
+        
         let openRouterRequest = OpenRouterRequest(
             model: OpenRouterConstants.defaultModel,
-            messages: [.init(role: "user", content: [.text(prompt)])],
+            messages: [.init(role: "user", content: contentParts)],
             responseFormat: nil 
         )
         
