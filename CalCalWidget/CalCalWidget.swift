@@ -27,48 +27,19 @@ struct Provider: TimelineProvider {
     
     @MainActor
     private func fetchLatestData(for date: Date) -> SimpleEntry {
-        do {
-            let schema = Schema([FoodItem.self])
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            // Use App Group container for shared SwiftData
-            if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.ivan.CalCal") {
-                let sqliteURL = groupURL.appendingPathComponent("default.store")
-                let groupConfiguration = ModelConfiguration(schema: schema, url: sqliteURL)
-                let container = try ModelContainer(for: schema, configurations: [groupConfiguration])
-                let context = container.mainContext
-                
-                let calendar = Calendar.current
-                let startOfDay = calendar.startOfDay(for: date)
-                let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-                
-                let predicate = #Predicate<FoodItem> { item in
-                    item.dateEaten >= startOfDay && item.dateEaten < endOfDay
-                }
-                let descriptor = FetchDescriptor<FoodItem>(predicate: predicate)
-                let items = try context.fetch(descriptor)
-                
-                let totalCalories = items.reduce(0) { $0 + $1.calories }
-                let totalProtein = items.reduce(0) { $0 + $1.protein }
-                let totalCarbs = items.reduce(0) { $0 + $1.carbs }
-                let totalFat = items.reduce(0) { $0 + $1.fat }
-                
-                return SimpleEntry(
-                    date: date,
-                    calories: totalCalories,
-                    calorieGoal: UserSettings.calorieGoal,
-                    protein: totalProtein,
-                    proteinGoal: UserSettings.proteinGoal,
-                    carbs: totalCarbs,
-                    carbsGoal: UserSettings.carbsGoal,
-                    fat: totalFat,
-                    fatGoal: UserSettings.fatGoal
-                )
-            }
-        } catch {
-            print("Widget fetch error: \(error)")
-        }
+        let stats = SharedDataManager.shared.fetchTodaysStats()
         
-        return SimpleEntry(date: date, calories: 0, calorieGoal: UserSettings.calorieGoal, protein: 0, proteinGoal: UserSettings.proteinGoal, carbs: 0, carbsGoal: UserSettings.carbsGoal, fat: 0, fatGoal: UserSettings.fatGoal)
+        return SimpleEntry(
+            date: date,
+            calories: stats.calories,
+            calorieGoal: UserSettings.calorieGoal,
+            protein: stats.protein,
+            proteinGoal: UserSettings.proteinGoal,
+            carbs: stats.carbs,
+            carbsGoal: UserSettings.carbsGoal,
+            fat: stats.fat,
+            fatGoal: UserSettings.fatGoal
+        )
     }
 }
 
