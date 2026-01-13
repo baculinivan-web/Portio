@@ -3,7 +3,7 @@
 ## Phase 1: Foundation and UI Layout
 
 - [x] Task: Add camera and photo library usage descriptions to `Info.plist` dd8880c
-- [ ] Task: Update `ChatInputView` to include the camera button to the left of the text field
+- [x] Task: Update `ChatInputView` to include the camera button to the left of the text field b678ee2
 - [ ] Task: Create a placeholder `CameraView` using `ZStack` and `AVFoundation` base classes
 - [ ] Task: Conductor - User Manual Verification 'Foundation and UI Layout' (Protocol in workflow.md)
 
