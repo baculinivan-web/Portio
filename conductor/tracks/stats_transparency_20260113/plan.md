@@ -7,7 +7,7 @@
 - [x] Task: Verify legibility of the Picker against the gradient background fa157a7
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Implementation' (Protocol in workflow.md) fa157a7
 
-## Phase 2: Final Verification
+## Phase 2: Final Verification [checkpoint: 2686acb]
 
-- [ ] Task: Conduct a final visual check on a device/simulator
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [x] Task: Conduct a final visual check on a device/simulator 2686acb
+- [x] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md) 2686acb
