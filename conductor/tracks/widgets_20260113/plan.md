@@ -2,9 +2,9 @@
 
 ## Phase 1: Infrastructure and Setup
 - [x] Task: Enable App Groups for shared data between main app and Widget Extension 27dc20b
-- [ ] Task: Create Widget Extension target in Xcode
-- [ ] Task: Create shared Data Manager or use App Group container for SwiftData access in widgets
-- [ ] Task: Conductor - User Manual Verification 'Infrastructure and Setup' (Protocol in workflow.md)
+- [x] Task: Create Widget Extension target in Xcode 4a90e56
+- [x] Task: Create shared Data Manager or use App Group container for SwiftData access in widgets 7047e25
+- [x] Task: Conductor - User Manual Verification 'Infrastructure and Setup' (Protocol in workflow.md)
 
 ## Phase 2: Widget UI & "Liquid Glass" Styling
 - [ ] Task: Implement common widget background view with translucency and blur (HIG compliant)
