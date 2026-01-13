@@ -1,6 +1,6 @@
 # Plan: Fix OpenRouter Model for Vision Support
 
-## Phase 1: Configuration and API Manager
+## Phase 1: Configuration and API Manager [checkpoint: 42191a1]
 
 - [x] Task: Update `Gemini-Info.plist` to include the `MODEL_NAME` key with value `google/gemma-3-27b-it:free` d518ded
 - [x] Task: Update `APIKeyManager.swift` to include a `getModelName()` method df14aa8
