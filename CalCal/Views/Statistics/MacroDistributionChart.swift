@@ -6,40 +6,44 @@ struct MacroDistributionChart: View {
     let timeframe: TimeFrame
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Macro Distribution")
-                .font(.headline)
-                .padding(.bottom, 8)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Macros Distribution")
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Image(systemName: "chart.bar.fill")
+                    .foregroundColor(.blue)
+            }
             
             Chart(data) { stats in
                 BarMark(
                     x: .value("Date", stats.date, unit: timeframe == .year ? .month : .day),
                     y: .value("Grams", stats.protein)
                 )
-                .foregroundStyle(.purple)
                 .foregroundStyle(by: .value("Macro", "Protein"))
                 
                 BarMark(
                     x: .value("Date", stats.date, unit: timeframe == .year ? .month : .day),
                     y: .value("Grams", stats.carbs)
                 )
-                .foregroundStyle(.blue)
                 .foregroundStyle(by: .value("Macro", "Carbs"))
                 
                 BarMark(
                     x: .value("Date", stats.date, unit: timeframe == .year ? .month : .day),
                     y: .value("Grams", stats.fat)
                 )
-                .foregroundStyle(.green)
                 .foregroundStyle(by: .value("Macro", "Fat"))
             }
             .chartForegroundStyleScale([
-                "Protein": Color.purple,
-                "Carbs": Color.blue,
-                "Fat": Color.green
+                "Protein": Color.purple.gradient,
+                "Carbs": Color.blue.gradient,
+                "Fat": Color.green.gradient
             ])
             .chartXAxis {
                 AxisMarks(values: .stride(by: timeframe == .year ? .month : .day)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(.white.opacity(0.1))
                     if timeframe == .year {
                         AxisValueLabel(format: .dateTime.month(.narrow))
                     } else {
@@ -47,10 +51,21 @@ struct MacroDistributionChart: View {
                     }
                 }
             }
-            .frame(height: 200)
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(.white.opacity(0.1))
+                    AxisValueLabel()
+                }
+            }
+            .frame(height: 220)
         }
-        .padding()
+        .padding(20)
         .background(.ultraThinMaterial)
-        .cornerRadius(20)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }

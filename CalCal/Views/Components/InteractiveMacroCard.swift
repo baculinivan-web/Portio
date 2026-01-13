@@ -15,21 +15,22 @@ struct InteractiveMacroCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title.uppercased())
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.heavy)
+                        .foregroundColor(color)
+                        .letterSpacing(1)
                     
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text("\(Int(value))")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.bold)
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
                         
                         Text("/ \(Int(goal)) \(unit)")
-                            .font(.subheadline)
+                            .font(.system(.callout, design: .rounded))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -37,39 +38,57 @@ struct InteractiveMacroCard: View {
                 Spacer()
                 
                 CircularProgressView(progress: progress, color: color)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 60, height: 60)
+                    .shadow(color: color.opacity(0.3), radius: 5, x: 0, y: 3)
             }
             
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     Divider()
-                    Text("Details Placeholder") // Will be replaced with real breakdown later
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .background(color.opacity(0.3))
                     
-                    // Example breakdown bar
-                    Capsule()
-                        .fill(color.opacity(0.3))
-                        .frame(height: 8)
-                        .overlay(
-                            GeometryReader { geometry in
-                                Capsule()
-                                    .fill(color)
-                                    .frame(width: geometry.size.width * progress)
-                            }
-                        )
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(color)
+                        Text("Detailed breakdown coming soon")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Refined progress bar
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(Int(progress * 100))% of daily goal")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.secondary)
+                        
+                        Capsule()
+                            .fill(color.opacity(0.1))
+                            .frame(height: 12)
+                            .overlay(
+                                GeometryReader { geometry in
+                                    Capsule()
+                                        .fill(color.gradient)
+                                        .frame(width: geometry.size.width * progress)
+                                }
+                            )
+                    }
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .transition(.asymmetric(insertion: .push(from: .top).combined(with: .opacity), removal: .move(edge: .top).combined(with: .opacity)))
             }
         }
-        .padding()
+        .padding(20)
         .background(.ultraThinMaterial)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 10)
         .onTapGesture {
-            let generator = UIImpactFeedbackGenerator(style: .light)
+            let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 isExpanded.toggle()
             }
         }

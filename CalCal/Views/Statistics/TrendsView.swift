@@ -9,19 +9,26 @@ struct TrendsView: View {
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Timeframe Selection
-                Picker("Timeframe", selection: $selectedTimeframe) {
-                    ForEach(TimeFrame.allCases) { timeframe in
-                        Text(timeframe.rawValue).tag(timeframe)
-                    }
+        VStack(spacing: 24) {
+            // Timeframe Selection
+            Picker("Timeframe", selection: $selectedTimeframe) {
+                ForEach(TimeFrame.allCases) { timeframe in
+                    Text(timeframe.rawValue).tag(timeframe)
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .onChange(of: selectedTimeframe) { _, _ in
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .onChange(of: selectedTimeframe) { _, _ in
+                withAnimation {
                     fetchData()
                 }
+            }
+            
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Performance Overview")
+                    .font(.system(.title3, design: .rounded))
+                    .fontWeight(.bold)
+                    .padding(.horizontal)
                 
                 // Summaries
                 VStack(spacing: 12) {
@@ -38,8 +45,8 @@ struct TrendsView: View {
                 }
                 .padding(.horizontal)
             }
-            .padding(.vertical)
         }
+        .padding(.vertical)
         .onAppear {
             fetchData()
         }

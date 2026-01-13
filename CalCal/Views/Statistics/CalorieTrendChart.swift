@@ -7,16 +7,26 @@ struct CalorieTrendChart: View {
     let calorieGoal: Double
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Calorie Trend")
-                .font(.headline)
-                .padding(.bottom, 8)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Daily Calories")
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.orange)
+            }
             
             Chart(data) { stats in
                 // Goal Line
                 RuleMark(y: .value("Goal", calorieGoal))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5]))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.orange.opacity(0.5))
+                    .annotation(position: .top, alignment: .trailing) {
+                        Text("Goal")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
                 
                 // Trend Line
                 LineMark(
@@ -25,7 +35,7 @@ struct CalorieTrendChart: View {
                 )
                 .interpolationMethod(.catmullRom)
                 .foregroundStyle(Color.orange.gradient)
-                .symbol(by: .value("Date", stats.date))
+                .lineStyle(StrokeStyle(lineWidth: 3))
                 
                 // Gradient Area
                 AreaMark(
@@ -35,7 +45,7 @@ struct CalorieTrendChart: View {
                 .interpolationMethod(.catmullRom)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [Color.orange.opacity(0.3), Color.orange.opacity(0.0)],
+                        colors: [Color.orange.opacity(0.2), Color.orange.opacity(0.0)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -43,6 +53,8 @@ struct CalorieTrendChart: View {
             }
             .chartXAxis {
                 AxisMarks(values: .stride(by: timeframe == .year ? .month : .day)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(.white.opacity(0.1))
                     if timeframe == .year {
                         AxisValueLabel(format: .dateTime.month(.narrow))
                     } else {
@@ -50,10 +62,21 @@ struct CalorieTrendChart: View {
                     }
                 }
             }
-            .frame(height: 200)
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(.white.opacity(0.1))
+                    AxisValueLabel()
+                }
+            }
+            .frame(height: 220)
         }
-        .padding()
+        .padding(20)
         .background(.ultraThinMaterial)
-        .cornerRadius(20)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
