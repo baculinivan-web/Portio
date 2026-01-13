@@ -7,13 +7,13 @@
 - [x] Task: Create a placeholder `CameraView` using `ZStack` and `AVFoundation` base classes bb9187b
 - [x] Task: Conductor - User Manual Verification 'Foundation and UI Layout' (Protocol in workflow.md) 86cb38e
 
-## Phase 2: Custom Camera Interface
+## Phase 2: Custom Camera Interface [checkpoint: f1696a8]
 
 - [x] Task: Implement `CameraManager` (AVFoundation) for capturing photos and handling session 2e10ced
 - [x] Task: Implement `CameraPreview` view to show the live camera feed 4bc80a0
 - [x] Task: Implement the Gallery Button in the camera view with the latest photo thumbnail 4e8a2ac
 - [x] Task: Implement Permission handling for Camera and Photo Library 14ee8a4
-- [ ] Task: Conductor - User Manual Verification 'Custom Camera Interface' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Custom Camera Interface' (Protocol in workflow.md) f1696a8
 
 ## Phase 3: Capture, Preview, and Attachment
 
