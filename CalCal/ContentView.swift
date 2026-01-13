@@ -119,10 +119,16 @@ struct ContentView: View {
     }
 
     private func addItem() {
-        guard !foodQuery.isEmpty else { return }
+        guard !foodQuery.isEmpty || !attachedImages.isEmpty else { return }
         let query = foodQuery
+        let imagesData = attachedImages.compactMap { $0.jpegData(compressionQuality: 0.8) }
+        
         foodQuery = ""
-        viewModel.addItem(query: query, context: modelContext)
+        withAnimation {
+            attachedImages = []
+        }
+        
+        viewModel.addItem(query: query, imageDatas: imagesData, context: modelContext)
         
         // Dismiss the keyboard
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
