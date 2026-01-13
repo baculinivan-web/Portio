@@ -1,11 +1,13 @@
 import Foundation
 import AVFoundation
 import UIKit
+import Photos
 
 class CameraManager: NSObject, ObservableObject {
     @Published var session = AVCaptureSession()
     @Published var capturedImage: UIImage?
     @Published var isSessionRunning = false
+    @Published var latestThumbnail: UIImage?
     
     private let output = AVCapturePhotoOutput()
     private var videoDeviceInput: AVCaptureDeviceInput?
@@ -22,6 +24,11 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func checkPermissionsAndSetup() {
+        checkCameraPermissions()
+        checkPhotoLibraryPermissions()
+    }
+    
+    private func checkCameraPermissions() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             setupSession()
@@ -35,6 +42,34 @@ class CameraManager: NSObject, ObservableObject {
             }
         default:
             break
+        }
+    }
+    
+    private func checkPhotoLibraryPermissions() {
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
+            if status == .authorized || status == .limited {
+                self.fetchLatestPhoto()
+            }
+        }
+    }
+    
+    private func fetchLatestPhoto() {
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 1
+        
+        let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        if let firstAsset = fetchResult.firstObject {
+            let manager = PHImageManager.default()
+            let option = PHImageRequestOptions()
+            option.isSynchronous = false
+            option.deliveryMode = .highQualityFormat
+            
+            manager.requestImage(for: firstAsset, targetSize: CGSize(width: 100, height: 100), contentMode: .aspectFill, options: option) { image, _ in
+                DispatchQueue.main.async {
+                    self.latestThumbnail = image
+                }
+            }
         }
     }
     
