@@ -106,6 +106,37 @@ struct SmallWidgetView: View {
     }
 }
 
+struct QuickActionButtonsView: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            Link(destination: URL(string: "calcal://add")!) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+            }
+            
+            Link(destination: URL(string: "calcal://camera")!) {
+                Image(systemName: "camera.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+}
+
+struct MacroBreakdownView: View {
+    let entry: SimpleEntry
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MacroMiniView(label: "P", value: entry.protein, goal: entry.proteinGoal, color: .red)
+            MacroMiniView(label: "C", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
+            MacroMiniView(label: "F", value: entry.fat, goal: entry.fatGoal, color: .green)
+        }
+        .frame(width: 80)
+    }
+}
+
 struct MediumWidgetView: View {
     var entry: SimpleEntry
     
@@ -125,29 +156,12 @@ struct MediumWidgetView: View {
                 
                 Spacer()
                 
-                HStack(spacing: 8) {
-                    Link(destination: URL(string: "calcal://add")!) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.orange)
-                    }
-                    
-                    Link(destination: URL(string: "calcal://camera")!) {
-                        Image(systemName: "camera.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.orange)
-                    }
-                }
+                QuickActionButtonsView()
             }
             
             Spacer()
             
-            VStack(alignment: .leading, spacing: 10) {
-                MacroMiniView(label: "P", value: entry.protein, goal: entry.proteinGoal, color: .red)
-                MacroMiniView(label: "C", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
-                MacroMiniView(label: "F", value: entry.fat, goal: entry.fatGoal, color: .green)
-            }
-            .frame(width: 80)
+            MacroBreakdownView(entry: entry)
         }
     }
 }
