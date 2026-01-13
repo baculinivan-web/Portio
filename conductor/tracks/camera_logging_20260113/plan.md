@@ -11,8 +11,8 @@
 
 - [x] Task: Implement `CameraManager` (AVFoundation) for capturing photos and handling session 2e10ced
 - [x] Task: Implement `CameraPreview` view to show the live camera feed 4bc80a0
-- [ ] Task: Implement the Gallery Button in the camera view with the latest photo thumbnail
-- [ ] Task: Implement Permission handling for Camera and Photo Library
+- [x] Task: Implement the Gallery Button in the camera view with the latest photo thumbnail 4e8a2ac
+- [x] Task: Implement Permission handling for Camera and Photo Library 14ee8a4
 - [ ] Task: Conductor - User Manual Verification 'Custom Camera Interface' (Protocol in workflow.md)
 
 ## Phase 3: Capture, Preview, and Attachment
