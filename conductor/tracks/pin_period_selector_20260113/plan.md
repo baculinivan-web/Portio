@@ -1,12 +1,12 @@
 # Plan: Pin Period Selector to Header
 
-## Phase 1: State and Interface Refactor
+## Phase 1: State and Interface Refactor [checkpoint: c4d2200]
 
-- [ ] Task: Move `selectedTimeframe` state from `TrendsView.swift` to `StatisticsView.swift`
-- [ ] Task: Update `TrendsView.swift` to accept `selectedTimeframe` as a parameter
-- [ ] Task: Update `StatisticsView.swift` to include the timeframe `Picker` in the fixed top section
-- [ ] Task: Apply conditional visibility to the timeframe `Picker` (only show when `selectedTab == .allTime`)
-- [ ] Task: Conductor - User Manual Verification 'Interface Refactor' (Protocol in workflow.md)
+- [x] Task: Move `selectedTimeframe` state from `TrendsView.swift` to `StatisticsView.swift` c4d2200
+- [x] Task: Update `TrendsView.swift` to accept `selectedTimeframe` as a parameter c4d2200
+- [x] Task: Update `StatisticsView.swift` to include the timeframe `Picker` in the fixed top section c4d2200
+- [x] Task: Apply conditional visibility to the timeframe `Picker` (only show when `selectedTab == .allTime`) c4d2200
+- [x] Task: Conductor - User Manual Verification 'Interface Refactor' (Protocol in workflow.md) c4d2200
 
 ## Phase 2: Data Flow and Verification
 
