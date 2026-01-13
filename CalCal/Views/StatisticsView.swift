@@ -22,7 +22,6 @@ struct StatisticsView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
-                .background(.ultraThinMaterial)
                 .onChange(of: selectedTab) { _, _ in
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         // This triggers the transition
@@ -59,6 +58,7 @@ struct StatisticsView: View {
         }
         .navigationTitle("Your Statistics")
         .navigationBarTitleDisplayMode(.large)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 }
 
