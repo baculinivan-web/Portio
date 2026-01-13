@@ -14,7 +14,14 @@ struct CalCalApp: App {
         let schema = Schema([
             FoodItem.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        let modelConfiguration: ModelConfiguration
+        if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.ivan.CalCal") {
+            let sqliteURL = groupURL.appendingPathComponent("default.store")
+            modelConfiguration = ModelConfiguration(schema: schema, url: sqliteURL)
+        } else {
+            modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        }
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
