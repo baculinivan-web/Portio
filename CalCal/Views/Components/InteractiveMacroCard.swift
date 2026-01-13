@@ -10,7 +10,7 @@ struct InteractiveMacroCard: View {
     
     @State private var isExpanded = false
     
-    private var filteredItems: [(name: String, value: Double)] {
+    private var filteredItems: [(id: UUID, name: String, value: Double)] {
         items.compactMap { item in
             let val: Double
             switch title.lowercased() {
@@ -20,7 +20,7 @@ struct InteractiveMacroCard: View {
             case "fat": val = item.fat
             default: val = 0
             }
-            return val > 0 ? (name: item.cleanFoodName, value: val) : nil
+            return val > 0 ? (id: item.id, name: item.cleanFoodName, value: val) : nil
         }.sorted { $0.value > $1.value }
     }
     
@@ -70,7 +70,7 @@ struct InteractiveMacroCard: View {
                     } else {
                         ScrollView {
                             VStack(spacing: 12) {
-                                ForEach(filteredItems, id: \.name) { item in
+                                ForEach(filteredItems, id: \.id) { item in
                                     HStack {
                                         Text(item.name)
                                             .font(.system(.subheadline, design: .rounded))
