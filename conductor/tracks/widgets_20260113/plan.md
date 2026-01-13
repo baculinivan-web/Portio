@@ -1,6 +1,6 @@
 # Plan: add_widgets_small_and_medium
 
-## Phase 1: Infrastructure and Setup
+## Phase 1: Infrastructure and Setup (Checkpoint: 432b806)
 - [x] Task: Enable App Groups for shared data between main app and Widget Extension 27dc20b
 - [x] Task: Create Widget Extension target in Xcode 4a90e56
 - [x] Task: Create shared Data Manager or use App Group container for SwiftData access in widgets 7047e25
