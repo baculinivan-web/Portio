@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: Refactor Nutrition Service for OpenRouter
+## [~] Track: Refactor Nutrition Service for OpenRouter
 *Link: [./conductor/tracks/refactor_openrouter_20260113/](./conductor/tracks/refactor_openrouter_20260113/)*
