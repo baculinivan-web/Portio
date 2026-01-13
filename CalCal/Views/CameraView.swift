@@ -6,6 +6,7 @@ struct CameraView: View {
     @StateObject private var cameraManager = CameraManager()
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var showPermissionAlert = false
+    var onPhotoConfirmed: (UIImage) -> Void
     
     var body: some View {
         ZStack {
@@ -13,7 +14,7 @@ struct CameraView: View {
                 PhotoPreviewView(
                     image: image,
                     onUse: {
-                        // Task 9 will handle this
+                        onPhotoConfirmed(image)
                         cameraManager.capturedImage = nil
                         dismiss()
                     },

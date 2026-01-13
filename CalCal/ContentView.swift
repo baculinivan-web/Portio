@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var isShowingSettings = false
     @State private var showGoalSummary = false
     @State private var isShowingCamera = false
+    @State private var attachedImages: [UIImage] = []
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
     @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
@@ -88,7 +89,11 @@ struct ContentView: View {
                 SettingsView()
             }
             .fullScreenCover(isPresented: $isShowingCamera) {
-                CameraView()
+                CameraView { image in
+                    withAnimation {
+                        attachedImages.append(image)
+                    }
+                }
             }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
                 OnboardingView() {
