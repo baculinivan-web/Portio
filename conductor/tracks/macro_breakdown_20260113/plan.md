@@ -14,9 +14,9 @@
 - [x] Task: Style the individual list rows to match the "Liquid Glass" theme (subtle dividers, refined typography) 6443b70
 - [x] Task: Conductor - User Manual Verification 'Breakdown UI and Scroll Effect' (Protocol in workflow.md) 346e250
 
-## Phase 3: Integration and Polish
+## Phase 3: Integration and Polish [checkpoint: a9adb4a]
 
 - [x] Task: Update `TodayView` to pass the `items` query result to each `InteractiveMacroCard` ad1b188
 - [x] Task: Refine expansion animations to account for the new list content 6443b70
 - [x] Task: Verify end-to-end data flow and visual fidelity 6443b70
-- [~] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md) a9adb4a
