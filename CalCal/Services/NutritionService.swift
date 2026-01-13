@@ -27,6 +27,7 @@ enum NutritionError: Error, LocalizedError {
 // MARK: - Networking Service
 class NutritionService {
     private let apiKey: String
+    private let modelName: String
     private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
 
     init() {
@@ -34,6 +35,11 @@ class NutritionService {
             fatalError("OpenRouter API Key not found. Please add it to Gemini-Info.plist")
         }
         self.apiKey = apiKey
+        
+        guard let modelName = APIKeyManager.getModelName() else {
+             fatalError("Model Name not found. Please add MODEL_NAME to Gemini-Info.plist")
+        }
+        self.modelName = modelName
     }
 
     func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
@@ -81,7 +87,7 @@ class NutritionService {
         }
         
         let openRouterRequest = OpenRouterRequest(
-            model: OpenRouterConstants.defaultModel,
+            model: self.modelName,
             messages: [.init(role: "user", content: contentParts)],
             responseFormat: nil 
         )
@@ -154,7 +160,7 @@ class NutritionService {
         """
 
         let openRouterRequest = OpenRouterRequest(
-            model: OpenRouterConstants.defaultModel,
+            model: self.modelName,
             messages: [.init(role: "user", content: [.text(prompt)])],
             responseFormat: nil 
         )
@@ -196,7 +202,6 @@ class NutritionService {
             throw NutritionError.unparsableJSON(decodingError.localizedDescription)
         }
     }
-}
 
 // MARK: - Codable Structs for Domain Models
 
