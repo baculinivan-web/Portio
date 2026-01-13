@@ -1,10 +1,10 @@
 # Plan: Macro Breakdown with Liquid Glass Scroll Effect
 
-## Phase 1: Data Preparation
+## Phase 1: Data Preparation [checkpoint: 75a8a9f]
 
-- [~] Task: Update `InteractiveMacroCard` to accept an array of `FoodItem` objects
-- [~] Task: Implement a computed property within the card to filter and sort items by their contribution to the specific macro
-- [ ] Task: Conductor - User Manual Verification 'Data Preparation' (Protocol in workflow.md)
+- [x] Task: Update `InteractiveMacroCard` to accept an array of `FoodItem` objects 75a8a9f
+- [x] Task: Implement a computed property within the card to filter and sort items by their contribution to the specific macro 75a8a9f
+- [x] Task: Conductor - User Manual Verification 'Data Preparation' (Protocol in workflow.md) 75a8a9f
 
 ## Phase 2: Breakdown UI and Scroll Effect
 
