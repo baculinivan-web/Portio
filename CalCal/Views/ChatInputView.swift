@@ -3,9 +3,16 @@ import SwiftUI
 struct ChatInputView: View {
     @Binding var text: String
     var onSend: () -> Void
+    var onCameraTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
+            Button(action: onCameraTap) {
+                Image(systemName: "camera.fill")
+                    .font(.title2)
+                    .foregroundColor(.primary)
+            }
+
             TextField("Enter food...", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)

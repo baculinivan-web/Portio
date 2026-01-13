@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var foodQuery: String = ""
     @State private var isShowingSettings = false
     @State private var showGoalSummary = false
+    @State private var isShowingCamera = false
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
     @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
@@ -76,7 +77,7 @@ struct ContentView: View {
             }
             .toolbarBackground(.visible, for: .navigationBar)
             .safeAreaInset(edge: .bottom) {
-                ChatInputView(text: $foodQuery, onSend: addItem)
+                ChatInputView(text: $foodQuery, onSend: addItem, onCameraTap: { isShowingCamera = true })
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
                 Button("OK") { viewModel.errorMessage = nil }
@@ -85,6 +86,9 @@ struct ContentView: View {
             })
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView()
+            }
+            .fullScreenCover(isPresented: $isShowingCamera) {
+                Text("Camera View Placeholder") // Will be replaced in later tasks
             }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
                 OnboardingView() {
