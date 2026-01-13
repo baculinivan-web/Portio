@@ -7,12 +7,12 @@
 - [x] Task: Update `StatisticsView` skeleton to include a Segmented Picker for "Today" and "All Time" 3d71d9c
 - [x] Task: Conductor - User Manual Verification 'Foundation and Data Aggregation' (Protocol in workflow.md) 51178a1
 
-## Phase 2: Redesigned "Today" View (Interactive Cards)
+## Phase 2: Redesigned "Today" View (Interactive Cards) [checkpoint: 3fb12dc]
 
 - [x] Task: Create `InteractiveMacroCard` component with "Liquid Glass" styling and haptic feedback integration 6443b70
 - [x] Task: Implement expansion logic for cards to reveal a detailed breakdown (e.g., contributing food items) 6443b70
 - [x] Task: Integrate `InteractiveMacroCard` into the "Today" tab of `StatisticsView` ad1b188
-- [~] Task: Conductor - User Manual Verification 'Redesigned Today View' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Redesigned Today View' (Protocol in workflow.md) 3fb12dc
 
 ## Phase 3: "All Time" Trends View (SwiftCharts)
 
