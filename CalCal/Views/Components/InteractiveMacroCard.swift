@@ -22,7 +22,7 @@ struct InteractiveMacroCard: View {
                         .font(.system(.caption, design: .rounded))
                         .fontWeight(.heavy)
                         .foregroundColor(color)
-                        .letterSpacing(1)
+                        
                     
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text("\(Int(value))")

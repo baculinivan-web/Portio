@@ -202,6 +202,7 @@ class NutritionService {
             throw NutritionError.unparsableJSON(decodingError.localizedDescription)
         }
     }
+}
 
 // MARK: - Codable Structs for Domain Models
 

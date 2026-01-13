@@ -85,7 +85,7 @@ struct ContentView: View {
                     onCameraTap: { isShowingCamera = true },
                     onRemoveImage: { index in
                         withAnimation {
-                            attachedImages.remove(at: index)
+                            _ = attachedImages.remove(at: index)
                         }
                     }
                 )

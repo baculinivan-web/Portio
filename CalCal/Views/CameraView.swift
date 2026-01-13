@@ -138,5 +138,5 @@ struct CameraView: View {
 }
 
 #Preview {
-    CameraView()
+    CameraView(onPhotoConfirmed: { _ in })
 }

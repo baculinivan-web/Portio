@@ -115,3 +115,57 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
     }
+    
+    func capturePhoto() {
+        let settings = AVCapturePhotoSettings()
+        output.capturePhoto(with: settings, delegate: self)
+    }
+    
+    func stopSession() {
+        if session.isRunning {
+            session.stopRunning()
+            isSessionRunning = session.isRunning
+        }
+    }
+    
+    private func checkPhotoLibraryPermissions() {
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
+            if status == .authorized || status == .limited {
+                self.fetchLatestPhoto()
+            }
+        }
+    }
+    
+    private func fetchLatestPhoto() {
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 1
+        
+        let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        if let firstAsset = fetchResult.firstObject {
+            let manager = PHImageManager.default()
+            let option = PHImageRequestOptions()
+            option.isSynchronous = false
+            option.deliveryMode = .highQualityFormat
+            
+            manager.requestImage(for: firstAsset, targetSize: CGSize(width: 100, height: 100), contentMode: .aspectFill, options: option) { image, _ in
+                DispatchQueue.main.async {
+                    self.latestThumbnail = image
+                }
+            }
+        }
+    }
+}
+
+extension CameraManager: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error = error {
+            print("Error capturing photo: \(error.localizedDescription)")
+            self.cameraError = .captureFailed
+            return
+        }
+        
+        guard let imageData = photo.fileDataRepresentation() else { return }
+        self.capturedImage = UIImage(data: imageData)
+    }
+}
