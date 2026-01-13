@@ -6,6 +6,7 @@ struct ChatInputView: View {
     var onSend: () -> Void
     var onCameraTap: () -> Void
     var onRemoveImage: (Int) -> Void
+    var focusState: FocusState<Bool>.Binding
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,6 +51,7 @@ struct ChatInputView: View {
                 TextField("Enter food...", text: $text, axis: .vertical)
                     .textFieldStyle(.plain)
                     .lineLimit(1...5)
+                    .focused(focusState)
 
                 Button(action: onSend) {
                     Image(systemName: "arrow.up.circle.fill")

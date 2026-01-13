@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showGoalSummary = false
     @State private var isShowingCamera = false
     @State private var attachedImages: [UIImage] = []
+    @FocusState private var isInputFocused: Bool
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
     @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
@@ -88,8 +89,12 @@ struct ContentView: View {
                         withAnimation {
                             _ = attachedImages.remove(at: index)
                         }
-                    }
+                    },
+                    focusState: $isInputFocused
                 )
+            }
+            .onOpenURL { url in
+                handleDeepLink(url)
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
                 Button("OK") { viewModel.errorMessage = nil }
@@ -116,6 +121,17 @@ struct ContentView: View {
             .sheet(isPresented: $showGoalSummary) {
                 GoalSummaryView()
             }
+        }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        switch url.absoluteString {
+        case "calcal://camera":
+            isShowingCamera = true
+        case "calcal://add":
+            isInputFocused = true
+        default:
+            break
         }
     }
 
