@@ -6,5 +6,7 @@
 	<string>AIzaSyBG0pZOuRJY1jYa3M1yCl1oA8hAZtGf7cQ</string>
 	<key>OPENROUTER_API_KEY</key>
 	<string>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</string>
+	<key>MODEL_NAME</key>
+	<string>google/gemma-3-27b-it:free</string>
 </dict>
 </plist>
