@@ -3,8 +3,8 @@
 ## Phase 1: Configuration and API Manager
 
 - [x] Task: Update `Gemini-Info.plist` to include the `MODEL_NAME` key with value `google/gemma-3-27b-it:free` d518ded
-- [ ] Task: Update `APIKeyManager.swift` to include a `getModelName()` method
-- [ ] Task: Conductor - User Manual Verification 'Configuration and API Manager' (Protocol in workflow.md)
+- [x] Task: Update `APIKeyManager.swift` to include a `getModelName()` method df14aa8
+- [x] Task: Conductor - User Manual Verification 'Configuration and API Manager' (Protocol in workflow.md) df14aa8
 
 ## Phase 2: Service Integration
 
