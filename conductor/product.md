@@ -1,5 +1,5 @@
 # Initial Concept
-CalCal is an iOS application designed to track food intake and nutritional information. It leverages AI (specifically Gemini) to analyze user descriptions and images of food to automatically identify food items and provide nutritional data like calories, protein, carbs, and fat. The app features a "Liquid Glass" UI, supports SwiftData for local storage, and includes features like multi-image attachments and manual data editing.
+CalCal is an iOS application designed to track food intake and nutritional information. It leverages AI (via OpenRouter, using `google/gemma-3-27b-it:free`) to analyze user descriptions and images of food to automatically identify food items and provide nutritional data like calories, protein, carbs, and fat. The app features a "Liquid Glass" UI, supports SwiftData for local storage, and includes features like integrated camera logging, multi-image attachments, and manual data editing.
 
 ## Target Audience
 - **Fitness Enthusiasts and Athletes:** Individuals who need to precisely track their macronutrients (protein, carbs, fat) to support their training and performance goals.
@@ -11,7 +11,7 @@ CalCal is an iOS application designed to track food intake and nutritional infor
 - **Comprehensive Tracking:** Provide a robust system for monitoring daily intake and maintaining a historical record of nutritional habits.
 
 ## Core Features (MVP)
-- **AI Recognition:** Intelligent identification of food items from both natural language text descriptions and captured images.
+- **AI Recognition:** Intelligent identification of food items from both natural language text descriptions and captured images (via integrated camera or gallery).
 - **Data Persistence:** Reliable local storage of food logs and nutritional data using SwiftData.
 - **Manual Control:** Flexibility for users to manually edit identified items or nutritional values to ensure total accuracy.
 

@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Camera Integration for Food Logging
+## [x] Track: Camera Integration for Food Logging
 *Link: [./conductor/tracks/camera_logging_20260113/](./conductor/tracks/camera_logging_20260113/)*
