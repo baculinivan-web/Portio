@@ -7,5 +7,5 @@
 
 ## Phase 2: Final Verification
 
-- [ ] Task: Conduct a final visual and interaction check on a device/simulator
+- [~] Task: Conduct a final visual and interaction check on a device/simulator
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
