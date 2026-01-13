@@ -5,6 +5,7 @@ struct CameraView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var cameraManager = CameraManager()
     @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var showPermissionAlert = false
     
     var body: some View {
         ZStack {
@@ -51,6 +52,7 @@ struct CameraView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white, lineWidth: 2))
                         }
                     }
+                    .disabled(PHPhotoLibrary.authorizationStatus(for: .readWrite) == .denied)
                     .onChange(of: selectedItems) { _, newValue in
                         if let first = newValue.first {
                             Task {
@@ -68,7 +70,11 @@ struct CameraView: View {
                     
                     // Capture Button
                     Button {
-                        cameraManager.capturePhoto()
+                        if AVCaptureDevice.authorizationStatus(for: .video) == .authorized {
+                            cameraManager.capturePhoto()
+                        } else {
+                            showPermissionAlert = true
+                        }
                     } label: {
                         Circle()
                             .strokeBorder(.white, lineWidth: 3)
@@ -88,6 +94,16 @@ struct CameraView: View {
                 .padding(.horizontal, 40)
                 .padding(.bottom, 30)
             }
+        }
+        .alert("Permission Required", isPresented: $showPermissionAlert) {
+            Button("Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Please enable camera access in Settings to take photos of your food.")
         }
         .onAppear {
             cameraManager.checkPermissionsAndSetup()
