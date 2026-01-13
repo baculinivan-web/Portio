@@ -25,8 +25,8 @@
 
 ## Phase 4: Integration and Sending
 
-- [ ] Task: Update `addItem` in `ContentView` to pass attached image data to the `ViewModel`
-- [ ] Task: Verify that `NutritionService` correctly processes the images via OpenRouter
-- [ ] Task: Handle simulator fallback (disable camera/alert)
-- [ ] Task: Final Polish: animations for camera presentation and attachment removal
-- [ ] Task: Conductor - User Manual Verification 'Integration and Sending' (Protocol in workflow.md)
+- [x] Task: Update `addItem` in `ContentView` to pass attached image data to the `ViewModel` 58d09e6
+- [x] Task: Verify that `NutritionService` correctly processes the images via OpenRouter 58d09e6
+- [x] Task: Handle simulator fallback (disable camera/alert) b0ff7e4
+- [x] Task: Final Polish: animations for camera presentation and attachment removal 49edb8f
+- [x] Task: Conductor - User Manual Verification 'Integration and Sending' (Protocol in workflow.md) 49edb8f
