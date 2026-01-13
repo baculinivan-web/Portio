@@ -3,9 +3,9 @@
 ## Phase 1: Foundation and Data Aggregation
 
 - [x] Task: Implement SwiftData helper methods for aggregating nutritional data (Calories, Macros) by Day, Week, and Month b698d0f
-- [ ] Task: Write unit tests for the data aggregation and comparison logic
-- [ ] Task: Update `StatisticsView` skeleton to include a Segmented Picker for "Today" and "All Time"
-- [ ] Task: Conductor - User Manual Verification 'Foundation and Data Aggregation' (Protocol in workflow.md)
+- [~] Task: Write unit tests for the data aggregation and comparison logic
+- [x] Task: Update `StatisticsView` skeleton to include a Segmented Picker for "Today" and "All Time" 3d71d9c
+- [~] Task: Conductor - User Manual Verification 'Foundation and Data Aggregation' (Protocol in workflow.md)
 
 ## Phase 2: Redesigned "Today" View (Interactive Cards)
 
