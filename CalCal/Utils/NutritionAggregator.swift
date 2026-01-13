@@ -90,11 +90,19 @@ enum TimeFrame: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-struct NutritionStats: Identifiable {
-    let id = UUID()
-    let date: Date
-    let calories: Double
-    let protein: Double
-    let carbs: Double
-    let fat: Double
+public struct NutritionStats: Identifiable {
+    public let id = UUID()
+    public let date: Date
+    public let calories: Double
+    public let protein: Double
+    public let carbs: Double
+    public let fat: Double
+    
+    public init(date: Date, calories: Double, protein: Double, carbs: Double, fat: Double) {
+        self.date = date
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+    }
 }
