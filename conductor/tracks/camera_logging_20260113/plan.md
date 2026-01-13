@@ -17,11 +17,11 @@
 
 ## Phase 3: Capture, Preview, and Attachment
 
-- [ ] Task: Implement Photo Capture logic and transition to a `PhotoPreviewView`
-- [ ] Task: Implement "Attach" and "Retake" logic in `PhotoPreviewView`
-- [ ] Task: Update `CalorieTrackerViewModel` (or a new shared state) to manage pending attachments
-- [ ] Task: Update `ChatInputView` to display thumbnails of attached photos
-- [ ] Task: Conductor - User Manual Verification 'Capture, Preview, and Attachment' (Protocol in workflow.md)
+- [x] Task: Implement Photo Capture logic and transition to a `PhotoPreviewView` f18c0ae
+- [x] Task: Implement "Attach" and "Retake" logic in `PhotoPreviewView` fb99a51
+- [x] Task: Update `CalorieTrackerViewModel` (or a new shared state) to manage pending attachments fb99a51
+- [x] Task: Update `ChatInputView` to display thumbnails of attached photos a5946fa
+- [x] Task: Conductor - User Manual Verification 'Capture, Preview, and Attachment' (Protocol in workflow.md) a5946fa
 
 ## Phase 4: Integration and Sending
 
