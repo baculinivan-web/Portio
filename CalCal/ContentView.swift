@@ -78,7 +78,17 @@ struct ContentView: View {
             }
             .toolbarBackground(.visible, for: .navigationBar)
             .safeAreaInset(edge: .bottom) {
-                ChatInputView(text: $foodQuery, onSend: addItem, onCameraTap: { isShowingCamera = true })
+                ChatInputView(
+                    text: $foodQuery,
+                    attachedImages: attachedImages,
+                    onSend: addItem,
+                    onCameraTap: { isShowingCamera = true },
+                    onRemoveImage: { index in
+                        withAnimation {
+                            attachedImages.remove(at: index)
+                        }
+                    }
+                )
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
                 Button("OK") { viewModel.errorMessage = nil }
