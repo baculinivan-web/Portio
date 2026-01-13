@@ -1,11 +1,11 @@
 # Plan: Creative Stats View Redesign
 
-## Phase 1: Foundation and Data Aggregation
+## Phase 1: Foundation and Data Aggregation [checkpoint: 51178a1]
 
 - [x] Task: Implement SwiftData helper methods for aggregating nutritional data (Calories, Macros) by Day, Week, and Month b698d0f
-- [~] Task: Write unit tests for the data aggregation and comparison logic
+- [x] Task: Write unit tests for the data aggregation and comparison logic b698d0f
 - [x] Task: Update `StatisticsView` skeleton to include a Segmented Picker for "Today" and "All Time" 3d71d9c
-- [~] Task: Conductor - User Manual Verification 'Foundation and Data Aggregation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Foundation and Data Aggregation' (Protocol in workflow.md) 51178a1
 
 ## Phase 2: Redesigned "Today" View (Interactive Cards)
 
