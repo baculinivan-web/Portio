@@ -6,11 +6,11 @@
 - [x] Task: Update `APIKeyManager.swift` to include a `getModelName()` method df14aa8
 - [x] Task: Conductor - User Manual Verification 'Configuration and API Manager' (Protocol in workflow.md) df14aa8
 
-## Phase 2: Service Integration
+## Phase 2: Service Integration [checkpoint: 456ab8c]
 
 - [x] Task: Update `OpenRouterConstants` in `OpenRouterModels.swift` to remove the hardcoded model string b0f6bce
 - [x] Task: Refactor `NutritionService.swift` to retrieve the model name from `APIKeyManager` 65e0fd7
-- [x] Task: Conductor - User Manual Verification 'Service Integration' (Protocol in workflow.md) 65e0fd7
+- [x] Task: Conductor - User Manual Verification 'Service Integration' (Protocol in workflow.md) 456ab8c
 
 ## Phase 3: Final Verification
 
