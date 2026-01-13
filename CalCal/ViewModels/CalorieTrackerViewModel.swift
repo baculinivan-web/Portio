@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import SwiftData
+import WidgetKit
 
 @MainActor
 class CalorieTrackerViewModel: ObservableObject {
@@ -61,6 +62,8 @@ class CalorieTrackerViewModel: ObservableObject {
                             )
                             context.insert(newItem)
                         }
+                        
+                        WidgetCenter.shared.reloadAllTimelines()
                     }
                 }
                 

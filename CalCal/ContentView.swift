@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -157,6 +158,7 @@ struct ContentView: View {
                 let itemToDelete = todaysItems[index]
                 modelContext.delete(itemToDelete)
             }
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }

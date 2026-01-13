@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import WidgetKit
 
 struct FoodItemDetailView: View {
     @Bindable var item: FoodItem
@@ -51,6 +52,19 @@ struct FoodItemDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item.weightGrams) { _, _ in
             item.recalculateNutrients()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: item.calories) { _, _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: item.protein) { _, _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: item.carbs) { _, _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onChange(of: item.fat) { _, _ in
+            WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: selectedPhotos) { _, newItems in
             Task {
