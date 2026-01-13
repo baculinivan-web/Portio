@@ -9,10 +9,10 @@
 
 ## Phase 2: Redesigned "Today" View (Interactive Cards)
 
-- [ ] Task: Create `InteractiveMacroCard` component with "Liquid Glass" styling and haptic feedback integration
-- [ ] Task: Implement expansion logic for cards to reveal a detailed breakdown (e.g., contributing food items)
-- [ ] Task: Integrate `InteractiveMacroCard` into the "Today" tab of `StatisticsView`
-- [ ] Task: Conductor - User Manual Verification 'Redesigned Today View' (Protocol in workflow.md)
+- [x] Task: Create `InteractiveMacroCard` component with "Liquid Glass" styling and haptic feedback integration 6443b70
+- [x] Task: Implement expansion logic for cards to reveal a detailed breakdown (e.g., contributing food items) 6443b70
+- [x] Task: Integrate `InteractiveMacroCard` into the "Today" tab of `StatisticsView` ad1b188
+- [~] Task: Conductor - User Manual Verification 'Redesigned Today View' (Protocol in workflow.md)
 
 ## Phase 3: "All Time" Trends View (SwiftCharts)
 
