@@ -15,7 +15,6 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let currentDate = Date()
         
-        // We use Task to bridge the synchronous getTimeline to the @MainActor SharedDataManager
         Task { @MainActor in
             let stats = SharedDataManager.shared.fetchTodaysStats()
             
@@ -50,58 +49,28 @@ struct SimpleEntry: TimelineEntry {
     let fatGoal: Double
 }
 
-struct CalorieProgressView: View {
+struct CalorieRingView: View {
     let calories: Double
     let goal: Double
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Calories")
-                .font(.caption.bold())
-                .foregroundStyle(.orange)
+        ZStack {
+            Circle()
+                .stroke(Color.orange.opacity(0.2), lineWidth: 8)
             
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Circle()
+                .trim(from: 0, to: min(calories / max(goal, 1), 1.0))
+                .stroke(Color.orange, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            
+            VStack(spacing: -2) {
                 Text("\(Int(calories))")
-                    .font(.title2.bold())
-                Text("/ \(Int(goal))")
-                    .font(.caption)
+                    .font(.system(.title3, design: .rounded).bold())
+                Text("kcal")
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            
-            ProgressView(value: min(calories / max(goal, 1), 1.0))
-                .tint(.orange)
         }
-    }
-}
-
-struct QuickActionButtonsView: View {
-    var body: some View {
-        HStack(spacing: 12) {
-            Link(destination: URL(string: "calcal://add")!) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-            }
-            
-            Link(destination: URL(string: "calcal://camera")!) {
-                Image(systemName: "camera.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-            }
-        }
-    }
-}
-
-struct MacroBreakdownView: View {
-    let entry: SimpleEntry
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MacroMiniView(label: "P", value: entry.protein, goal: entry.proteinGoal, color: .red)
-            MacroMiniView(label: "C", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
-            MacroMiniView(label: "F", value: entry.fat, goal: entry.fatGoal, color: .green)
-        }
-        .frame(width: 80)
     }
 }
 
@@ -124,7 +93,6 @@ struct MacroMiniView: View {
             
             ProgressView(value: min(value / max(goal, 1), 1.0))
                 .tint(color)
-                .scaleEffect(x: 1, y: 0.5, anchor: .center)
         }
     }
 }
@@ -134,7 +102,7 @@ struct CalCalWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        Group {
             if family == .systemSmall {
                 SmallWidgetView(entry: entry)
             } else {
@@ -149,9 +117,24 @@ struct SmallWidgetView: View {
     var entry: SimpleEntry
     
     var body: some View {
-        VStack(alignment: .leading) {
-            CalorieProgressView(calories: entry.calories, goal: entry.calorieGoal)
+        VStack {
+            HStack {
+                Text("CalCal")
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+                Spacer()
+            }
+            
             Spacer()
+            
+            CalorieRingView(calories: entry.calories, goal: entry.calorieGoal)
+                .padding(4)
+            
+            Spacer()
+            
+            Text("/ \(Int(entry.calorieGoal))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -166,21 +149,43 @@ struct MediumWidgetView: View {
                     .font(.caption.bold())
                     .foregroundStyle(.orange)
                 
-                Text("\(Int(entry.calories))")
-                    .font(.system(size: 34, weight: .bold))
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(Int(entry.calories))")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                    Text("kcal")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
                 
-                Text("kcal of \(Int(entry.calorieGoal))")
-                    .font(.caption)
+                Text("of \(Int(entry.calorieGoal)) goal")
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 
                 Spacer()
                 
-                QuickActionButtonsView()
+                HStack(spacing: 12) {
+                    Link(destination: URL(string: "calcal://add")!) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.orange)
+                    }
+                    
+                    Link(destination: URL(string: "calcal://camera")!) {
+                        Image(systemName: "camera.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.orange)
+                    }
+                }
             }
             
             Spacer()
             
-            MacroBreakdownView(entry: entry)
+            VStack(alignment: .leading, spacing: 8) {
+                MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .red)
+                MacroMiniView(label: "Carbs", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
+                MacroMiniView(label: "Fat", value: entry.fat, goal: entry.fatGoal, color: .green)
+            }
+            .frame(width: 90)
         }
     }
 }
