@@ -8,7 +8,7 @@
 
 ## Phase 2: Service Refactoring
 
-- [ ] Task: Refactor `NutritionService.swift` to use OpenRouter for text-based queries
+- [x] Task: Refactor `NutritionService.swift` to use OpenRouter for text-based queries 466050c
 - [ ] Task: Update `NutritionService.swift` to handle image-based queries via OpenRouter
 - [ ] Task: Implement error handling and logging for OpenRouter responses
 - [ ] Task: Conductor - User Manual Verification 'Service Refactoring' (Protocol in workflow.md)
