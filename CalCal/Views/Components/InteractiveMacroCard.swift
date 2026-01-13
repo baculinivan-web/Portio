@@ -62,12 +62,46 @@ struct InteractiveMacroCard: View {
                     Divider()
                         .background(color.opacity(0.3))
                     
-                    HStack {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundColor(color)
-                        Text("Detailed breakdown coming soon")
+                    if filteredItems.isEmpty {
+                        Text("No items logged yet")
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundColor(.secondary)
+                            .padding(.vertical, 8)
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                ForEach(filteredItems, id: \.name) { item in
+                                    HStack {
+                                        Text(item.name)
+                                            .font(.system(.subheadline, design: .rounded))
+                                            .foregroundColor(.primary)
+                                        
+                                        Spacer()
+                                        
+                                        Text("\(Int(item.value))\(unit)")
+                                            .font(.system(.subheadline, design: .rounded))
+                                            .fontWeight(.bold)
+                                            .foregroundColor(color)
+                                    }
+                                    .padding(.horizontal, 4)
+                                }
+                            }
+                            .padding(.vertical, 12)
+                        }
+                        .frame(maxHeight: 150)
+                        .scrollEdgeEffectStyle(.soft, for: .vertical)
+                        .mask(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: .black, location: 0.1),
+                                    .init(color: .black, location: 0.9),
+                                    .init(color: .clear, location: 1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
                     }
                     
                     // Refined progress bar
