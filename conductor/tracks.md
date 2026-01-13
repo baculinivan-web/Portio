@@ -1,4 +1,8 @@
 # Project Tracks
 
 This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
-\n---\n\n## [x] Track: Pin Period Selector to Header\n*Link: [./conductor/tracks/pin_period_selector_20260113/](./conductor/tracks/pin_period_selector_20260113/)*
+
+---
+
+## [ ] Track: Interactive Keyboard Dismissal on Scroll
+*Link: [./conductor/tracks/keyboard_swipe_hide_20260113/](./conductor/tracks/keyboard_swipe_hide_20260113/)*
