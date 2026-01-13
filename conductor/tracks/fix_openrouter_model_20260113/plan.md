@@ -8,7 +8,7 @@
 
 ## Phase 2: Service Integration
 
-- [ ] Task: Update `OpenRouterConstants` in `OpenRouterModels.swift` to remove the hardcoded model string
+- [x] Task: Update `OpenRouterConstants` in `OpenRouterModels.swift` to remove the hardcoded model string b0f6bce
 - [ ] Task: Refactor `NutritionService.swift` to retrieve the model name from `APIKeyManager`
 - [ ] Task: Conductor - User Manual Verification 'Service Integration' (Protocol in workflow.md)
 
