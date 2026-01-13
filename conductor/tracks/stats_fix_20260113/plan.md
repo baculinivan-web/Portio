@@ -7,11 +7,11 @@
 - [x] Task: Verify that duplicate names are handled correctly in the UI e7d2a82
 - [x] Task: Conductor - User Manual Verification 'Breakdown Identification' (Protocol in workflow.md) e7d2a82
 
-## Phase 2: Applying Global Scroll Effects
+## Phase 2: Applying Global Scroll Effects [checkpoint: c68a8c4]
 
-- [ ] Task: Refactor `TodayView.swift` to apply the soft scroll edge effect to the main ScrollView
-- [ ] Task: Refactor `TrendsView.swift` to apply the soft scroll edge effect to the main ScrollView
-- [ ] Task: Conductor - User Manual Verification 'Global Scroll Effects' (Protocol in workflow.md)
+- [x] Task: Refactor `TodayView.swift` to apply the soft scroll edge effect to the main ScrollView c68a8c4
+- [x] Task: Refactor `TrendsView.swift` to apply the soft scroll edge effect to the main ScrollView c68a8c4
+- [x] Task: Conductor - User Manual Verification 'Global Scroll Effects' (Protocol in workflow.md) c68a8c4
 
 ## Phase 3: Final Verification and documentation update
 
