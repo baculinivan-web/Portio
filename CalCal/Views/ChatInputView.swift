@@ -21,7 +21,9 @@ struct ChatInputView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                 
                                 Button {
-                                    onRemoveImage(index)
+                                    withAnimation(.spring()) {
+                                        onRemoveImage(index)
+                                    }
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.white)
