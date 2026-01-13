@@ -16,7 +16,7 @@
 
 ## Phase 3: Integration and Polish
 
-- [ ] Task: Update `TodayView` to pass the `items` query result to each `InteractiveMacroCard`
-- [ ] Task: Refine expansion animations to account for the new list content
-- [ ] Task: Verify end-to-end data flow and visual fidelity
-- [ ] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md)
+- [x] Task: Update `TodayView` to pass the `items` query result to each `InteractiveMacroCard` ad1b188
+- [x] Task: Refine expansion animations to account for the new list content 6443b70
+- [x] Task: Verify end-to-end data flow and visual fidelity 6443b70
+- [~] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md)

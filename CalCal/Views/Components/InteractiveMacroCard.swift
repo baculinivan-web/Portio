@@ -137,7 +137,7 @@ struct InteractiveMacroCard: View {
         .onTapGesture {
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
                 isExpanded.toggle()
             }
         }
