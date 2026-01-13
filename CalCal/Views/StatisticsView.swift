@@ -3,6 +3,7 @@ import SwiftData
 
 struct StatisticsView: View {
     @State private var selectedTab: StatsTab = .today
+    @State private var selectedTimeframe: TimeFrame = .week
 
     var body: some View {
         ZStack {
@@ -15,12 +16,24 @@ struct StatisticsView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                Picker("View Mode", selection: $selectedTab) {
-                    ForEach(StatsTab.allCases) { tab in
-                        Text(tab.rawValue).tag(tab)
+                VStack(spacing: 8) {
+                    Picker("View Mode", selection: $selectedTab) {
+                        ForEach(StatsTab.allCases) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    if selectedTab == .allTime {
+                        Picker("Timeframe", selection: $selectedTimeframe) {
+                            ForEach(TimeFrame.allCases) { timeframe in
+                                Text(timeframe.rawValue).tag(timeframe)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
-                .pickerStyle(.segmented)
                 .padding()
                 .onChange(of: selectedTab) { _, _ in
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
@@ -35,7 +48,7 @@ struct StatisticsView: View {
                             TodayView()
                                 .transition(.move(edge: .leading).combined(with: .opacity))
                         case .allTime:
-                            TrendsView()
+                            TrendsView(selectedTimeframe: selectedTimeframe)
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
