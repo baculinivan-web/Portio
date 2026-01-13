@@ -15,13 +15,13 @@
 - [x] Task: Implement Permission handling for Camera and Photo Library 14ee8a4
 - [x] Task: Conductor - User Manual Verification 'Custom Camera Interface' (Protocol in workflow.md) f1696a8
 
-## Phase 3: Capture, Preview, and Attachment
+## Phase 3: Capture, Preview, and Attachment [checkpoint: 671ee96]
 
 - [x] Task: Implement Photo Capture logic and transition to a `PhotoPreviewView` f18c0ae
 - [x] Task: Implement "Attach" and "Retake" logic in `PhotoPreviewView` fb99a51
 - [x] Task: Update `CalorieTrackerViewModel` (or a new shared state) to manage pending attachments fb99a51
 - [x] Task: Update `ChatInputView` to display thumbnails of attached photos a5946fa
-- [x] Task: Conductor - User Manual Verification 'Capture, Preview, and Attachment' (Protocol in workflow.md) a5946fa
+- [x] Task: Conductor - User Manual Verification 'Capture, Preview, and Attachment' (Protocol in workflow.md) 671ee96
 
 ## Phase 4: Integration and Sending
 
