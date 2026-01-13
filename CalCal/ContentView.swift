@@ -57,6 +57,7 @@ struct ContentView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollDismissesKeyboard(.interactively)
             .navigationDestination(for: FoodItem.self) { item in
                 FoodItemDetailView(item: item)
             }
