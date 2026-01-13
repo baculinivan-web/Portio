@@ -8,8 +8,9 @@ class CalorieTrackerViewModel: ObservableObject {
 
     private let nutritionService = NutritionService()
 
-    func addItem(query: String, context: ModelContext) {
+    func addItem(query: String, imageDatas: [Data] = [], context: ModelContext) {
         let placeholderItem = FoodItem(name: query)
+        placeholderItem.imageDatas = imageDatas
         
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             context.insert(placeholderItem)
@@ -17,7 +18,7 @@ class CalorieTrackerViewModel: ObservableObject {
 
         Task {
             do {
-                let nutritionDataArray = try await nutritionService.fetchNutrition(for: query)
+                let nutritionDataArray = try await nutritionService.fetchNutrition(for: query, images: imageDatas)
                 
                 guard let firstItemData = nutritionDataArray.first else {
                     context.delete(placeholderItem)
