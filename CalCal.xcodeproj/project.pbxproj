@@ -74,20 +74,6 @@
 			);
 			target = 7C2CBB502E9BC212006BCA61 /* CalCal */;
 		};
-		7C200E002F16E864004AEE4C /* Exceptions for "CalCal" folder in "CalCalWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				CalCalApp.swift,
-				ContentView.swift,
-				Assets.xcassets,
-				Gemini-Info.plist,
-				Info.plist,
-				Services,
-				ViewModels,
-				Views,
-			);
-			target = 7C200DCD2F16E860004AEE4C /* CalCalWidgetExtension */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -103,7 +89,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				7CBB7B412E9EFE98007B903D /* Exceptions for "CalCal" folder in "CalCal" target */,
-				7C200E002F16E864004AEE4C /* Exceptions for "CalCal" folder in "CalCalWidgetExtension" target */,
 			);
 			path = CalCal;
 			sourceTree = "<group>";
@@ -202,7 +187,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				7C2CBB532E9BC212006BCA61 /* CalCal */,
 				7C200DD42F16E861004AEE4C /* CalCalWidget */,
 			);
 			name = CalCalWidgetExtension;
