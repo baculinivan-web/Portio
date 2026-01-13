@@ -6,6 +6,7 @@ enum NutritionError: Error, LocalizedError {
     case badRequest
     case badResponse
     case unparsableJSON(String)
+    case apiError(String)
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +18,8 @@ enum NutritionError: Error, LocalizedError {
             return "The server returned an invalid response."
         case .unparsableJSON(let details):
             return "Could not parse the nutrition data from the AI. Details: \(details)"
+        case .apiError(let message):
+            return "OpenRouter API Error: \(message)"
         }
     }
 }
@@ -92,6 +95,11 @@ class NutritionService {
                  print("--- NETWORKING ERROR (fetchNutrition) ---")
                  print("Status Code: \(httpResponse.statusCode)")
                  print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
+                 
+                 if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
+                    throw NutritionError.apiError(errorResponse.error.message)
+                 }
+
                  if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                     throw NutritionError.invalidAPIKey
                  }
@@ -160,6 +168,11 @@ class NutritionService {
                 print("--- NETWORKING ERROR (AIGoals) ---")
                 print("Status Code: \(httpResponse.statusCode)")
                 print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
+                
+                if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
+                    throw NutritionError.apiError(errorResponse.error.message)
+                }
+
                 if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                     throw NutritionError.invalidAPIKey
                 }

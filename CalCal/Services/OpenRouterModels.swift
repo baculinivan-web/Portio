@@ -60,3 +60,12 @@ struct OpenRouterResponse: Decodable {
         let content: String?
     }
 }
+
+struct OpenRouterErrorResponse: Decodable {
+    let error: OpenRouterError
+    
+    struct OpenRouterError: Decodable {
+        let message: String
+        let code: Int?
+    }
+}
