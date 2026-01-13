@@ -16,5 +16,5 @@
 ## Phase 3: Integration and Verification
 
 - [x] Task: Update `CalorieTrackerViewModel` to work with the refactored service c8857c3
-- [ ] Task: Run manual verification tests for food identification (text and image)
+- [~] Task: Run manual verification tests for food identification (text and image)
 - [ ] Task: Conductor - User Manual Verification 'Integration and Verification' (Protocol in workflow.md)
