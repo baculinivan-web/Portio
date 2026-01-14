@@ -343,6 +343,8 @@ struct MediumWidgetView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(Int(entry.calories))")
                         .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
                     Text("kcal")
                         .font(.system(.subheadline, design: .rounded).bold())
                         .foregroundStyle(.secondary)
