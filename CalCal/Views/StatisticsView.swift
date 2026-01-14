@@ -21,13 +21,15 @@ struct StatisticsView: View {
                             .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
                     }
                 } header: {
-                    VStack(spacing: 8) {
+                    VStack(spacing: 12) {
                         Picker("View Mode", selection: $selectedTab) {
                             ForEach(StatsTab.allCases) { tab in
                                 Text(tab.rawValue).tag(tab)
                             }
                         }
                         .pickerStyle(.segmented)
+                        .padding(4)
+                        .background(.ultraThinMaterial, in: Capsule())
                         
                         if selectedTab == .allTime {
                             Picker("Timeframe", selection: $selectedTimeframe) {
@@ -36,6 +38,8 @@ struct StatisticsView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+                            .padding(4)
+                            .background(.ultraThinMaterial, in: Capsule())
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
