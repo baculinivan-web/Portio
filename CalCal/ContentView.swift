@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var showGoalSummary = false
     @State private var isShowingCamera = false
     @State private var attachedImages: [UIImage] = []
+    @State private var isShowingWarningAnalysis = false
     @FocusState private var isInputFocused: Bool
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
@@ -28,6 +29,14 @@ struct ContentView: View {
     private var totalProtein: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.protein } }
     private var totalCarbs: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.carbs } }
     private var totalFat: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.fat } }
+    
+    private var triggeredNutrients: [WarningNutrient] {
+        var triggered: [WarningNutrient] = []
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCalories, goal: calorieGoal) { triggered.append(.calories) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCarbs, goal: carbsGoal) { triggered.append(.carbs) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalFat, goal: fatGoal) { triggered.append(.fat) }
+        return triggered
+    }
 
     var body: some View {
         NavigationStack {
@@ -46,7 +55,17 @@ struct ContentView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    
+                    if !triggeredNutrients.isEmpty {
+                        NutrientWarningCard(triggeredNutrients: triggeredNutrients) {
+                            isShowingWarningAnalysis = true
+                        }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
+                .listRowSeparator(.hidden)
                 
                 Section(header: Text("Today's Entries")) {
                     ForEach(todaysItems) { item in
@@ -121,6 +140,14 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showGoalSummary) {
                 GoalSummaryView()
+            }
+            .sheet(isPresented: $isShowingWarningAnalysis) {
+                NutrientWarningDetailView(
+                    triggeredNutrients: triggeredNutrients,
+                    todaysItems: todaysItems,
+                    totals: (totalCalories, totalCarbs, totalFat),
+                    goals: (calorieGoal, carbsGoal, fatGoal)
+                )
             }
         }
     }
