@@ -7,6 +7,9 @@ struct StatisticsView: View {
 
     var body: some View {
         ScrollView {
+            // Tiny clear view to help trigger large title behavior
+            Color.clear.frame(height: 1)
+            
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                 Section {
                     switch selectedTab {
@@ -37,7 +40,6 @@ struct StatisticsView: View {
                         }
                     }
                     .padding()
-                    .background(.ultraThinMaterial)
                     .onChange(of: selectedTab) { _, _ in
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                             // This triggers the transition
@@ -49,8 +51,6 @@ struct StatisticsView: View {
         .scrollEdgeEffectStyle(.soft, for: .vertical)
         .navigationTitle("Your Statistics")
         .navigationBarTitleDisplayMode(.large)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
 }
 
