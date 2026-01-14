@@ -7,10 +7,10 @@
 - [x] Task: Conductor - User Manual Verification 'Shared Components' (Protocol in workflow.md)
 
 ## Phase 2: Widget Logic & Data Mapping
-- [ ] Task: Update `SimpleEntry` if necessary to support specific nutrient focus
-- [ ] Task: Implement `NutrientProvider` or extend existing `Provider` to handle specific nutrient data
-- [ ] Task: Implement "Amount Left" calculation logic including "Overdo" state (red text)
-- [ ] Task: Conductor - User Manual Verification 'Data Mapping' (Protocol in workflow.md)
+- [x] Task: Update `SimpleEntry` if necessary to support specific nutrient focus 4e9e50c
+- [x] Task: Implement `NutrientProvider` or extend existing `Provider` to handle specific nutrient data 379103d
+- [x] Task: Implement "Amount Left" calculation logic including "Overdo" state (red text) 379103d
+- [x] Task: Conductor - User Manual Verification 'Data Mapping' (Protocol in workflow.md)
 
 ## Phase 3: Widget Configurations
 - [ ] Task: Create `CalorieWidget`, `ProteinWidget`, `CarbsWidget`, and `FatWidget` structs
