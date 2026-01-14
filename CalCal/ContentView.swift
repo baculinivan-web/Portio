@@ -158,6 +158,7 @@ struct ContentView: View {
                 let itemToDelete = todaysItems[index]
                 modelContext.delete(itemToDelete)
             }
+            try? modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
     }

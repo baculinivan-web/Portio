@@ -15,6 +15,7 @@ class CalorieTrackerViewModel: ObservableObject {
         
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             context.insert(placeholderItem)
+            try? context.save()
         }
         WidgetCenter.shared.reloadAllTimelines()
 
@@ -64,6 +65,7 @@ class CalorieTrackerViewModel: ObservableObject {
                             context.insert(newItem)
                         }
                         
+                        try? context.save()
                         WidgetCenter.shared.reloadAllTimelines()
                     }
                 }

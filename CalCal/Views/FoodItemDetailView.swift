@@ -52,18 +52,23 @@ struct FoodItemDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item.weightGrams) { _, _ in
             item.recalculateNutrients()
+            try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.calories) { _, _ in
+            try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.protein) { _, _ in
+            try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.carbs) { _, _ in
+            try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.fat) { _, _ in
+            try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: selectedPhotos) { _, newItems in
