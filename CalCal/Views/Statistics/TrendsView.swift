@@ -11,11 +11,6 @@ struct TrendsView: View {
     var body: some View {
         VStack(spacing: 24) {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Performance Overview")
-                    .font(.system(.title3, design: .rounded))
-                    .fontWeight(.bold)
-                    .padding(.horizontal)
-                
                 // Summaries
                 VStack(spacing: 12) {
                     TrendComparisonView(currentData: stats, metric: \.calories, title: "Calories")

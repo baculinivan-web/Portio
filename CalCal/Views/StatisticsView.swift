@@ -33,35 +33,23 @@ struct StatisticsView: View {
             }
             
             ScrollView {
-                VStack {
+                VStack(spacing: 0) {
                     switch selectedTab {
                     case .today:
                         TodayView()
-                            .transition(.move(edge: .leading).combined(with: .opacity))
+                            .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
                     case .allTime:
                         TrendsView(selectedTimeframe: selectedTimeframe)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
                     }
                 }
-                .padding(.top)
             }
             .scrollEdgeEffectStyle(.soft, for: .vertical)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.05),
-                        .init(color: .black, location: 0.95),
-                        .init(color: .clear, location: 1)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
         }
         .navigationTitle("Your Statistics")
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
 }
 
