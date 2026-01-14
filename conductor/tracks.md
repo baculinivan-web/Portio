@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: color code protein to red
+## [x] Track: color code protein to red
 *Link: [./conductor/tracks/protein_color_sync_20260113/](./conductor/tracks/protein_color_sync_20260113/)*
