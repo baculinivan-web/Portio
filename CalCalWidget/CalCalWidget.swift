@@ -66,10 +66,13 @@ struct CalorieRingView: View {
             VStack(spacing: -2) {
                 Text("\(Int(calories))")
                     .font(.system(.title3, design: .rounded).bold())
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                 Text("kcal")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+            .padding(8) // Inner padding to prevent touching the ring
         }
     }
 }
@@ -160,16 +163,16 @@ struct SmallWidgetView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("CalCal")
+                Text("Today")
                     .font(.system(.caption, design: .rounded).bold())
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.secondary)
                 Spacer()
             }
             
             Spacer()
             
             CalorieRingView(calories: entry.calories, goal: entry.calorieGoal)
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
             
             Spacer()
             
