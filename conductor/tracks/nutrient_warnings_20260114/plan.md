@@ -13,6 +13,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: UI Components' (Protocol in workflow.md)
 
 ## Phase 3: Final Integration & Polish
-- [ ] Task: Ensure the warning card correctly responds to real-time data changes and time-of-day transitions.
-- [ ] Task: Refine animations for the card's appearance/disappearance.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Final Integration & Polish' (Protocol in workflow.md)
+- [x] Task: Ensure the warning card correctly responds to real-time data changes and time-of-day transitions. 5150952
+- [x] Task: Refine animations for the card's appearance/disappearance. 5150952
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Final Integration & Polish' (Protocol in workflow.md)
