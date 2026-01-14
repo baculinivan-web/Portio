@@ -3,7 +3,7 @@
 ## Phase 1: Implementation of Dynamic Scaling
 - [x] Task: Apply dynamic scaling to the calorie count in `MediumWidgetView` in `CalCalWidget/CalCalWidget.swift`. 4734a47
     - Add `.minimumScaleFactor(0.6)` and `.lineLimit(1)` to the calorie value `Text`.
-- [ ] Task: Group the calorie value and "kcal" unit to ensure they scale together or handle them consistently to prevent the unit from being pushed out.
+- [x] Task: Group the calorie value and "kcal" unit to ensure they scale together or handle them consistently to prevent the unit from being pushed out. 4c76d92
 - [ ] Task: Conductor - User Manual Verification 'Implementation of Dynamic Scaling' (Protocol in workflow.md)
 
 ## Phase 2: Preview and Layout Verification
