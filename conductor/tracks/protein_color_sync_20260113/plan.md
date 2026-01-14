@@ -7,10 +7,10 @@
 
 
 ## Phase 2: App UI Updates
-- [ ] Task: Update protein color in `TotalsCardView.swift` and `NutrientView.swift`
-- [ ] Task: Update protein color in `MacroDistributionChart.swift`
-- [ ] Task: Update protein color in `TrendComparisonView.swift` or other stats views
-- [ ] Task: Conductor - User Manual Verification 'App UI Updates' (Protocol in workflow.md)
+- [x] Task: Update protein color in `TotalsCardView.swift` and `NutrientView.swift` 5f31063
+- [x] Task: Update protein color in `MacroDistributionChart.swift` 5f31063
+- [x] Task: Update protein color in `TrendComparisonView.swift` or other stats views 5f31063
+- [x] Task: Conductor - User Manual Verification 'App UI Updates' (Protocol in workflow.md) 5f31063
 
 ## Phase 3: Widget UI Updates
 - [ ] Task: Update protein color in `MediumWidgetView` (CalCalWidget.swift)
