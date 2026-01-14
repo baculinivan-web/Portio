@@ -13,3 +13,4 @@
 
 ## AI & Services
 - **AI Integration:** OpenRouter API (for access to various LLMs including Gemini, Claude, etc.)
+- **Web Search Integration:** Serper.dev API (for real-time nutritional grounding via tool calling)
