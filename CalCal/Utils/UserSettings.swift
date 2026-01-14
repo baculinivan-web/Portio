@@ -5,23 +5,28 @@ struct UserSettings {
     static let shared = UserDefaults(suiteName: "group.com.ivan.CalCal") ?? .standard
     
     static var calorieGoal: Double {
-        return shared.double(forKey: "calorieGoal") == 0 ? 2200 : shared.double(forKey: "calorieGoal")
+        get { shared.double(forKey: "calorieGoal") == 0 ? 2200 : shared.double(forKey: "calorieGoal") }
+        set { shared.set(newValue, forKey: "calorieGoal") }
     }
     
     static var proteinGoal: Double {
-        return shared.double(forKey: "proteinGoal") == 0 ? 120 : shared.double(forKey: "proteinGoal")
+        get { shared.double(forKey: "proteinGoal") == 0 ? 120 : shared.double(forKey: "proteinGoal") }
+        set { shared.set(newValue, forKey: "proteinGoal") }
     }
     
     static var carbsGoal: Double {
-        return shared.double(forKey: "carbsGoal") == 0 ? 250 : shared.double(forKey: "carbsGoal")
+        get { shared.double(forKey: "carbsGoal") == 0 ? 250 : shared.double(forKey: "carbsGoal") }
+        set { shared.set(newValue, forKey: "carbsGoal") }
     }
     
     static var fatGoal: Double {
-        return shared.double(forKey: "fatGoal") == 0 ? 70 : shared.double(forKey: "fatGoal")
+        get { shared.double(forKey: "fatGoal") == 0 ? 70 : shared.double(forKey: "fatGoal") }
+        set { shared.set(newValue, forKey: "fatGoal") }
     }
     
     static var goalExplanation: String {
-        return shared.string(forKey: "goalExplanation") ?? ""
+        get { shared.string(forKey: "goalExplanation") ?? "" }
+        set { shared.set(newValue, forKey: "goalExplanation") }
     }
     
     static var hasCompletedOnboarding: Bool {
