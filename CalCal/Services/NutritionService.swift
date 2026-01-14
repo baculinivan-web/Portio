@@ -104,16 +104,16 @@ class NutritionService {
                 function: .init(
                     name: "google_search",
                     description: "Search Google for nutritional information of specific food items, brands, or restaurant menu items.",
-                    parameters: .object([
+                    parameters: [
                         "type": .string("object"),
                         "properties": .object([
                             "query": .object([
                                 "type": .string("string"),
-                                "description": "The search query, e.g., 'McDonalds Big Mac nutrition facts' or 'Chobani Greek Yogurt calories'."
+                                "description": .string("The search query, e.g., 'McDonalds Big Mac nutrition facts' or 'Chobani Greek Yogurt calories'.")
                             ])
                         ]),
                         "required": .array([.string("query")])
-                    ])
+                    ]
                 )
             )
         ]
@@ -176,9 +176,9 @@ class NutritionService {
                         
                         messages.append(.init(
                             role: "tool",
+                            content: [.text(searchResult)],
                             toolCallId: toolCall.id,
-                            name: "google_search",
-                            content: [.text(searchResult)]
+                            name: "google_search"
                         ))
                     }
                 }
