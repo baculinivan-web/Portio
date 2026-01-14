@@ -2,7 +2,7 @@
 
 ## Phase 1: Background & Container Cleanup
 - [x] Task: Remove custom background gradient from `StatisticsView.swift` 2919431
-- [ ] Task: Update `StatisticsView.swift` scroll view and masking to work with standard background
+- [x] Task: Update `StatisticsView.swift` scroll view and masking to work with standard background 8c48de6f
 - [ ] Task: Conductor - User Manual Verification 'Background & Container Cleanup' (Protocol in workflow.md)
 
 ## Phase 2: Card & Component Restyling
