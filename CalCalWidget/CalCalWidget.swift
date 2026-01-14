@@ -391,6 +391,64 @@ struct CalCalWidget: Widget {
     }
 }
 
+// MARK: - Individual Nutrient Widgets
+
+struct CalorieWidget: Widget {
+    let kind: String = "CalorieWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
+            NutrientBaseView(type: .calories, value: entry.calories, goal: entry.calorieGoal)
+                .containerBackground(.background, for: .widget)
+        }
+        .configurationDisplayName("Calories")
+        .description("Track your daily calorie intake.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct ProteinWidget: Widget {
+    let kind: String = "ProteinWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
+            NutrientBaseView(type: .protein, value: entry.protein, goal: entry.proteinGoal)
+                .containerBackground(.background, for: .widget)
+        }
+        .configurationDisplayName("Protein")
+        .description("Track your daily protein intake.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct CarbsWidget: Widget {
+    let kind: String = "CarbsWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
+            NutrientBaseView(type: .carbs, value: entry.carbs, goal: entry.carbsGoal)
+                .containerBackground(.background, for: .widget)
+        }
+        .configurationDisplayName("Carbs")
+        .description("Track your daily carbs intake.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct FatWidget: Widget {
+    let kind: String = "FatWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
+            NutrientBaseView(type: .fats, value: entry.fat, goal: entry.fatGoal)
+                .containerBackground(.background, for: .widget)
+        }
+        .configurationDisplayName("Fats")
+        .description("Track your daily fats intake.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
 struct CalCalWidget_Previews: PreviewProvider {
     static var previews: some View {
         CalCalWidgetEntryView(entry: SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70))
