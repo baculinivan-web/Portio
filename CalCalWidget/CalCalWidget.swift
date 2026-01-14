@@ -74,6 +74,30 @@ struct CalorieRingView: View {
     }
 }
 
+struct QuickActionButtonsView: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Link(destination: URL(string: "calcal://add")!) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Color.orange.opacity(0.8))
+                    .clipShape(Circle())
+            }
+            
+            Link(destination: URL(string: "calcal://camera")!) {
+                Image(systemName: "camera.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Color.orange.opacity(0.8))
+                    .clipShape(Circle())
+            }
+        }
+    }
+}
+
 struct MacroMiniView: View {
     let label: String
     let value: Double
