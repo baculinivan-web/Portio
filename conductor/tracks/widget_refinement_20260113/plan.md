@@ -4,7 +4,7 @@
 - [x] Task: Update calorie count typography to large, bold, and rounded (`design: .rounded`) 6882aaa
 - [x] Task: Refine "kcal" and goal label positioning for tighter integration 6882aaa
 - [x] Task: Improve overall widget margins and spacing for a more "airy" feel 6882aaa
-- [~] Task: Conductor - User Manual Verification 'Typography and Layout' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Typography and Layout' (Protocol in workflow.md)
 
 ## Phase 2: Macro Progress Bar Redesign
 - [ ] Task: Redesign `MacroMiniView` with thicker, rounded progress bars
