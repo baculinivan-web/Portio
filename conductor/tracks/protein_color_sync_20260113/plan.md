@@ -18,6 +18,6 @@
 - [x] Task: Conductor - User Manual Verification 'Widget UI Updates' (Protocol in workflow.md) 756ff37
 
 ## Phase 4: Final Verification
-- [ ] Task: Final visual sweep of the app and all widget sizes
-- [ ] Task: Ensure no violet/purple macro indicators remain
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [x] Task: Final visual sweep of the app and all widget sizes 29ab0d7
+- [x] Task: Ensure no violet/purple macro indicators remain 29ab0d7
+- [x] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md) 29ab0d7
