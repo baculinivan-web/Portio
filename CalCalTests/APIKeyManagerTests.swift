@@ -8,4 +8,9 @@ struct APIKeyManagerTests {
         // We don't assert the value as it depends on the environment/file
         // We just verify the API exists and doesn't crash
     }
+    
+    @Test func testGetSerperAPIKey() {
+        let key = APIKeyManager.getSerperAPIKey()
+        // We just verify the API exists and doesn't crash
+    }
 }

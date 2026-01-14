@@ -9,6 +9,10 @@ enum APIKeyManager {
         return get(key: "OPENROUTER_API_KEY")
     }
     
+    static func getSerperAPIKey() -> String? {
+        return get(key: "SERPER_API_KEY", placeholder: "YOUR_SERPER_API_KEY_HERE")
+    }
+    
     static func getModelName() -> String? {
         // Default to nil if not set or placeholder
         return get(key: "MODEL_NAME", placeholder: "YOUR_MODEL_NAME_HERE")
