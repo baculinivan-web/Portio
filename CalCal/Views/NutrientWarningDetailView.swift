@@ -54,10 +54,10 @@ struct NutrientWarningDetailView: View {
                             
                             // Top Contributors
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Top Contributors")
+                                Text("Highest Impact Items")
                                     .font(.system(.subheadline, design: .rounded).bold())
                                 
-                                let contributors = NutrientWarningManager.getTopContributors(for: nutrient, in: todaysItems)
+                                let contributors = NutrientWarningManager.getTopContributors(for: nutrient, in: todaysItems, count: 3)
                                 if contributors.isEmpty {
                                     Text("No items recorded yet.")
                                         .font(.caption)
