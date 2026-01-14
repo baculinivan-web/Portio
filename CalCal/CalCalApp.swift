@@ -15,6 +15,7 @@ struct CalCalApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .defaultAppStorage(UserSettings.shared)
         }
         .modelContainer(sharedModelContainer)
     }
