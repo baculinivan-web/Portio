@@ -1,6 +1,6 @@
 # Plan: individual_nutrient_widgets
 
-## Phase 1: Shared UI Components
+## Phase 1: Shared UI Components (Checkpoint: 6fa3f6d)
 - [x] Task: Implement `NutrientGaugeView` (bottom-right stylized gauge with SF Symbol) 4e9e50c
 - [x] Task: Implement `NutrientBaseView` (standard layout for Header, Title, and Remaining text) 4e9e50c
 - [x] Task: Create a `NutrientTheme` model to manage colors and symbols for each type 4e9e50c
