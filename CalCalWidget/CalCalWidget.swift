@@ -2,6 +2,41 @@ import WidgetKit
 import SwiftUI
 import SwiftData
 
+struct NutrientProvider: TimelineProvider {
+    func placeholder(in context: Context) -> SimpleEntry {
+        SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+        let entry = SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70)
+        completion(entry)
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
+        let currentDate = Date()
+        
+        Task { @MainActor in
+            let stats = SharedDataManager.shared.fetchTodaysStats()
+            
+            let entry = SimpleEntry(
+                date: currentDate,
+                calories: stats.calories,
+                calorieGoal: UserSettings.calorieGoal,
+                protein: stats.protein,
+                proteinGoal: UserSettings.proteinGoal,
+                carbs: stats.carbs,
+                carbsGoal: UserSettings.carbsGoal,
+                fat: stats.fat,
+                fatGoal: UserSettings.fatGoal
+            )
+            
+            let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
+            let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
+            completion(timeline)
+        }
+    }
+}
+
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), calories: 1200, calorieGoal: 2000, protein: 80, proteinGoal: 150, carbs: 150, carbsGoal: 250, fat: 45, fatGoal: 70)
