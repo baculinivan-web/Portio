@@ -2,7 +2,7 @@
 
 ## Phase 1: Infrastructure and Configuration
 - [x] Task: Add `SERPER_API_KEY` placeholder to `Gemini-Info.plist` and update `APIKeyManager` 525fbe0
-- [ ] Task: Update `OpenRouterModels.swift` to support tool calling (tools, tool_calls, tool_outputs)
+- [x] Task: Update `OpenRouterModels.swift` to support tool calling (tools, tool_calls, tool_outputs) 468f29e
 - [ ] Task: Conductor - User Manual Verification 'Infrastructure and Configuration' (Protocol in workflow.md)
 
 ## Phase 2: Serper.dev Service Implementation
