@@ -33,14 +33,7 @@ struct NutrientWarningCard: View {
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.secondary.opacity(0.5))
         }
-        .padding(12)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .contentShape(Rectangle())
         .onTapGesture {
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()

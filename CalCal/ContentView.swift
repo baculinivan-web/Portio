@@ -46,34 +46,33 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    NavigationLink(value: "stats") {
-                        TotalsCardView(
-                            calories: totalCalories,
-                            protein: totalProtein,
-                            carbs: totalCarbs,
-                            fat: totalFat,
-                            calorieGoal: calorieGoal,
-                            proteinGoal: proteinGoal,
-                            carbsGoal: carbsGoal,
-                            fatGoal: fatGoal
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-                .listRowSeparator(.hidden)
-                
-                if !triggeredNutrients.isEmpty {
-                    Section {
-                        NutrientWarningCard(triggeredNutrients: triggeredNutrients) {
-                            isShowingWarningAnalysis = true
+                    VStack(spacing: 16) {
+                        NavigationLink(value: "stats") {
+                            TotalsCardView(
+                                calories: totalCalories,
+                                protein: totalProtein,
+                                carbs: totalCarbs,
+                                fat: totalFat,
+                                calorieGoal: calorieGoal,
+                                proteinGoal: proteinGoal,
+                                carbsGoal: carbsGoal,
+                                fatGoal: fatGoal
+                            )
                         }
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .opacity.combined(with: .scale(scale: 0.95))
-                        ))
+                        .buttonStyle(.plain)
+                        
+                        if !triggeredNutrients.isEmpty {
+                            Divider()
+                            
+                            NutrientWarningCard(triggeredNutrients: triggeredNutrients) {
+                                isShowingWarningAnalysis = true
+                            }
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .opacity.combined(with: .scale(scale: 0.95))
+                            ))
+                        }
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                 }
                 
                 Section(header: Text("Today's Entries")) {
