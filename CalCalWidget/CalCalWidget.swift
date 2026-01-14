@@ -145,6 +145,12 @@ struct CalCalWidgetEntryView : View {
             }
         }
         .containerBackground(.thinMaterial, for: .widget)
+        .overlay {
+            // Subtle glass border
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(.white.opacity(0.15), lineWidth: 0.5)
+                .padding(-1) // Ensure it's at the very edge
+        }
     }
 }
 
