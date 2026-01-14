@@ -13,9 +13,9 @@
 - [x] Task: Conductor - User Manual Verification 'App UI Updates' (Protocol in workflow.md) 5f31063
 
 ## Phase 3: Widget UI Updates
-- [ ] Task: Update protein color in `MediumWidgetView` (CalCalWidget.swift)
-- [ ] Task: Verify consistent red across all individual widgets if not already set
-- [ ] Task: Conductor - User Manual Verification 'Widget UI Updates' (Protocol in workflow.md)
+- [x] Task: Update protein color in `MediumWidgetView` (CalCalWidget.swift) 756ff37
+- [x] Task: Verify consistent red across all individual widgets if not already set 756ff37
+- [x] Task: Conductor - User Manual Verification 'Widget UI Updates' (Protocol in workflow.md) 756ff37
 
 ## Phase 4: Final Verification
 - [ ] Task: Final visual sweep of the app and all widget sizes
