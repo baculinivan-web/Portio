@@ -5,6 +5,8 @@ import SwiftData
 
 struct FoodItemDetailView: View {
     @Bindable var item: FoodItem
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     
     // State for the multi-image picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
@@ -47,6 +49,36 @@ struct FoodItemDetailView: View {
                 LabeledContent("Original Query", value: item.name)
                 LabeledContent("Identified As", value: item.identifiedFood)
                 LabeledContent("Logged At", value: item.dateEaten, format: .dateTime.hour().minute())
+                
+                if item.isSearchGrounded {
+                    HStack {
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Image(systemName: "magnifyingglass.circle.fill")
+                                .font(.caption)
+                            Text("Google Search grounded")
+                                .font(.caption2.bold())
+                                .textCase(.uppercase)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundStyle(.blue)
+                        .clipShape(Capsule())
+                    }
+                }
+            }
+            
+            Section {
+                Button(role: .destructive) {
+                    deleteItem()
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text("Delete Entry")
+                        Spacer()
+                    }
+                }
             }
         }
         .navigationTitle("Edit Entry")
@@ -84,6 +116,15 @@ struct FoodItemDetailView: View {
         }
         .sheet(item: $selectedImageDataForViewer) { data in
             PhotoViewer(imageData: data)
+        }
+    }
+    
+    private func deleteItem() {
+        withAnimation {
+            modelContext.delete(item)
+            try? modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
+            dismiss()
         }
     }
 }
@@ -150,8 +191,8 @@ struct NutrientEditor: View {
             Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            TextField(label, value: $value, format: .number.precision(.fractionLength(1)))
-                .keyboardType(.decimalPad)
+            TextField(label, value: $value, format: .number.precision(.fractionLength(0)))
+                .keyboardType(.numberPad)
         }
         .padding(.vertical, 4)
     }
