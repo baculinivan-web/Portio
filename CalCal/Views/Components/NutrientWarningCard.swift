@@ -34,11 +34,11 @@ struct NutrientWarningCard: View {
                 .foregroundColor(.secondary.opacity(0.5))
         }
         .padding(12)
-        .background(.ultraThinMaterial)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
         .onTapGesture {
