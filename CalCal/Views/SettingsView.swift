@@ -4,11 +4,11 @@ import WidgetKit
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
-    @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
-    @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
-    @AppStorage("carbsGoal") private var carbsGoal: Double = UserSettings.carbsGoal
-    @AppStorage("fatGoal") private var fatGoal: Double = UserSettings.fatGoal
-    @AppStorage("goalExplanation") private var goalExplanation: String = UserSettings.goalExplanation
+    @AppStorage("calorieGoal", store: UserSettings.shared) private var calorieGoal: Double = UserSettings.calorieGoal
+    @AppStorage("proteinGoal", store: UserSettings.shared) private var proteinGoal: Double = UserSettings.proteinGoal
+    @AppStorage("carbsGoal", store: UserSettings.shared) private var carbsGoal: Double = UserSettings.carbsGoal
+    @AppStorage("fatGoal", store: UserSettings.shared) private var fatGoal: Double = UserSettings.fatGoal
+    @AppStorage("goalExplanation", store: UserSettings.shared) private var goalExplanation: String = UserSettings.goalExplanation
 
     var body: some View {
         NavigationStack {
