@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import WidgetKit
+import SwiftData
 
 struct FoodItemDetailView: View {
     @Bindable var item: FoodItem
