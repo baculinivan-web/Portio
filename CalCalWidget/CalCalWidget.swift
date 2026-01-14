@@ -49,6 +49,121 @@ struct SimpleEntry: TimelineEntry {
     let fatGoal: Double
 }
 
+enum NutrientType: String {
+    case calories, protein, carbs, fats
+    
+    var title: String {
+        switch self {
+        case .calories: return "Calories"
+        case .protein: return "Protein"
+        case .carbs: return "Carbs"
+        case .fats: return "Fats"
+        }
+    }
+    
+    var symbol: String {
+        switch self {
+        case .calories: return "flame.fill"
+        case .protein: return "bolt.fill"
+        case .carbs: return "leaf.fill"
+        case .fats: return "drop.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .calories: return .orange
+        case .protein: return .red
+        case .carbs: return .blue
+        case .fats: return .green
+        }
+    }
+    
+    var unit: String {
+        switch self {
+        case .calories: return "kcal"
+        default: return "g"
+        }
+    }
+}
+
+struct NutrientBaseView: View {
+    let type: NutrientType
+    let value: Double
+    let goal: Double
+    
+    var remaining: Double {
+        max(goal - value, 0)
+    }
+    
+    var over: Double {
+        max(value - goal, 0)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("TODAY")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(.secondary)
+            
+            Text(type.title)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+                .padding(.top, 4)
+            
+            if over > 0 {
+                Text("\(Int(over))\(type.unit) over")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.red)
+            } else {
+                Text("\(Int(remaining))\(type.unit) left")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(type.color)
+            }
+            
+            Spacer()
+            
+            HStack {
+                Spacer()
+                NutrientGaugeView(value: value, goal: goal, symbol: type.symbol, color: type.color)
+            }
+        }
+        .padding(12)
+    }
+}
+
+struct NutrientGaugeView: View {
+    let value: Double
+    let goal: Double
+    let symbol: String
+    let color: Color
+    
+    var body: some View {
+        ZStack {
+            // Background outer ring (subtle)
+            Circle()
+                .stroke(color.opacity(0.1), lineWidth: 4)
+            
+            // The gauge arc (matching image style)
+            Circle()
+                .trim(from: 0, to: min(value / max(goal, 1), 1.0) * 0.75) // 75% arc
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(135))
+            
+            // Inner circle for symbol background
+            Circle()
+                .fill(Color(uiColor: .systemBackground).opacity(0.1))
+                .padding(4)
+            
+            // The icon
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(color)
+        }
+        .frame(width: 44, height: 44)
+    }
+}
+
 struct CalorieRingView: View {
     let calories: Double
     let goal: Double
