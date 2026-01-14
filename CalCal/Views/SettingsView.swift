@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
@@ -35,6 +36,10 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .onChange(of: calorieGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
+            .onChange(of: proteinGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
+            .onChange(of: carbsGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
+            .onChange(of: fatGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
