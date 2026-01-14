@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import Combine
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -58,21 +59,22 @@ struct ContentView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    
-                    if !triggeredNutrients.isEmpty {
+                }
+                .listRowSeparator(.hidden)
+                
+                if !triggeredNutrients.isEmpty {
+                    Section {
                         NutrientWarningCard(triggeredNutrients: triggeredNutrients) {
                             isShowingWarningAnalysis = true
                         }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
-                        .listRowBackground(Color.clear)
                         .transition(.asymmetric(
                             insertion: .move(edge: .top).combined(with: .opacity),
                             removal: .opacity.combined(with: .scale(scale: 0.95))
                         ))
                     }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                 }
-                .listRowSeparator(.hidden)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredNutrients)
                 
                 Section(header: Text("Today's Entries")) {
                     ForEach(todaysItems) { item in
@@ -84,6 +86,7 @@ struct ContentView: View {
                     .onDelete(perform: deleteItems)
                 }
             }
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredNutrients)
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
             .navigationDestination(for: FoodItem.self) { item in
