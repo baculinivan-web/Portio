@@ -5,10 +5,10 @@
 - [x] Task: Update `OpenRouterModels.swift` to support tool calling (tools, tool_calls, tool_outputs) 468f29e
 - [x] Task: Conductor - User Manual Verification 'Infrastructure and Configuration' (Protocol in workflow.md) 3e3ac58
 
-## Phase 2: Serper.dev Service Implementation
+## Phase 2: Serper.dev Service Implementation [DONE] Checkpoint: 316d037
 - [x] Task: Create `SerperService.swift` to handle web search requests 20c47a5
 - [x] Task: Implement unit tests for `SerperService` (Skipped: User requested to skip tests)
-- [ ] Task: Conductor - User Manual Verification 'Serper.dev Service Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Serper.dev Service Implementation' (Protocol in workflow.md) 316d037
 
 ## Phase 3: NutritionService Tool Calling Integration
 - [ ] Task: Define the `google_search` tool in `NutritionService`
