@@ -348,6 +348,7 @@ struct MediumWidgetView: View {
                     Text("kcal")
                         .font(.system(.subheadline, design: .rounded).bold())
                         .foregroundStyle(.secondary)
+                        .layoutPriority(1)
                 }
                 
                 Text("of \(Int(entry.calorieGoal)) goal")
