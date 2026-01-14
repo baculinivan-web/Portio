@@ -1,6 +1,6 @@
 # Plan: refine_widget_ui
 
-## Phase 1: Typography and Layout Refinement
+## Phase 1: Typography and Layout Refinement (Checkpoint: ce7b85a)
 - [x] Task: Update calorie count typography to large, bold, and rounded (`design: .rounded`) 6882aaa
 - [x] Task: Refine "kcal" and goal label positioning for tighter integration 6882aaa
 - [x] Task: Improve overall widget margins and spacing for a more "airy" feel 6882aaa
