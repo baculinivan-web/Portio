@@ -1,11 +1,9 @@
 # Plan: Fix Incorrect Calorie 'Over' Calculation in Small Widget
 
-## Phase 1: Data Consistency and Model Unification
+## Phase 1: Data Consistency and Model Unification [DONE] Checkpoint: 40466ca
 - [x] Task: Synchronize `FoodItem` model between App and Widget. d0e22d2
-    - Update `CalCalWidget/Item.swift` to include the `isSearchGrounded` property found in `CalCal/Item.swift`.
 - [x] Task: Fix `TodayView` goal synchronization. d606b76
-    - Update `CalCal/Views/Statistics/TodayView.swift` to use the shared App Group storage for `@AppStorage` properties (using `UserSettings.shared`).
-- [~] Task: Conductor - User Manual Verification 'Data Consistency and Model Unification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Data Consistency and Model Unification' (Protocol in workflow.md) 40466ca
 
 ## Phase 2: Calculation Logic Verification and Debugging
 - [ ] Task: Audit `SharedDataManager.fetchTodaysStats()` in both app and widget to ensure `FoodItem`s are fetched correctly and not duplicated.
