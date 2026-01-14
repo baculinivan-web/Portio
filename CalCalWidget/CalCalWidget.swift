@@ -399,7 +399,7 @@ struct CalorieWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
             NutrientBaseView(type: .calories, value: entry.calories, goal: entry.calorieGoal)
-                .containerBackground(.background, for: .widget)
+                .containerBackground(.thinMaterial, for: .widget)
         }
         .configurationDisplayName("Calories")
         .description("Track your daily calorie intake.")
@@ -413,7 +413,7 @@ struct ProteinWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
             NutrientBaseView(type: .protein, value: entry.protein, goal: entry.proteinGoal)
-                .containerBackground(.background, for: .widget)
+                .containerBackground(.thinMaterial, for: .widget)
         }
         .configurationDisplayName("Protein")
         .description("Track your daily protein intake.")
@@ -427,7 +427,7 @@ struct CarbsWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
             NutrientBaseView(type: .carbs, value: entry.carbs, goal: entry.carbsGoal)
-                .containerBackground(.background, for: .widget)
+                .containerBackground(.thinMaterial, for: .widget)
         }
         .configurationDisplayName("Carbs")
         .description("Track your daily carbs intake.")
@@ -441,7 +441,7 @@ struct FatWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NutrientProvider()) { entry in
             NutrientBaseView(type: .fats, value: entry.fat, goal: entry.fatGoal)
-                .containerBackground(.background, for: .widget)
+                .containerBackground(.thinMaterial, for: .widget)
         }
         .configurationDisplayName("Fats")
         .description("Track your daily fats intake.")
