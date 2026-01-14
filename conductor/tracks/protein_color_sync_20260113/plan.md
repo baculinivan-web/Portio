@@ -1,0 +1,23 @@
+# Plan: color_code_protein_to_red
+
+## Phase 1: Identification & Global Mapping
+- [x] Task: Search for all instances of `.purple` or `.indigo` used for macros in the codebase
+- [x] Task: Identify the specific red color used in `CalCalWidget.swift` (NutrientType.protein)
+- [x] Task: Conductor - User Manual Verification 'Identification' (Protocol in workflow.md)
+
+
+## Phase 2: App UI Updates
+- [ ] Task: Update protein color in `TotalsCardView.swift` and `NutrientView.swift`
+- [ ] Task: Update protein color in `MacroDistributionChart.swift`
+- [ ] Task: Update protein color in `TrendComparisonView.swift` or other stats views
+- [ ] Task: Conductor - User Manual Verification 'App UI Updates' (Protocol in workflow.md)
+
+## Phase 3: Widget UI Updates
+- [ ] Task: Update protein color in `MediumWidgetView` (CalCalWidget.swift)
+- [ ] Task: Verify consistent red across all individual widgets if not already set
+- [ ] Task: Conductor - User Manual Verification 'Widget UI Updates' (Protocol in workflow.md)
+
+## Phase 4: Final Verification
+- [ ] Task: Final visual sweep of the app and all widget sizes
+- [ ] Task: Ensure no violet/purple macro indicators remain
+- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
