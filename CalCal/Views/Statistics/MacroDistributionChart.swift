@@ -36,7 +36,7 @@ struct MacroDistributionChart: View {
                 .foregroundStyle(by: .value("Macro", "Fat"))
             }
             .chartForegroundStyleScale([
-                "Protein": Color.purple.gradient,
+                "Protein": Color.red.gradient,
                 "Carbs": Color.blue.gradient,
                 "Fat": Color.green.gradient
             ])

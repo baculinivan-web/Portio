@@ -34,7 +34,7 @@ struct TodayView: View {
                 value: totalProtein,
                 goal: proteinGoal,
                 unit: "g",
-                color: .purple,
+                color: .red,
                 items: todaysItems
             )
             

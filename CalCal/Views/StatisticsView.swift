@@ -9,7 +9,7 @@ struct StatisticsView: View {
         ZStack {
             // Masterpiece background
             LinearGradient(
-                colors: [Color.orange.opacity(0.1), Color.purple.opacity(0.1), Color.blue.opacity(0.1)],
+                colors: [Color.orange.opacity(0.1), Color.red.opacity(0.1), Color.blue.opacity(0.1)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )

@@ -165,7 +165,7 @@ struct CircularProgressView: View {
 #Preview {
     ZStack {
         Color.blue.ignoresSafeArea()
-        InteractiveMacroCard(title: "Protein", value: 85, goal: 150, unit: "g", color: .purple, items: [])
+        InteractiveMacroCard(title: "Protein", value: 85, goal: 150, unit: "g", color: .red, items: [])
             .padding()
     }
 }
