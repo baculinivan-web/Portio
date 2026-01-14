@@ -117,10 +117,10 @@ struct SmallWidgetView: View {
     var entry: SimpleEntry
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             HStack {
                 Text("CalCal")
-                    .font(.caption.bold())
+                    .font(.system(.caption, design: .rounded).bold())
                     .foregroundStyle(.orange)
                 Spacer()
             }
@@ -128,14 +128,15 @@ struct SmallWidgetView: View {
             Spacer()
             
             CalorieRingView(calories: entry.calories, goal: entry.calorieGoal)
-                .padding(4)
+                .padding(.vertical, 8)
             
             Spacer()
             
-            Text("/ \(Int(entry.calorieGoal))")
-                .font(.caption2)
+            Text("\(Int(entry.calorieGoal)) kcal goal")
+                .font(.system(.caption2, design: .rounded))
                 .foregroundStyle(.secondary)
         }
+        .padding(4)
     }
 }
 
@@ -144,39 +145,32 @@ struct MediumWidgetView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Today")
-                    .font(.caption.bold())
+                    .font(.system(.caption, design: .rounded).bold())
                     .foregroundStyle(.orange)
                 
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Spacer()
+                
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(Int(entry.calories))")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .font(.system(size: 40, weight: .heavy, design: .rounded))
                     Text("kcal")
-                        .font(.caption.bold())
+                        .font(.system(.subheadline, design: .rounded).bold())
                         .foregroundStyle(.secondary)
                 }
                 
                 Text("of \(Int(entry.calorieGoal)) goal")
-                    .font(.caption2)
+                    .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .padding(.top, -2)
                 
                 Spacer()
                 
-                HStack(spacing: 12) {
-                    Link(destination: URL(string: "calcal://add")!) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.orange)
-                    }
-                    
-                    Link(destination: URL(string: "calcal://camera")!) {
-                        Image(systemName: "camera.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.orange)
-                    }
-                }
+                QuickActionButtonsView()
             }
+            .padding(.vertical, 4)
+
             
             Spacer()
             
