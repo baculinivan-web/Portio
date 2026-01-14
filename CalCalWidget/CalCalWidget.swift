@@ -82,17 +82,28 @@ struct MacroMiniView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(label)
-                    .font(.caption2.bold())
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
                 Spacer()
                 Text("\(Int(value))g")
-                    .font(.caption2)
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
             
-            ProgressView(value: min(value / max(goal, 1), 1.0))
-                .tint(color)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color.opacity(0.2))
+                        .frame(height: 6)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color.gradient)
+                        .frame(width: geometry.size.width * min(value / max(goal, 1), 1.0), height: 6)
+                }
+            }
+            .frame(height: 6)
         }
     }
 }
@@ -175,7 +186,7 @@ struct MediumWidgetView: View {
             Spacer()
             
             VStack(alignment: .leading, spacing: 8) {
-                MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .red)
+                MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .orange)
                 MacroMiniView(label: "Carbs", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
                 MacroMiniView(label: "Fat", value: entry.fat, goal: entry.fatGoal, color: .green)
             }
