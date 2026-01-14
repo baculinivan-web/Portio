@@ -4,10 +4,10 @@ import SwiftData
 struct TodayView: View {
     @Query(sort: \FoodItem.dateEaten, order: .reverse) private var items: [FoodItem]
     
-    @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
-    @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
-    @AppStorage("carbsGoal") private var carbsGoal: Double = UserSettings.carbsGoal
-    @AppStorage("fatGoal") private var fatGoal: Double = UserSettings.fatGoal
+    @AppStorage("calorieGoal", store: UserSettings.shared) private var calorieGoal: Double = UserSettings.calorieGoal
+    @AppStorage("proteinGoal", store: UserSettings.shared) private var proteinGoal: Double = UserSettings.proteinGoal
+    @AppStorage("carbsGoal", store: UserSettings.shared) private var carbsGoal: Double = UserSettings.carbsGoal
+    @AppStorage("fatGoal", store: UserSettings.shared) private var fatGoal: Double = UserSettings.fatGoal
     
     private var todaysItems: [FoodItem] {
         items.filter { Calendar.current.isDateInToday($0.dateEaten) }
