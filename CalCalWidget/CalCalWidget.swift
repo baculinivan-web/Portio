@@ -185,7 +185,7 @@ struct MediumWidgetView: View {
     var entry: SimpleEntry
     
     var body: some View {
-        HStack(spacing: 32) {
+        HStack(alignment: .center, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Today")
                     .font(.system(.caption, design: .rounded).bold())
@@ -212,15 +212,16 @@ struct MediumWidgetView: View {
             }
             .padding(.vertical, 4)
 
-            VStack(alignment: .leading, spacing: 8) {
+            Spacer(minLength: 20)
+            
+            VStack(alignment: .leading, spacing: 10) {
                 MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .orange)
                 MacroMiniView(label: "Carbs", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
                 MacroMiniView(label: "Fat", value: entry.fat, goal: entry.fatGoal, color: .green)
             }
-            .frame(width: 100)
-            
-            Spacer()
+            .frame(width: 130) // Increased width to fill the right side better
         }
+        .padding(.horizontal, 8)
     }
 }
 
