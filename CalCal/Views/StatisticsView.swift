@@ -29,7 +29,7 @@ struct StatisticsView: View {
                         }
                         .pickerStyle(.segmented)
                         .padding(4)
-                        .background(.ultraThinMaterial, in: Capsule())
+                        .glassEffect()
                         
                         if selectedTab == .allTime {
                             Picker("Timeframe", selection: $selectedTimeframe) {
@@ -39,7 +39,7 @@ struct StatisticsView: View {
                             }
                             .pickerStyle(.segmented)
                             .padding(4)
-                            .background(.ultraThinMaterial, in: Capsule())
+                            .glassEffect()
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
