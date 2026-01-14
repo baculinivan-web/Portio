@@ -29,6 +29,7 @@ class NutritionService {
     private let apiKey: String
     private let modelName: String
     private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+    private let serperService = SerperService()
 
     init() {
         guard let apiKey = APIKeyManager.getOpenRouterAPIKey() else {
@@ -51,17 +52,23 @@ class NutritionService {
         request.addValue("https://calcal.app", forHTTPHeaderField: "HTTP-Referer")
         request.addValue("CalCal", forHTTPHeaderField: "X-Title")
 
-        var prompt = """
-        Analyze the food query: '\(query)'. Your task is to identify each distinct food item and return its nutritional information.
+        var systemPrompt = """
+        You are a highly accurate nutritional analysis expert.
+        Analyze the food query and images provided by the user to identify each distinct food item and return its nutritional information.
+        
+        If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use the `google_search` tool to find the most accurate and up-to-date nutritional information.
+        
+        CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
         """
         
+        var userPrompt = "Analyze the food query: '\(query)'."
+        
         if !images.isEmpty {
-            prompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
+            userPrompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
         }
         
-        prompt += """
+        userPrompt += """
         
-        CRITICAL: Your entire response must be ONLY a single, minified JSON object. Do not include backticks, the word 'json', or any other text before or after the JSON object.
         The JSON object must have a single key "foods" which is an array of objects. Each object in the array must have these exact keys and value types:
         - "identifiedFood": String (A descriptive name, e.g., "1 large apple")
         - "cleanFoodName": String (A simple, clean name for the food, e.g., "Apple" or "Beef Patty". This should not include quantities or weights.)
@@ -78,7 +85,7 @@ class NutritionService {
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
         
-        var contentParts: [OpenRouterRequest.ContentPart] = [.text(prompt)]
+        var contentParts: [OpenRouterRequest.ContentPart] = [.text(userPrompt)]
         
         for imageData in images {
             let base64 = imageData.base64EncodedString()
@@ -86,49 +93,118 @@ class NutritionService {
             contentParts.append(.imageUrl(url))
         }
         
-        let openRouterRequest = OpenRouterRequest(
-            model: self.modelName,
-            messages: [.init(role: "user", content: contentParts)],
-            responseFormat: nil 
-        )
+        var messages: [OpenRouterRequest.Message] = [
+            .init(role: "system", content: [.text(systemPrompt)]),
+            .init(role: "user", content: contentParts)
+        ]
         
-        request.httpBody = try JSONEncoder().encode(openRouterRequest)
+        let tools: [OpenRouterRequest.Tool] = [
+            .init(
+                type: "function",
+                function: .init(
+                    name: "google_search",
+                    description: "Search Google for nutritional information of specific food items, brands, or restaurant menu items.",
+                    parameters: .object([
+                        "type": .string("object"),
+                        "properties": .object([
+                            "query": .object([
+                                "type": .string("string"),
+                                "description": "The search query, e.g., 'McDonalds Big Mac nutrition facts' or 'Chobani Greek Yogurt calories'."
+                            ])
+                        ]),
+                        "required": .array([.string("query")])
+                    ])
+                )
+            )
+        ]
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            if let httpResponse = response as? HTTPURLResponse {
-                 print("--- NETWORKING ERROR (fetchNutrition) ---")
-                 print("Status Code: \(httpResponse.statusCode)")
-                 print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
-                 
-                 if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
-                    throw NutritionError.apiError(errorResponse.error.message)
-                 }
+        // Loop for tool calling
+        for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
+            let openRouterRequest = OpenRouterRequest(
+                model: self.modelName,
+                messages: messages,
+                responseFormat: nil,
+                tools: tools,
+                toolChoice: .auto
+            )
+            
+            request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
-                 if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
-                    throw NutritionError.invalidAPIKey
-                 }
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                if let httpResponse = response as? HTTPURLResponse {
+                     print("--- NETWORKING ERROR (fetchNutrition) ---")
+                     print("Status Code: \(httpResponse.statusCode)")
+                     print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
+                     
+                     if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
+                        throw NutritionError.apiError(errorResponse.error.message)
+                     }
+
+                     if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                        throw NutritionError.invalidAPIKey
+                     }
+                }
+                throw NutritionError.badResponse
             }
-            throw NutritionError.badResponse
-        }
 
-        let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
-        guard var nutritionJSONText = openRouterResponse.choices.first?.message.content else {
-            throw NutritionError.badResponse
-        }
+            let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+            guard let choice = openRouterResponse.choices.first else {
+                throw NutritionError.badResponse
+            }
+            
+            let message = choice.message
+            
+            // Add the assistant's message to the history
+            messages.append(.init(
+                role: "assistant",
+                content: message.content != nil ? [.text(message.content!)] : nil,
+                toolCalls: message.toolCalls
+            ))
 
-        if let jsonStartIndex = nutritionJSONText.firstIndex(of: "{"),
-           let jsonEndIndex = nutritionJSONText.lastIndex(of: "}") {
-            nutritionJSONText = String(nutritionJSONText[jsonStartIndex...jsonEndIndex])
-        }
+            if choice.finishReason == "tool_calls", let toolCalls = message.toolCalls {
+                for toolCall in toolCalls {
+                    if toolCall.function.name == "google_search" {
+                        guard let argsData = toolCall.function.arguments.data(using: .utf8),
+                              let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
+                              let searchQuery = args["query"] as? String else {
+                            continue
+                        }
+                        
+                        let searchResult = try await serperService.search(query: searchQuery)
+                        
+                        messages.append(.init(
+                            role: "tool",
+                            toolCallId: toolCall.id,
+                            name: "google_search",
+                            content: [.text(searchResult)]
+                        ))
+                    }
+                }
+                // Continue the loop to get the next response from the LLM
+                continue
+            } else {
+                // Final response
+                guard var nutritionJSONText = message.content else {
+                    throw NutritionError.badResponse
+                }
 
-        do {
-            let foodArrayResponse = try JSONDecoder().decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
-            return foodArrayResponse.foods
-        } catch let decodingError {
-            throw NutritionError.unparsableJSON(decodingError.localizedDescription)
+                if let jsonStartIndex = nutritionJSONText.firstIndex(of: "{"),
+                   let jsonEndIndex = nutritionJSONText.lastIndex(of: "}") {
+                    nutritionJSONText = String(nutritionJSONText[jsonStartIndex...jsonEndIndex])
+                }
+
+                do {
+                    let foodArrayResponse = try JSONDecoder().decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
+                    return foodArrayResponse.foods
+                } catch let decodingError {
+                    throw NutritionError.unparsableJSON(decodingError.localizedDescription)
+                }
+            }
         }
+        
+        throw NutritionError.badResponse
     }
     
     func fetchAIGoals(userStats: String, userGoals: String, baselineTDEE: Double) async throws -> GoalResponse {
