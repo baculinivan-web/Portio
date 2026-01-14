@@ -13,7 +13,10 @@ struct ContentView: View {
     @State private var isShowingCamera = false
     @State private var attachedImages: [UIImage] = []
     @State private var isShowingWarningAnalysis = false
+    @State private var currentTime = Date()
     @FocusState private var isInputFocused: Bool
+    
+    let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
     @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
@@ -32,9 +35,9 @@ struct ContentView: View {
     
     private var triggeredNutrients: [WarningNutrient] {
         var triggered: [WarningNutrient] = []
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalCalories, goal: calorieGoal) { triggered.append(.calories) }
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalCarbs, goal: carbsGoal) { triggered.append(.carbs) }
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalFat, goal: fatGoal) { triggered.append(.fat) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCalories, goal: calorieGoal, date: currentTime) { triggered.append(.calories) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCarbs, goal: carbsGoal, date: currentTime) { triggered.append(.carbs) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalFat, goal: fatGoal, date: currentTime) { triggered.append(.fat) }
         return triggered
     }
 
@@ -62,10 +65,14 @@ struct ContentView: View {
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(Color.clear)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity.combined(with: .scale(scale: 0.95))
+                        ))
                     }
                 }
                 .listRowSeparator(.hidden)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredNutrients)
                 
                 Section(header: Text("Today's Entries")) {
                     ForEach(todaysItems) { item in
@@ -148,6 +155,9 @@ struct ContentView: View {
                     totals: (totalCalories, totalCarbs, totalFat),
                     goals: (calorieGoal, carbsGoal, fatGoal)
                 )
+            }
+            .onReceive(timer) { input in
+                currentTime = input
             }
         }
     }
