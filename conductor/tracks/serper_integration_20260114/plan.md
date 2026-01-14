@@ -11,9 +11,9 @@
 - [x] Task: Conductor - User Manual Verification 'Serper.dev Service Implementation' (Protocol in workflow.md) 316d037
 
 ## Phase 3: NutritionService Tool Calling Integration
-- [ ] Task: Define the `google_search` tool in `NutritionService`
-- [ ] Task: Implement the tool calling loop in `NutritionService.fetchNutrition`
-- [ ] Task: Update the system prompt to instruct the LLM on when to use the search tool
+- [x] Task: Define the `google_search` tool in `NutritionService` 0953ffd
+- [x] Task: Implement the tool calling loop in `NutritionService.fetchNutrition` 0953ffd
+- [x] Task: Update the system prompt to instruct the LLM on when to use the search tool 0953ffd
 - [ ] Task: Conductor - User Manual Verification 'NutritionService Tool Calling Integration' (Protocol in workflow.md)
 
 ## Phase 4: Verification and Refinement
