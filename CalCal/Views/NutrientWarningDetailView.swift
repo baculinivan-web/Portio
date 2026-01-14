@@ -31,6 +31,11 @@ struct NutrientWarningDetailView: View {
                                             .font(.system(.title2, design: .rounded))
                                             .fontWeight(.bold)
                                             .foregroundColor(.red)
+                                        
+                                        Text("+ \(Int(intake - goal)) \(nutrient.unit)")
+                                            .font(.system(.headline, design: .rounded))
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.secondary)
                                     } else {
                                         Text("Approaching Goal")
                                             .font(.system(.title2, design: .rounded))
