@@ -368,7 +368,7 @@ struct MediumWidgetView: View {
             Spacer(minLength: 20)
             
             VStack(alignment: .leading, spacing: 10) {
-                MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .orange)
+                MacroMiniView(label: "Protein", value: entry.protein, goal: entry.proteinGoal, color: .red)
                 MacroMiniView(label: "Carbs", value: entry.carbs, goal: entry.carbsGoal, color: .blue)
                 MacroMiniView(label: "Fat", value: entry.fat, goal: entry.fatGoal, color: .green)
             }
