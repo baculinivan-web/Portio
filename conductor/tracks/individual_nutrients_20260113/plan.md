@@ -6,7 +6,7 @@
 - [x] Task: Create a `NutrientTheme` model to manage colors and symbols for each type 4e9e50c
 - [x] Task: Conductor - User Manual Verification 'Shared Components' (Protocol in workflow.md)
 
-## Phase 2: Widget Logic & Data Mapping
+## Phase 2: Widget Logic & Data Mapping (Checkpoint: c10ffbf)
 - [x] Task: Update `SimpleEntry` if necessary to support specific nutrient focus 4e9e50c
 - [x] Task: Implement `NutrientProvider` or extend existing `Provider` to handle specific nutrient data 379103d
 - [x] Task: Implement "Amount Left" calculation logic including "Overdo" state (red text) 379103d
