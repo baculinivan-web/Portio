@@ -19,5 +19,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [x] Track: small widget with calorie (and text with how much is left/we over) is not calculating kcal over properly. it says that im 723kcal over when i am actually only 57 over
-*Link: [./conductor/tracks/widget_calculation_fix_20260114/](./conductor/tracks/widget_calculation_fix_20260114/)*
