@@ -19,3 +19,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
+## [x] Track: я хочу добавить еще одну функцию предупреждений. если жиры или углеводы заполнили шкалу на 30% больше чем белки
+*Link: [./conductor/tracks/nutrient_imbalance_warning_20260114/](./conductor/tracks/nutrient_imbalance_warning_20260114/)*
+
+---
+
