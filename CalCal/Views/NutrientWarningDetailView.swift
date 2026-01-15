@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct NutrientWarningDetailView: View {
-    let triggeredNutrients: [WarningNutrient]
+    let triggeredWarnings: [WarningType]
     let todaysItems: [FoodItem]
-    let totals: (calories: Double, carbs: Double, fat: Double)
-    let goals: (calories: Double, carbs: Double, fat: Double)
+    let totals: (calories: Double, protein: Double, carbs: Double, fat: Double)
+    let goals: (calories: Double, protein: Double, carbs: Double, fat: Double)
     
     @Environment(\.dismiss) var dismiss
     
@@ -12,9 +12,10 @@ struct NutrientWarningDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    ForEach(triggeredNutrients, id: \.self) { nutrient in
+                    ForEach(triggeredWarnings, id: \.self) { warning in
+                        let nutrient = getNutrient(from: warning)
                         VStack(alignment: .leading, spacing: 20) {
-                            // Header with overshoot info
+                            // Header with overshoot/imbalance info
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(nutrient.rawValue.uppercased())
@@ -22,25 +23,41 @@ struct NutrientWarningDetailView: View {
                                         .fontWeight(.heavy)
                                         .foregroundColor(getNutrientColor(nutrient))
                                     
-                                    let intake = getIntake(for: nutrient)
-                                    let goal = getGoal(for: nutrient)
-                                    let overshoot = NutrientWarningManager.getOvershootPercentage(intake: intake, goal: goal)
-                                    
-                                    if overshoot > 0 {
-                                        Text("\(overshoot)% Overshoot")
-                                            .font(.system(.title2, design: .rounded))
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.red)
+                                    switch warning {
+                                    case .overshoot:
+                                        let intake = getIntake(for: nutrient)
+                                        let goal = getGoal(for: nutrient)
+                                        let overshoot = NutrientWarningManager.getOvershootPercentage(intake: intake, goal: goal)
                                         
-                                        Text("+ \(Int(intake - goal)) \(nutrient.unit)")
-                                            .font(.system(.headline, design: .rounded))
-                                            .fontWeight(.medium)
-                                            .foregroundColor(.secondary)
-                                    } else {
-                                        Text("Approaching Goal")
-                                            .font(.system(.title2, design: .rounded))
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.orange)
+                                        if overshoot > 0 {
+                                            Text("\(overshoot)% Overshoot")
+                                                .font(.system(.title2, design: .rounded))
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.red)
+                                            
+                                            Text("+ \(Int(intake - goal)) \(nutrient.unit)")
+                                                .font(.system(.headline, design: .rounded))
+                                                .fontWeight(.medium)
+                                                .foregroundColor(.secondary)
+                                        } else {
+                                            Text("Approaching Goal")
+                                                .font(.system(.title2, design: .rounded))
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.orange)
+                                        }
+                                    case .imbalance:
+                                        let intake = getIntake(for: nutrient)
+                                        let goal = getGoal(for: nutrient)
+                                        if let gap = NutrientWarningManager.getImbalanceGap(intake: intake, goal: goal, proteinIntake: totals.protein, proteinGoal: goals.protein) {
+                                            Text("\(gap)% Nutrient Imbalance")
+                                                .font(.system(.title2, design: .rounded))
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.orange)
+                                            
+                                            Text("Relative to Protein intake")
+                                                .font(.system(.subheadline, design: .rounded))
+                                                .foregroundColor(.secondary)
+                                        }
                                     }
                                 }
                                 Spacer()
@@ -51,7 +68,7 @@ struct NutrientWarningDetailView: View {
                                 Text("Context")
                                     .font(.system(.subheadline, design: .rounded).bold())
                                 
-                                Text(getExplanation(for: nutrient))
+                                Text(getExplanation(for: warning))
                                     .font(.system(.subheadline, design: .rounded))
                                     .foregroundColor(.secondary)
                                     .lineSpacing(4)
@@ -108,9 +125,17 @@ struct NutrientWarningDetailView: View {
         }
     }
     
+    private func getNutrient(from warning: WarningType) -> WarningNutrient {
+        switch warning {
+        case .overshoot(let n): return n
+        case .imbalance(let n): return n
+        }
+    }
+    
     private func getIntake(for nutrient: WarningNutrient) -> Double {
         switch nutrient {
         case .calories: return totals.calories
+        case .protein: return totals.protein
         case .carbs: return totals.carbs
         case .fat: return totals.fat
         }
@@ -119,6 +144,7 @@ struct NutrientWarningDetailView: View {
     private func getGoal(for nutrient: WarningNutrient) -> Double {
         switch nutrient {
         case .calories: return goals.calories
+        case .protein: return goals.protein
         case .carbs: return goals.carbs
         case .fat: return goals.fat
         }
@@ -127,6 +153,7 @@ struct NutrientWarningDetailView: View {
     private func getNutrientValue(_ item: FoodItem, _ nutrient: WarningNutrient) -> Double {
         switch nutrient {
         case .calories: return item.calories
+        case .protein: return item.protein
         case .carbs: return item.carbs
         case .fat: return item.fat
         }
@@ -135,19 +162,33 @@ struct NutrientWarningDetailView: View {
     private func getNutrientColor(_ nutrient: WarningNutrient) -> Color {
         switch nutrient {
         case .calories: return .orange
+        case .protein: return .red
         case .carbs: return .blue
         case .fat: return .green
         }
     }
     
-    private func getExplanation(for nutrient: WarningNutrient) -> String {
-        switch nutrient {
-        case .calories:
-            return "Consuming more calories than your body needs leads to weight gain. It's important to balance energy intake with your activity levels to maintain a healthy metabolism."
-        case .carbs:
-            return "Excessive carbohydrate intake, especially simple sugars, can cause rapid spikes in blood sugar and insulin levels, which may lead to energy crashes and increased fat storage."
-        case .fat:
-            return "While healthy fats are essential, they are calorie-dense. High fat intake can easily lead to exceeding your daily calorie goal and may impact cardiovascular health if saturated fats are high."
+    private func getExplanation(for warning: WarningType) -> String {
+        switch warning {
+        case .overshoot(let nutrient):
+            switch nutrient {
+            case .calories:
+                return "Consuming more calories than your body needs leads to weight gain. It's important to balance energy intake with your activity levels to maintain a healthy metabolism."
+            case .protein:
+                return "Protein is essential for muscle maintenance and recovery. A balanced intake ensures your body has the building blocks it needs."
+            case .carbs:
+                return "Excessive carbohydrate intake, especially simple sugars, can cause rapid spikes in blood sugar and insulin levels, which may lead to energy crashes and increased fat storage."
+            case .fat:
+                return "While healthy fats are essential, they are calorie-dense. High fat intake can easily lead to exceeding your daily calorie goal and may impact cardiovascular health if saturated fats are high."
+            }
+        case .imbalance(let nutrient):
+            var advice = ""
+            if nutrient == .carbs {
+                advice = "Consider reducing high-carb foods for the rest of the day. "
+            } else if nutrient == .fat {
+                advice = "Consider reducing high-fat foods for the rest of the day. "
+            }
+            return advice + "Try increasing protein-rich foods like chicken, eggs, or legumes to restore balance. A balanced nutrient intake supports stable energy levels and muscle maintenance."
         }
     }
 }

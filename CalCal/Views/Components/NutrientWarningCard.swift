@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct NutrientWarningCard: View {
-    let triggeredNutrients: [WarningNutrient]
+    let triggeredWarnings: [WarningType]
     let onTap: () -> Void
     
     var body: some View {
@@ -22,7 +22,7 @@ struct NutrientWarningCard: View {
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
-                Text("You might want to limit high \(triggeredNutrients.map { $0.rawValue }.joined(separator: "/")) foods")
+                Text(warningSubtitle)
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
             }
@@ -42,13 +42,38 @@ struct NutrientWarningCard: View {
     }
     
     private var warningTitle: String {
-        let titles = triggeredNutrients.map { $0.rawValue }
-        if titles.isEmpty { return "Nutritional Warning" }
-        if titles.count == 1 {
-            return "High \(titles[0]) detected"
+        var components: [String] = []
+        
+        let overshoots = triggeredWarnings.compactMap { if case .overshoot(let n) = $0 { return n.rawValue } else { return nil } }
+        let imbalances = triggeredWarnings.filter { if case .imbalance = $0 { return true } else { return false } }
+        
+        if !overshoots.isEmpty {
+            if overshoots.count == 1 {
+                components.append("High \(overshoots[0])")
+            } else {
+                components.append("High \(overshoots.dropLast().joined(separator: ", ")) & \(overshoots.last!)")
+            }
+        }
+        
+        if !imbalances.isEmpty {
+            components.append("Nutrient Imbalance")
+        }
+        
+        if components.isEmpty { return "Nutritional Warning" }
+        if components.count == 1 {
+            return "\(components[0]) detected"
         } else {
-            let combined = titles.dropLast().joined(separator: ", ") + " & " + titles.last!
-            return "High \(combined) detected"
+            return "\(components.joined(separator: " & ")) detected"
+        }
+    }
+    
+    private var warningSubtitle: String {
+        let hasImbalance = triggeredWarnings.contains { if case .imbalance = $0 { return true } else { return false } }
+        if hasImbalance {
+            return "Consider increasing protein and balancing intake"
+        } else {
+            let overshoots = triggeredWarnings.compactMap { if case .overshoot(let n) = $0 { return n.rawValue } else { return nil } }
+            return "You might want to limit high \(overshoots.joined(separator: "/")) foods"
         }
     }
 }
@@ -56,8 +81,16 @@ struct NutrientWarningCard: View {
 #Preview {
     ZStack {
         Color.blue.opacity(0.1).ignoresSafeArea()
-        NutrientWarningCard(triggeredNutrients: [.calories, .carbs]) {
-            print("Tapped")
+        VStack {
+            NutrientWarningCard(triggeredWarnings: [.overshoot(.calories), .overshoot(.carbs)]) {
+                print("Tapped")
+            }
+            NutrientWarningCard(triggeredWarnings: [.imbalance(.carbs)]) {
+                print("Tapped")
+            }
+            NutrientWarningCard(triggeredWarnings: [.overshoot(.calories), .imbalance(.fat)]) {
+                print("Tapped")
+            }
         }
         .padding()
     }
