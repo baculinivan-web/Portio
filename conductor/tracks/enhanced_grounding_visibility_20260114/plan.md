@@ -11,7 +11,7 @@
 ## Phase 2: UI Implementation
 - [x] Task: Create `SearchDetailRow.swift` component to display a single search step (query + 2 results). 7b32823
 - [x] Task: Integrate search detail rows into `FoodItemDetailView.swift` under the "Entry Info" section. 3b62b40
-- [ ] Task: Apply "Liquid Glass" styling to the search detail cards.
+- [x] Task: Apply "Liquid Glass" styling to the search detail cards. 8bb0234
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: UI Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Final Polish
