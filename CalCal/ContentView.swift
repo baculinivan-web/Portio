@@ -34,12 +34,23 @@ struct ContentView: View {
     private var totalCarbs: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.carbs } }
     private var totalFat: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.fat } }
     
-    private var triggeredNutrients: [WarningNutrient] {
-        var triggered: [WarningNutrient] = []
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalCalories, goal: calorieGoal, date: currentTime) { triggered.append(.calories) }
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalCarbs, goal: carbsGoal, date: currentTime) { triggered.append(.carbs) }
-        if NutrientWarningManager.shouldTriggerWarning(intake: totalFat, goal: fatGoal, date: currentTime) { triggered.append(.fat) }
-        return triggered
+    private var triggeredWarnings: [WarningType] {
+        var warnings: [WarningType] = []
+        
+        // 1. Overshoot warnings
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCalories, goal: calorieGoal, date: currentTime) { warnings.append(.overshoot(.calories)) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalCarbs, goal: carbsGoal, date: currentTime) { warnings.append(.overshoot(.carbs)) }
+        if NutrientWarningManager.shouldTriggerWarning(intake: totalFat, goal: fatGoal, date: currentTime) { warnings.append(.overshoot(.fat)) }
+        
+        // 2. Imbalance warnings (Relative to Protein)
+        if NutrientWarningManager.getImbalanceGap(intake: totalCarbs, goal: carbsGoal, proteinIntake: totalProtein, proteinGoal: proteinGoal) != nil {
+            warnings.append(.imbalance(.carbs))
+        }
+        if NutrientWarningManager.getImbalanceGap(intake: totalFat, goal: fatGoal, proteinIntake: totalProtein, proteinGoal: proteinGoal) != nil {
+            warnings.append(.imbalance(.fat))
+        }
+        
+        return warnings
     }
 
     var body: some View {
@@ -61,10 +72,10 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
                         
-                        if !triggeredNutrients.isEmpty {
+                        if !triggeredWarnings.isEmpty {
                             Divider()
                             
-                            NutrientWarningCard(triggeredNutrients: triggeredNutrients) {
+                            NutrientWarningCard(triggeredWarnings: triggeredWarnings) {
                                 isShowingWarningAnalysis = true
                             }
                             .transition(.asymmetric(
@@ -85,7 +96,7 @@ struct ContentView: View {
                     .onDelete(perform: deleteItems)
                 }
             }
-            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredNutrients)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredWarnings)
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
             .navigationDestination(for: FoodItem.self) { item in
@@ -152,10 +163,10 @@ struct ContentView: View {
             }
             .sheet(isPresented: $isShowingWarningAnalysis) {
                 NutrientWarningDetailView(
-                    triggeredNutrients: triggeredNutrients,
+                    triggeredWarnings: triggeredWarnings,
                     todaysItems: todaysItems,
-                    totals: (totalCalories, totalCarbs, totalFat),
-                    goals: (calorieGoal, carbsGoal, fatGoal)
+                    totals: (totalCalories, totalProtein, totalCarbs, totalFat),
+                    goals: (calorieGoal, proteinGoal, carbsGoal, fatGoal)
                 )
             }
             .onReceive(timer) { input in
