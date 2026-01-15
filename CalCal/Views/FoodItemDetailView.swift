@@ -66,6 +66,10 @@ struct FoodItemDetailView: View {
                         .foregroundStyle(.blue)
                         .clipShape(Capsule())
                     }
+                    
+                    ForEach(item.searchSteps, id: \.self) { step in
+                        SearchDetailRow(step: step)
+                    }
                 }
             }
             
