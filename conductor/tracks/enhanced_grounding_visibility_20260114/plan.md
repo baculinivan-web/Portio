@@ -2,7 +2,7 @@
 
 ## Phase 1: Data Model & Networking
 - [x] Task: Define `SearchStep` and `SearchResult` structs/models. 29d2635
-- [ ] Task: Update `FoodItem` model in `Item.swift` to include `[SearchStep]`.
+- [x] Task: Update `FoodItem` model in `Item.swift` to include `[SearchStep]`. 16e8cf2
 - [ ] Task: Update `NutritionResponse` in `NutritionService.swift` to include search data.
 - [ ] Task: Modify the tool-calling loop in `NutritionService.swift` to capture and store Serper.dev responses.
 - [ ] Task: Update `CalorieTrackerViewModel.swift` to map search data from the AI response to the `FoodItem`.
