@@ -9,7 +9,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Networking' (Protocol in workflow.md)
 
 ## Phase 2: UI Implementation
-- [ ] Task: Create `SearchDetailRow.swift` component to display a single search step (query + 2 results).
+- [x] Task: Create `SearchDetailRow.swift` component to display a single search step (query + 2 results). 7b32823
 - [ ] Task: Integrate search detail rows into `FoodItemDetailView.swift` under the "Entry Info" section.
 - [ ] Task: Apply "Liquid Glass" styling to the search detail cards.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: UI Implementation' (Protocol in workflow.md)
