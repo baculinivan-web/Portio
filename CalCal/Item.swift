@@ -9,6 +9,8 @@ public final class FoodItem {
     public var cleanFoodName: String // The simple name for display
     public var dateEaten: Date
     public var isProcessing: Bool
+    public var isSearchGrounded: Bool = false
+    public var searchSteps: [SearchStep] = []
     public var imageDatas: [Data] = []
 
     // Nutritional values for the current weight
@@ -24,7 +26,7 @@ public final class FoodItem {
     public var carbsPer100g: Double
     public var fatPer100g: Double
 
-    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, imageDatas: [Data] = [],
+    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, isSearchGrounded: Bool = false, searchSteps: [SearchStep] = [], imageDatas: [Data] = [],
          calories: Double, protein: Double, carbs: Double, fat: Double,
          weightGrams: Double, caloriesPer100g: Double, proteinPer100g: Double, carbsPer100g: Double, fatPer100g: Double) {
         self.id = UUID()
@@ -33,6 +35,8 @@ public final class FoodItem {
         self.cleanFoodName = cleanFoodName
         self.dateEaten = dateEaten
         self.isProcessing = isProcessing
+        self.isSearchGrounded = isSearchGrounded
+        self.searchSteps = searchSteps
         self.imageDatas = imageDatas
         self.calories = calories
         self.protein = protein
@@ -47,7 +51,7 @@ public final class FoodItem {
     
     // Convenience initializer for the processing state
     public convenience init(name: String) {
-        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, imageDatas: [],
+        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, searchSteps: [], imageDatas: [],
                   calories: 0, protein: 0, carbs: 0, fat: 0,
                   weightGrams: 0, caloriesPer100g: 0, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0)
     }
