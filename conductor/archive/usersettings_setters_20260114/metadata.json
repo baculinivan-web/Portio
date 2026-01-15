@@ -1,0 +1,8 @@
+{
+  "track_id": "usersettings_setters_20260114",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-01-14T14:00:00Z",
+  "updated_at": "2026-01-14T14:00:00Z",
+  "description": "Fix build error in OnboardingView by adding missing setters to UserSettings static properties and audit codebase for other assignments."
+}
