@@ -3,10 +3,10 @@
 ## Phase 1: Data Model & Networking
 - [x] Task: Define `SearchStep` and `SearchResult` structs/models. 29d2635
 - [x] Task: Update `FoodItem` model in `Item.swift` to include `[SearchStep]`. 16e8cf2
-- [ ] Task: Update `NutritionResponse` in `NutritionService.swift` to include search data.
-- [ ] Task: Modify the tool-calling loop in `NutritionService.swift` to capture and store Serper.dev responses.
-- [ ] Task: Update `CalorieTrackerViewModel.swift` to map search data from the AI response to the `FoodItem`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Networking' (Protocol in workflow.md)
+- [x] Task: Update `NutritionResponse` in `NutritionService.swift` to include search data. eb02783
+- [x] Task: Modify the tool-calling loop in `NutritionService.swift` to capture and store Serper.dev responses. eb02783
+- [x] Task: Update `CalorieTrackerViewModel.swift` to map search data from the AI response to the `FoodItem`. eb02783
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model & Networking' (Protocol in workflow.md)
 
 ## Phase 2: UI Implementation
 - [ ] Task: Create `SearchDetailRow.swift` component to display a single search step (query + 2 results).
