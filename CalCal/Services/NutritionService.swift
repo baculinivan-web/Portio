@@ -58,6 +58,17 @@ class NutritionService {
         
         If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use the `google_search` tool to find the most accurate and up-to-date nutritional information.
         
+        CRITICAL PORTION ESTIMATION RULE: For branded or packaged items (e.g., "Сырок Ростагроэкспорт", "Big Mac", "Snickers"), if the user does not specify a weight, you MUST estimate the weight of ONE standard unit/serving (e.g., one bar, one burger, one pack). NEVER default to 100g if the standard unit weight is different. If you do not know the weight of a standard unit, you MUST perform a separate `google_search` specifically to find the typical weight of that item (e.g., "weight of one Syrok Rostagroexport").
+        
+        CRITICAL SEARCH LANGUAGE RULE: Always perform `google_search` in the SAME language as the user's input query to ensure the most relevant local results.
+        
+        SEARCH RESULT EVALUATION RULE: When analyzing search results, you MUST verify that the brand or manufacturer in the snippet EXACTLY matches the user's query. Pay close attention to suffixes and specific brand names (e.g., "Rostagroexport" is NOT the same as "Rostagrocomplex"). If results for the exact brand are available, you MUST prioritize them over similar but different brands.
+        
+        SEARCH QUERY CONSTRUCTION RULE: When performing search, you MUST use these specific query patterns:
+        1. For nutritional data: "{product name} nutrition facts" or "{product name} БЖУ".
+        2. For portion/unit weight: "{product name} portion weight", "{product name} serving weight", "{product name} вес порции", or "{product name} вес 1 штуки".
+        Ensure at least one query focuses on nutritional facts and another explicitly on weight if it's not clearly stated in the first result.
+        
         CRITICAL: If you used the `google_search` tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
         
         CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
@@ -74,11 +85,11 @@ class NutritionService {
         The JSON object must have a single key "foods" which is an array of objects. Each object in the array must have these exact keys and value types:
         - "identifiedFood": String (A descriptive name, e.g., "1 large apple")
         - "cleanFoodName": String (A simple, clean name for the food, e.g., "Apple" or "Beef Patty". This should not include quantities or weights.)
-        - "calories": Double
-        - "protein": Double
-        - "carbs": Double
-        - "fat": Double
-        - "estimatedWeightGrams": Double
+        - "calories": Double (for the estimated portion weight)
+        - "protein": Double (for the estimated portion weight)
+        - "carbs": Double (for the estimated portion weight)
+        - "fat": Double (for the estimated portion weight)
+        - "estimatedWeightGrams": Double (The realistic weight of the portion. For branded items without weight specified, use the weight of ONE standard package/unit. Use search if unknown.)
         - "caloriesPer100g": Double
         - "proteinPer100g": Double
         - "carbsPer100g": Double
@@ -106,13 +117,13 @@ class NutritionService {
                 type: "function",
                 function: .init(
                     name: "google_search",
-                    description: "Search Google for nutritional information of specific food items, brands, or restaurant menu items.",
+                    description: "Search Google for nutritional information or standard portion/unit weights of specific food items, brands, or restaurant menu items.",
                     parameters: [
                         "type": .string("object"),
                         "properties": .object([
                             "query": .object([
                                 "type": .string("string"),
-                                "description": .string("The search query, e.g., 'McDonalds Big Mac nutrition facts' or 'Chobani Greek Yogurt calories'.")
+                                "description": .string("The search query, e.g., 'McDonalds Big Mac nutrition facts', 'weight of one Snickers bar', or 'Сырок Ростагроэкспорт вес 1 шт'.")
                             ])
                         ]),
                         "required": .array([.string("query")])
@@ -125,6 +136,36 @@ class NutritionService {
 
         // Loop for tool calling
         for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
+            #if DEBUG
+            print("\n--- OPENROUTER REQUEST ---")
+            print("Model: \(self.modelName)")
+            for (index, msg) in messages.enumerated() {
+                print("Message [\(index)] (\(msg.role)):")
+                if let content = msg.content {
+                    for part in content {
+                        switch part {
+                        case .text(let text):
+                            print("  Text: \(text)")
+                        case .imageUrl(let url):
+                            if url.hasPrefix("data:image") {
+                                print("  Image: [Base64 Data Truncated]")
+                            } else {
+                                print("  Image URL: \(url)")
+                            }
+                        }
+                    }
+                }
+                if let toolCalls = msg.toolCalls {
+                    for tc in toolCalls {
+                        print("  Tool Call: \(tc.function.name)(\(tc.function.arguments))")
+                    }
+                }
+                if let tcId = msg.toolCallId {
+                    print("  Tool Call ID: \(tcId)")
+                }
+            }
+            #endif
+
             let openRouterRequest = OpenRouterRequest(
                 model: self.modelName,
                 messages: messages,
@@ -136,6 +177,14 @@ class NutritionService {
             request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
             let (data, response) = try await URLSession.shared.data(for: request)
+            
+            #if DEBUG
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("\n--- OPENROUTER RESPONSE ---")
+                print(responseString)
+                print("---------------------------\n")
+            }
+            #endif
             
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 if let httpResponse = response as? HTTPURLResponse {
@@ -185,7 +234,7 @@ class NutritionService {
                         if let answer = searchStep.answerBox {
                             resultString += "Answer: \(answer)\n"
                         }
-                        resultString += "Top results:\n"
+                        resultString += "Top results (4):\n"
                         for (i, res) in searchStep.results.enumerated() {
                             resultString += "\(i+1). \(res.title): \(res.snippet)\n"
                         }
@@ -268,9 +317,23 @@ class NutritionService {
             responseFormat: nil 
         )
         
+        #if DEBUG
+        print("\n--- OPENROUTER REQUEST (fetchAIGoals) ---")
+        print("Model: \(self.modelName)")
+        print("Prompt: \(prompt)")
+        #endif
+
         request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
         let (data, response) = try await URLSession.shared.data(for: request)
+        
+        #if DEBUG
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("\n--- OPENROUTER RESPONSE (fetchAIGoals) ---")
+            print(responseString)
+            print("---------------------------\n")
+        }
+        #endif
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             if let httpResponse = response as? HTTPURLResponse {
