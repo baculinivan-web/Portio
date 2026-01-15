@@ -43,6 +43,8 @@ class CalorieTrackerViewModel: ObservableObject {
                         placeholderItem.carbsPer100g = firstItemData.carbsPer100g
                         placeholderItem.fatPer100g = firstItemData.fatPer100g
                         placeholderItem.isProcessing = false
+                        placeholderItem.isSearchGrounded = firstItemData.isSearchGrounded ?? false
+                        placeholderItem.searchSteps = firstItemData.searchSteps ?? []
                         
                         // Create new records for any additional items
                         let remainingItemsData = nutritionDataArray.dropFirst()
@@ -52,6 +54,9 @@ class CalorieTrackerViewModel: ObservableObject {
                                 identifiedFood: itemData.identifiedFood,
                                 cleanFoodName: itemData.cleanFoodName,
                                 dateEaten: .now,
+                                isProcessing: false,
+                                isSearchGrounded: itemData.isSearchGrounded ?? false,
+                                searchSteps: itemData.searchSteps ?? [],
                                 calories: itemData.calories,
                                 protein: itemData.protein,
                                 carbs: itemData.carbs,

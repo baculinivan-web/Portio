@@ -58,6 +58,8 @@ class NutritionService {
         
         If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use the `google_search` tool to find the most accurate and up-to-date nutritional information.
         
+        CRITICAL: If you used the `google_search` tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
+        
         CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
         """
         
@@ -81,6 +83,7 @@ class NutritionService {
         - "proteinPer100g": Double
         - "carbsPer100g": Double
         - "fatPer100g": Double
+        - "isSearchGrounded": Boolean
         If the query is "an apple and a banana", you must return two separate objects in the "foods" array. If the query is "a glass of milk", return one object in the array.
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
@@ -117,6 +120,8 @@ class NutritionService {
                 )
             )
         ]
+
+        var capturedSearchSteps: [SearchStep] = []
 
         // Loop for tool calling
         for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
@@ -172,11 +177,22 @@ class NutritionService {
                             continue
                         }
                         
-                        let searchResult = try await serperService.search(query: searchQuery)
+                        let searchStep = try await serperService.searchStructured(query: searchQuery)
+                        capturedSearchSteps.append(searchStep)
+                        
+                        // Convert back to string for the AI
+                        var resultString = ""
+                        if let answer = searchStep.answerBox {
+                            resultString += "Answer: \(answer)\n"
+                        }
+                        resultString += "Top results:\n"
+                        for (i, res) in searchStep.results.enumerated() {
+                            resultString += "\(i+1). \(res.title): \(res.snippet)\n"
+                        }
                         
                         messages.append(.init(
                             role: "tool",
-                            content: [.text(searchResult)],
+                            content: [.text(resultString)],
                             toolCallId: toolCall.id,
                             name: "google_search"
                         ))
@@ -197,7 +213,18 @@ class NutritionService {
 
                 do {
                     let foodArrayResponse = try JSONDecoder().decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
-                    return foodArrayResponse.foods
+                    var foods = foodArrayResponse.foods
+                    
+                    // Attach search steps to any item that is grounded
+                    if !capturedSearchSteps.isEmpty {
+                        for i in 0..<foods.count {
+                            if foods[i].isSearchGrounded == true {
+                                foods[i].searchSteps = capturedSearchSteps
+                            }
+                        }
+                    }
+                    
+                    return foods
                 } catch let decodingError {
                     throw NutritionError.unparsableJSON(decodingError.localizedDescription)
                 }
@@ -299,6 +326,8 @@ struct NutritionResponse: Codable {
     let proteinPer100g: Double
     let carbsPer100g: Double
     let fatPer100g: Double
+    let isSearchGrounded: Bool?
+    var searchSteps: [SearchStep]?
 }
 
 struct GoalResponse: Codable {
