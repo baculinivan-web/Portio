@@ -16,11 +16,13 @@
 - [x] Task: Update `FoodItemDetailView` to display different badges based on the data source (e.g., "Verified Brand" for OFF, "Google Grounded" for Serper). 13fcfe4
 - [x] Task: Conductor - User Manual Verification 'Data Model and UI Synchronization' (Protocol in workflow.md) 5dedf67
 
-## Phase 4: Verification and Refinement
+## Phase 4: Verification and Refinement [DONE] Checkpoint: 078c770
+- [x] Task: Verify with global brands (e.g., "Coca Cola", "Oreo"). (Skipped: User verified manually)
+- [x] Task: Verify portion estimation improvement using OFF serving sizes. (Skipped: User verified manually)
 - [x] Task: Create `NutritionFactsTable` view to display structured nutritional data in an FDA-style label format. 98f0cbb
 - [x] Task: Update `FoodItemDetailView` to show `NutritionFactsTable` when `dataSource` is OFF, and ensure `SearchDetailRow` list appears for Google sources. 8b507db
 - [x] Task: Update OFF badge text to "Grounded by Open Food Facts". 8b507db
 - [x] Task: Refine `systemPrompt` in `NutritionService` to instruct the LLM to strip quantities/weights from `openfoodfacts_search` queries to improve hit rate. 52826b5
 - [x] Task: Fix `dataSource` attribution reliability by tracking OFF tool usage in `NutritionService` and forcing the `dataSource` property on response items. eca9b06
 - [x] Task: Update `CalorieTrackerViewModel.swift` to map `dataSource` from `NutritionResponse` to `FoodItem`. 2470932
-- [~] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md) 078c770
