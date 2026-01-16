@@ -61,6 +61,7 @@ class NutritionService {
         
         TOOL PRIORITY RULE:
         1. `openfoodfacts_search`: Use this FIRST for any branded, packaged, or barcoded product query (e.g., "Nutella", "Chobani", "Oreo"). The data is structured and highly reliable.
+           CRITICAL: When using `openfoodfacts_search`, pass ONLY the brand and product name (e.g., "Coke Zero", "Snickers", "Сырок Ростагроэкспорт"). DO NOT include weights, volumes, or packaging details (e.g., "0.33l", "50g", "box") in the search query, as this often causes the search to fail. The tool will return available sizes/quantities for you to select from.
         2. `google_search`: Use this if `openfoodfacts_search` returns no results, or for restaurant menu items ("Big Mac"), generic dishes ("Caesar Salad"), or specific queries requiring web synthesis.
         
         CRITICAL PORTION ESTIMATION RULE: For branded or packaged items, if the user does not specify a weight, you MUST use the serving size or unit weight returned by the tools. NEVER default to 100g if the standard unit weight is different.
