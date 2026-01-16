@@ -21,7 +21,10 @@ struct StreakHistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(uiColor: .systemBackground).ignoresSafeArea()
+                // Background material for Liquid Glass look
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
@@ -44,6 +47,12 @@ struct StreakHistoryView: View {
                 }
                 .scrollTargetBehavior(.paging)
                 .ignoresSafeArea()
+            }
+            .task {
+                // Pre-fetch all 12 months for smooth scrolling
+                for item in months {
+                    loadStats(month: item.month, year: item.year)
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
