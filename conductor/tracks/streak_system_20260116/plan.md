@@ -7,7 +7,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model & State Management' (Protocol in workflow.md)
 
 ## Phase 2: Toolbar Streak Indicator
-- [ ] Task: Implement today's logging check logic in a ViewModel or Manager.
+- [x] Task: Implement today's logging check logic in a ViewModel or Manager. ff9df21
 - [ ] Task: Add the "fire" icon (`flame.fill`) to `ContentView` toolbar.
 - [ ] Task: Style the icon based on today's logging status (orange if logged, gray otherwise).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Toolbar Streak Indicator' (Protocol in workflow.md)
