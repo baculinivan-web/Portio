@@ -18,6 +18,12 @@ struct ContentView: View {
     @State private var currentTime = Date()
     @FocusState private var isInputFocused: Bool
     
+    // Streak Achievement State
+    @Namespace private var streakAnimation
+    @State private var activeAchievement: AchievementLevel? = nil
+    @State private var currentStreakCount: Int = 0
+    @State private var showStreakNotification = false
+    
     let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
@@ -124,7 +130,9 @@ struct ContentView: View {
                         Image(systemName: "flame.fill")
                             .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
                             .animation(.spring(), value: hasLoggedToday)
+                            .matchedGeometryEffect(id: "streakIcon", in: streakAnimation, isSource: !showStreakNotification)
                     }
+                    .opacity(showStreakNotification ? 0 : 1)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     EditButton()
@@ -179,6 +187,45 @@ struct ContentView: View {
             }
             .onReceive(timer) { input in
                 currentTime = input
+            }
+            .onChange(of: todaysItems) { _, _ in
+                if let achievement = StreakAchievementManager.checkAchievement(
+                    totalCalories: totalCalories,
+                    calorieGoal: calorieGoal,
+                    weightGoalMode: UserSettings.weightGoalMode,
+                    hasEntries: !todaysItems.isEmpty
+                ) {
+                    triggerAchievement(achievement)
+                }
+            }
+            .overlay(alignment: .top) {
+                if showStreakNotification, let level = activeAchievement {
+                    StreakNotificationPill(level: level, streakCount: currentStreakCount)
+                        .matchedGeometryEffect(id: "streakIcon", in: streakAnimation)
+                        .padding(.top, 10)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .scale(scale: 0.8).combined(with: .opacity)
+                        ))
+                        .zIndex(100)
+                }
+            }
+        }
+    }
+
+    private func triggerAchievement(_ level: AchievementLevel) {
+        let streakManager = StreakManager(modelContext: modelContext)
+        currentStreakCount = (try? streakManager.calculateCurrentStreak()) ?? 0
+        activeAchievement = level
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            showStreakNotification = true
+        }
+        
+        // Auto-dismiss after 5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                showStreakNotification = false
             }
         }
     }
