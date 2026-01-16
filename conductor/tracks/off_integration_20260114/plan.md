@@ -4,7 +4,7 @@
 - [x] Task: Create `OpenFoodFactsService.swift` to handle API requests to `world.openfoodfacts.org`. 48289f3
     - Implement a search method that returns structured data (nutrients per 100g, serving size, etc.).
 - [x] Task: Implement unit tests for `OpenFoodFactsService`. (Skipped: Focusing on integration)
-- [ ] Task: Conductor - User Manual Verification 'OpenFoodFacts Service Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'OpenFoodFacts Service Implementation' (Protocol in workflow.md)
 
 ## Phase 2: NutritionService Tool Integration
 - [ ] Task: Define the `openfoodfacts_search` tool in `NutritionService`.
