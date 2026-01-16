@@ -7,6 +7,7 @@ struct StreakHistoryView: View {
     
     @State private var monthlyStats: [String: [Date: NutritionStats]] = [:]
     @State private var selectedDate: Date? = nil
+    @State private var showingLegend = false
     
     private var months: [(month: Int, year: Int)] {
         let calendar = Calendar.current
@@ -18,45 +19,53 @@ struct StreakHistoryView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color(uiColor: .systemBackground).ignoresSafeArea()
-            
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 0) {
-                    ForEach(months, id: \.month) { item in
-                        ContributionGridView(
-                            month: item.month,
-                            year: item.year,
-                            dailyStats: monthlyStats["\(item.year)-\(item.month)"] ?? [:],
-                            onDateSelected: { date in
-                                selectedDate = date
+        NavigationStack {
+            ZStack {
+                Color(uiColor: .systemBackground).ignoresSafeArea()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 0) {
+                        ForEach(months, id: \.month) { item in
+                            ContributionGridView(
+                                month: item.month,
+                                year: item.year,
+                                dailyStats: monthlyStats["\(item.year)-\(item.month)"] ?? [:],
+                                onDateSelected: { date in
+                                    selectedDate = date
+                                }
+                            )
+                            .containerRelativeFrame(.vertical)
+                            .onAppear {
+                                loadStats(month: item.month, year: item.year)
                             }
-                        )
-                        .containerRelativeFrame(.vertical)
-                        .onAppear {
-                            loadStats(month: item.month, year: item.year)
                         }
                     }
+                    .scrollTargetLayout()
                 }
-                .scrollTargetLayout()
+                .scrollTargetBehavior(.paging)
+                .ignoresSafeArea()
             }
-            .scrollTargetBehavior(.paging)
-            .ignoresSafeArea()
-            
-            // Dismiss Button
-            VStack {
-                HStack {
-                    Spacer()
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingLegend = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 30))
                             .foregroundStyle(.secondary.opacity(0.5))
-                            .padding()
                     }
                 }
-                Spacer()
+            }
+            .alert("About Colors", isPresented: $showingLegend) {
+                Button("Got it") { }
+            } message: {
+                Text("• Light Gray: No items logged\n• Translucent Orange: At least one item logged\n• Solid Orange: Goal reached (depends on your Weight Goal Mode)")
             }
         }
     }

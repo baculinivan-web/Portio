@@ -156,23 +156,11 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView()
             }
-            .sheet(isPresented: $isShowingStreakHistory) {
+            .fullScreenCover(isPresented: $isShowingStreakHistory) {
                 StreakHistoryView()
             }
-            .fullScreenCover(isPresented: $isShowingCamera) {
-                CameraView { image in
-                    withAnimation {
-                        attachedImages.append(image)
-                    }
-                }
-            }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
-                OnboardingView() {
-                    // This gets called when onboarding is finished.
-                    hasCompletedOnboarding = true
-                    showGoalSummary = true // Trigger the summary sheet.
-                }
-            }
+
             .sheet(isPresented: $showGoalSummary) {
                 GoalSummaryView()
             }
