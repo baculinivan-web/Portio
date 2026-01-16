@@ -10,6 +10,7 @@ struct ContentView: View {
     @StateObject private var viewModel = CalorieTrackerViewModel()
     @State private var foodQuery: String = ""
     @State private var isShowingSettings = false
+    @State private var isShowingStreakHistory = false
     @State private var showGoalSummary = false
     @State private var isShowingCamera = false
     @State private var attachedImages: [UIImage] = []
@@ -27,6 +28,10 @@ struct ContentView: View {
 
     private var todaysItems: [FoodItem] {
         items.filter { Calendar.current.isDateInToday($0.dateEaten) }
+    }
+    
+    private var hasLoggedToday: Bool {
+        !todaysItems.isEmpty
     }
 
     private var totalCalories: Double { todaysItems.filter { !$0.isProcessing }.reduce(0) { $0 + $1.calories } }
@@ -110,8 +115,16 @@ struct ContentView: View {
             .navigationTitle("CalCal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { isShowingSettings = true } label: {
-                        Image(systemName: "gear")
+                    HStack(spacing: 16) {
+                        Button { isShowingSettings = true } label: {
+                            Image(systemName: "gear")
+                        }
+                        
+                        Button { isShowingStreakHistory = true } label: {
+                            Image(systemName: "flame.fill")
+                                .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
+                                .animation(.spring(), value: hasLoggedToday)
+                        }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -143,6 +156,9 @@ struct ContentView: View {
             })
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $isShowingStreakHistory) {
+                StreakHistoryView()
             }
             .fullScreenCover(isPresented: $isShowingCamera) {
                 CameraView { image in
