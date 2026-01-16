@@ -19,10 +19,10 @@
 - [x] Task: Implement the dot coloring logic in `ContributionGridView`. 7bf62cf
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Streak History UI (The "TikTok" Grid)' (Protocol in workflow.md)
 
-## Phase 4: Day Interaction & Summary
+## Phase 4: Day Interaction & Summary [x] Checkpoint: 07d408f
 - [x] Task: Create a `DaySummaryView` to display food items and totals for a selected date. df6f615
 - [x] Task: Add tap interaction to dots in `ContributionGridView` to present `DaySummaryView`. df6f615
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
 
 ## Phase 5: Polishing & Liquid Glass Aesthetics
 - [ ] Task: Apply translucency and "Liquid Glass" styling to the `StreakHistoryView`.
