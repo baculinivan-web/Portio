@@ -24,3 +24,10 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
+## [~] Track: Optimize NutritionService to execute LLM tool calls in parallel to reduce latency.
+*Link: [./conductor/tracks/parallel_tool_calling_20260114/](./conductor/tracks/parallel_tool_calling_20260114/)*
+
+---
+
+## [~] Track: Streak & Monthly Contribution System
+*Link: [./conductor/tracks/streak_system_20260116/](./conductor/tracks/streak_system_20260116/)*

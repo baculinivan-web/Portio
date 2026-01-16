@@ -51,8 +51,7 @@ struct FoodItemDetailView: View {
                 LabeledContent("Logged At", value: item.dateEaten, format: .dateTime.hour().minute())
                 
                 if item.isSearchGrounded {
-                    HStack {
-                        Spacer()
+                    VStack(alignment: .trailing, spacing: 8) {
                         if let source = item.dataSource, source.contains("OFF") {
                             HStack(spacing: 4) {
                                 Image(systemName: "checkmark.seal.fill")
@@ -66,7 +65,9 @@ struct FoodItemDetailView: View {
                             .background(Color.green.opacity(0.1))
                             .foregroundStyle(.green)
                             .clipShape(Capsule())
-                        } else {
+                        }
+                        
+                        if !item.searchSteps.isEmpty {
                             HStack(spacing: 4) {
                                 Image(systemName: "magnifyingglass.circle.fill")
                                     .font(.caption)
@@ -81,6 +82,7 @@ struct FoodItemDetailView: View {
                             .clipShape(Capsule())
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                     
                     if let source = item.dataSource, source.contains("OFF") {
                         NutritionFactsTable(
@@ -91,7 +93,9 @@ struct FoodItemDetailView: View {
                             servingSize: "\(Int(item.weightGrams))g"
                         )
                         .padding(.top, 8)
-                    } else {
+                    }
+                    
+                    if !item.searchSteps.isEmpty {
                         ForEach(item.searchSteps, id: \.self) { step in
                             SearchDetailRow(step: step)
                         }

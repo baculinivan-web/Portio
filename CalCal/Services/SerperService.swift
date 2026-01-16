@@ -118,7 +118,7 @@ class SerperService {
         }
 
         if let organic = json["organic"] as? [[String: Any]] {
-            for item in organic.prefix(2) {
+            for item in organic.prefix(4) {
                 if let title = item["title"] as? String,
                    let link = item["link"] as? String,
                    let snippet = item["snippet"] as? String {

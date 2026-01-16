@@ -5,10 +5,10 @@
 	<key>API_KEY</key>
 	<string>AIzaSyBG0pZOuRJY1jYa3M1yCl1oA8hAZtGf7cQ</string>
 	<key>OPENROUTER_API_KEY</key>
-	<string>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</string>
+	<string>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</string>
 	<key>SERPER_API_KEY</key>
-	<string>YOUR_SERPER_API_KEY_HERE</string>
+	<string>bd7e8a5321c0ca8a274a765c63090e04a54ae5a6</string>
 	<key>MODEL_NAME</key>
-	<string>google/gemma-3-27b-it:free</string>
+	<string>openai/gpt-oss-120b:free</string>
 </dict>
 </plist>

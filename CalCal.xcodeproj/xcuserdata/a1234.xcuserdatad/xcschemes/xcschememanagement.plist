@@ -7,12 +7,25 @@
 		<key>CalCal.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<key>CalCalWidgetExtension.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>7C200DCD2F16E860004AEE4C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7C2CBB502E9BC212006BCA61</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

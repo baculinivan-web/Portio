@@ -17,6 +17,7 @@
     - Create `initialSystemPrompt` focused on tool batching and investigation.
     - Create `finalSystemPrompt` focused on analysis and JSON generation.
     - Update logic to swap the system prompt after tool results are obtained.
+- [x] Task: Update `NutritionService` to disable `tools` and `toolChoice` in the `OpenRouterRequest` for the final turn (when `finalSystemPrompt` is used) to force JSON generation and prevent loop recurrence. 2ddb504
 - [ ] Task: Verify parallel execution by logging timestamps or observing console logs for simultaneous request start.
 - [ ] Task: Verify retry logic by simulating a network failure (optional/manual).
 - [~] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)

@@ -320,26 +320,37 @@ class NutritionService {
                     return aggregatedResults
                 }
                 
-                // Process results sequentially on the main actor context (or serially after parallel work)
-                // to safely update state and message history
+                // Safely update state and aggregate results
+                var resultsSummary = ""
                 for result in results {
                     switch result {
-                    case .google(let id, let content, let step):
+                    case .google(_, let content, let step):
                         capturedSearchSteps.append(step)
-                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "google_search"))
-                    case .off(let id, let content):
+                        resultsSummary += "\n[Search Result]: \(content)\n"
+                    case .off(_, let content):
                         didUseOFF = true
-                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "openfoodfacts_search"))
-                    case .error(let id, let content):
-                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "error"))
+                        resultsSummary += "\n[Branded Product Data]: \(content)\n"
+                    case .error(_, let content):
+                        resultsSummary += "\n[Tool Error]: \(content)\n"
                     }
                 }
                 
-                // Swap the system prompt to the final analysis prompt now that we have data
-                if !results.isEmpty {
-                    messages[0] = .init(role: "system", content: .string(finalSystemPrompt))
-                    isAnalysisPass = true
-                }
+                // Collapse context for the final turn
+                let finalUserPrompt = """
+                User's Original Query: "\(query)"
+                
+                Gathered Information:
+                \(resultsSummary)
+                
+                Based on the information above, provide the final nutritional analysis.
+                """
+                
+                messages = [
+                    .init(role: "system", content: .string(finalSystemPrompt)),
+                    .init(role: "user", content: .string(finalUserPrompt))
+                ]
+                
+                isAnalysisPass = true
                 
                 // Continue the loop to get the next response from the LLM
                 continue
@@ -371,7 +382,12 @@ class NutritionService {
                     if didUseOFF {
                         for i in 0..<foods.count {
                             if foods[i].isSearchGrounded == true {
-                                foods[i].dataSource = "OFF"
+                                // If already has "Google", append "OFF", else set to "OFF"
+                                if let currentSource = foods[i].dataSource, !currentSource.contains("OFF") {
+                                    foods[i].dataSource = "\(currentSource), OFF"
+                                } else if foods[i].dataSource == nil {
+                                    foods[i].dataSource = "OFF"
+                                }
                             }
                         }
                     }

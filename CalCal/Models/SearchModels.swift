@@ -15,9 +15,11 @@ public struct SearchResult: Codable, Hashable {
 public struct SearchStep: Codable, Hashable {
     public let query: String
     public let results: [SearchResult]
+    public let answerBox: String?
     
-    public init(query: String, results: [SearchResult]) {
+    public init(query: String, results: [SearchResult], answerBox: String? = nil) {
         self.query = query
         self.results = results
+        self.answerBox = answerBox
     }
 }
