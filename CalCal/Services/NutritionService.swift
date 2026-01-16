@@ -150,6 +150,7 @@ class NutritionService {
         ]
 
         var capturedSearchSteps: [SearchStep] = []
+        var didUseOFF = false
 
         // Loop for tool calling
         for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
@@ -272,6 +273,7 @@ class NutritionService {
                         var resultString = ""
                         do {
                             let products = try await offService.searchProducts(query: searchQuery)
+                            didUseOFF = true
                             
                             if products.isEmpty {
                                 resultString = "No products found in OpenFoodFacts database."
@@ -318,6 +320,15 @@ class NutritionService {
                         for i in 0..<foods.count {
                             if foods[i].isSearchGrounded == true {
                                 foods[i].searchSteps = capturedSearchSteps
+                            }
+                        }
+                    }
+                    
+                    // Enforce OFF data source if tool was used
+                    if didUseOFF {
+                        for i in 0..<foods.count {
+                            if foods[i].isSearchGrounded == true {
+                                foods[i].dataSource = "OFF"
                             }
                         }
                     }
@@ -439,7 +450,7 @@ struct NutritionResponse: Codable {
     let carbsPer100g: Double
     let fatPer100g: Double
     let isSearchGrounded: Bool?
-    let dataSource: String?
+    var dataSource: String?
     var searchSteps: [SearchStep]?
 }
 
