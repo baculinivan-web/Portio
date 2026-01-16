@@ -6,10 +6,10 @@
 - [x] Task: Conductor - User Manual Verification 'OpenFoodFacts Service Implementation' (Protocol in workflow.md) c8f0e38
 
 ## Phase 2: NutritionService Tool Integration
-- [ ] Task: Define the `openfoodfacts_search` tool in `NutritionService`.
-- [ ] Task: Update the tool calling loop in `NutritionService.fetchNutrition` to handle the new tool.
-- [ ] Task: Update the system prompt to instruct the LLM to prioritize OpenFoodFacts for branded items and use its serving size data for portion estimation.
-- [ ] Task: Conductor - User Manual Verification 'NutritionService Tool Integration' (Protocol in workflow.md)
+- [x] Task: Define the `openfoodfacts_search` tool in `NutritionService`. d15be4e
+- [x] Task: Update the tool calling loop in `NutritionService.fetchNutrition` to handle the new tool. d15be4e
+- [x] Task: Update the system prompt to instruct the LLM to prioritize OpenFoodFacts for branded items and use its serving size data for portion estimation. d15be4e
+- [~] Task: Conductor - User Manual Verification 'NutritionService Tool Integration' (Protocol in workflow.md)
 
 ## Phase 3: Data Model and UI Synchronization
 - [ ] Task: Update `NutritionResponse` and `FoodItem` models to include a source identifier (e.g., `dataSource`).
