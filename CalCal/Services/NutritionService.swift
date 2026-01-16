@@ -158,12 +158,14 @@ class NutritionService {
 
         var capturedSearchSteps: [SearchStep] = []
         var didUseOFF = false
+        var isAnalysisPass = false
 
         // Loop for tool calling
         for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
             #if DEBUG
             print("\n--- OPENROUTER REQUEST ---")
             print("Model: \(self.modelName)")
+            print("Is Analysis Pass: \(isAnalysisPass)")
             for (index, msg) in messages.enumerated() {
                 print("Message [\(index)] (\(msg.role)):")
                 if let content = msg.content {
@@ -200,8 +202,8 @@ class NutritionService {
                 model: self.modelName,
                 messages: messages,
                 responseFormat: nil,
-                tools: tools,
-                toolChoice: .auto,
+                tools: isAnalysisPass ? nil : tools,
+                toolChoice: isAnalysisPass ? nil : .auto,
                 reasoning: .init(effort: "low") // Optimize for speed
             )
             
@@ -336,6 +338,7 @@ class NutritionService {
                 // Swap the system prompt to the final analysis prompt now that we have data
                 if !results.isEmpty {
                     messages[0] = .init(role: "system", content: .string(finalSystemPrompt))
+                    isAnalysisPass = true
                 }
                 
                 // Continue the loop to get the next response from the LLM
