@@ -218,6 +218,13 @@ struct ContentView: View {
         currentStreakCount = (try? streakManager.calculateCurrentStreak()) ?? 0
         activeAchievement = level
         
+        // Trigger Haptics
+        if level == .level1 {
+            HapticManager.shared.triggerSuccess()
+        } else {
+            HapticManager.shared.triggerAchievementSequence()
+        }
+        
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             showStreakNotification = true
         }
