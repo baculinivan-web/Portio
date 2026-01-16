@@ -8,8 +8,8 @@
 
 ## Phase 2: Toolbar Streak Indicator
 - [x] Task: Implement today's logging check logic in a ViewModel or Manager. ff9df21
-- [ ] Task: Add the "fire" icon (`flame.fill`) to `ContentView` toolbar.
-- [ ] Task: Style the icon based on today's logging status (orange if logged, gray otherwise).
+- [x] Task: Add the "fire" icon (`flame.fill`) to `ContentView` toolbar. a7f222c
+- [x] Task: Style the icon based on today's logging status (orange if logged, gray otherwise). a7f222c
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Toolbar Streak Indicator' (Protocol in workflow.md)
 
 ## Phase 3: Streak History UI (The "TikTok" Grid)
