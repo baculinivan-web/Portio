@@ -13,8 +13,8 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Toolbar Streak Indicator' (Protocol in workflow.md)
 
 ## Phase 3: Streak History UI (The "TikTok" Grid)
-- [ ] Task: Create `ContributionGridView` for a single month based on the reference design.
-- [ ] Task: Implement the "TikTok-style" vertical paging `ScrollView` in `StreakHistoryView`.
+- [x] Task: Create `ContributionGridView` for a single month based on the reference design. 2989ec2
+- [x] Task: Implement the "TikTok-style" vertical paging `ScrollView` in `StreakHistoryView`. 2989ec2
 - [ ] Task: Write unit tests for the dot coloring logic (Losing vs Gaining vs Maintaining modes).
 - [ ] Task: Implement the dot coloring logic in `ContributionGridView`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Streak History UI (The "TikTok" Grid)' (Protocol in workflow.md)
