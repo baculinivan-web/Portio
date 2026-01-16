@@ -49,4 +49,16 @@ struct UserSettings {
         get { shared.bool(forKey: "hasCompletedOnboarding") }
         set { shared.set(newValue, forKey: "hasCompletedOnboarding") }
     }
+    
+    // MARK: - Streak Achievement Tracking
+    
+    static var lastLevel1ShownDate: Date? {
+        get { shared.object(forKey: "lastLevel1ShownDate") as? Date }
+        set { shared.set(newValue, forKey: "lastLevel1ShownDate") }
+    }
+    
+    static var lastLevel2ShownDate: Date? {
+        get { shared.object(forKey: "lastLevel2ShownDate") as? Date }
+        set { shared.set(newValue, forKey: "lastLevel2ShownDate") }
+    }
 }
