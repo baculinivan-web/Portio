@@ -5,25 +5,25 @@ struct StreakNotificationPill: View {
     let streakCount: Int
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Image(systemName: "flame.fill")
                 .foregroundStyle(.orange)
-                .font(.title3)
+                .font(.system(size: 32, weight: .bold)) // Bigger icon
             
             Text(level == .level1 ? "\(streakCount) Day Streak!" : "Daily Goal Achieved!")
-                .font(.system(.headline, design: .rounded))
+                .font(.system(size: 24, weight: .bold, design: .rounded)) // Bigger text
                 .foregroundStyle(.primary)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 32)
+        .padding(.vertical, 20)
         .background {
             Capsule()
                 .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
         }
         .overlay {
             Capsule()
-                .stroke(.white.opacity(0.2), lineWidth: 0.5)
+                .stroke(.white.opacity(0.3), lineWidth: 1)
         }
     }
 }

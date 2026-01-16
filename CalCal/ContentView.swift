@@ -118,24 +118,48 @@ struct ContentView: View {
                     StatisticsView()
                 }
             }
-            .navigationTitle("CalCal")
+            .navigationTitle(showStreakNotification ? "" : "CalCal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { isShowingSettings = true } label: {
-                        Image(systemName: "gear")
+                    if !showStreakNotification {
+                        Button { isShowingSettings = true } label: {
+                            Image(systemName: "gear")
+                        }
+                        .transition(.opacity)
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { isShowingStreakHistory = true } label: {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
-                            .animation(.spring(), value: hasLoggedToday)
-                            .matchedGeometryEffect(id: "streakIcon", in: streakAnimation, isSource: !showStreakNotification)
+                
+                ToolbarItem(placement: .principal) {
+                    if showStreakNotification, let level = activeAchievement {
+                        StreakNotificationPill(level: level, streakCount: currentStreakCount)
+                            .scaleEffect(0.7)
+                            .matchedGeometryEffect(id: "streakIcon", in: streakAnimation)
+                            .transition(.opacity.combined(with: .scale))
                     }
-                    .opacity(showStreakNotification ? 0 : 1)
                 }
+
                 ToolbarItem(placement: .topBarTrailing) {
-                    EditButton()
+                    HStack(spacing: 16) {
+                        if !showStreakNotification {
+                            Button { isShowingStreakHistory = true } label: {
+                                Image(systemName: "flame.fill")
+                                    .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
+                                    .animation(.spring(), value: hasLoggedToday)
+                                    .matchedGeometryEffect(id: "streakIcon", in: streakAnimation, isSource: true)
+                            }
+                            .simultaneousGesture(
+                                LongPressGesture().onEnded { _ in
+                                    #if DEBUG
+                                    triggerAchievement(.level1)
+                                    #endif
+                                }
+                            )
+                            .transition(.opacity)
+                            
+                            EditButton()
+                                .transition(.opacity)
+                        }
+                    }
                 }
             }
             .toolbarBackground(.visible, for: .navigationBar)
@@ -194,18 +218,6 @@ struct ContentView: View {
             }
             .onChange(of: todaysItems) { _, _ in
                 checkForAchievements()
-            }
-            .overlay(alignment: .top) {
-                if showStreakNotification, let level = activeAchievement {
-                    StreakNotificationPill(level: level, streakCount: currentStreakCount)
-                        .matchedGeometryEffect(id: "streakIcon", in: streakAnimation)
-                        .padding(.top, 10)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .scale(scale: 0.8).combined(with: .opacity)
-                        ))
-                        .zIndex(100)
-                }
             }
         }
     }
