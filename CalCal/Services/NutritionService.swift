@@ -108,8 +108,8 @@ class NutritionService {
         }
         
         var messages: [OpenRouterRequest.Message] = [
-            .init(role: "system", content: [.text(systemPrompt)]),
-            .init(role: "user", content: contentParts)
+            .init(role: "system", content: .string(systemPrompt)),
+            .init(role: "user", content: .parts(contentParts))
         ]
         
         let tools: [OpenRouterRequest.Tool] = [
@@ -160,15 +160,20 @@ class NutritionService {
             for (index, msg) in messages.enumerated() {
                 print("Message [\(index)] (\(msg.role)):")
                 if let content = msg.content {
-                    for part in content {
-                        switch part {
-                        case .text(let text):
-                            print("  Text: \(text)")
-                        case .imageUrl(let url):
-                            if url.hasPrefix("data:image") {
-                                print("  Image: [Base64 Data Truncated]")
-                            } else {
-                                print("  Image URL: \(url)")
+                    switch content {
+                    case .string(let text):
+                        print("  Text: \(text)")
+                    case .parts(let parts):
+                        for part in parts {
+                            switch part {
+                            case .text(let text):
+                                print("  Text: \(text)")
+                            case .imageUrl(let url):
+                                if url.hasPrefix("data:image") {
+                                    print("  Image: [Base64 Data Truncated]")
+                                } else {
+                                    print("  Image URL: \(url)")
+                                }
                             }
                         }
                     }
@@ -231,7 +236,7 @@ class NutritionService {
             // Add the assistant's message to the history
             messages.append(.init(
                 role: "assistant",
-                content: message.content != nil ? [.text(message.content!)] : nil,
+                content: message.content != nil ? .string(message.content!) : nil,
                 toolCalls: message.toolCalls
             ))
 
@@ -259,7 +264,7 @@ class NutritionService {
                         
                         messages.append(.init(
                             role: "tool",
-                            content: [.text(resultString)],
+                            content: resultString,
                             toolCallId: toolCall.id,
                             name: "google_search"
                         ))
@@ -292,7 +297,7 @@ class NutritionService {
                         
                         messages.append(.init(
                             role: "tool",
-                            content: [.text(resultString)],
+                            content: resultString,
                             toolCallId: toolCall.id,
                             name: "openfoodfacts_search"
                         ))
@@ -373,7 +378,7 @@ class NutritionService {
 
         let openRouterRequest = OpenRouterRequest(
             model: self.modelName,
-            messages: [.init(role: "user", content: [.text(prompt)])],
+            messages: [.init(role: "user", content: .string(prompt))],
             responseFormat: nil 
         )
         

@@ -58,7 +58,7 @@ struct OpenRouterRequest: Encodable {
     
     struct Message: Encodable {
         let role: String
-        let content: [ContentPart]?
+        let content: MessageContent?
         let toolCalls: [ToolCall]?
         let toolCallId: String?
         let name: String?
@@ -69,12 +69,35 @@ struct OpenRouterRequest: Encodable {
             case toolCallId = "tool_call_id"
         }
         
-        init(role: String, content: [ContentPart]? = nil, toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
+        init(role: String, content: MessageContent? = nil, toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
             self.role = role
             self.content = content
             self.toolCalls = toolCalls
             self.toolCallId = toolCallId
             self.name = name
+        }
+        
+        // Convenience init for array of parts
+        init(role: String, content: [ContentPart], toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
+            self.init(role: role, content: .parts(content), toolCalls: toolCalls, toolCallId: toolCallId, name: name)
+        }
+        
+        // Convenience init for simple string
+        init(role: String, content: String, toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
+            self.init(role: role, content: .string(content), toolCalls: toolCalls, toolCallId: toolCallId, name: name)
+        }
+    }
+    
+    enum MessageContent: Encodable {
+        case string(String)
+        case parts([ContentPart])
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            switch self {
+            case .string(let s): try container.encode(s)
+            case .parts(let p): try container.encode(p)
+            }
         }
     }
     
