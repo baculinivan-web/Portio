@@ -196,7 +196,8 @@ class NutritionService {
                 messages: messages,
                 responseFormat: nil,
                 tools: tools,
-                toolChoice: .auto
+                toolChoice: .auto,
+                reasoning: .init(effort: "low") // Optimize for speed
             )
             
             request.httpBody = try JSONEncoder().encode(openRouterRequest)
