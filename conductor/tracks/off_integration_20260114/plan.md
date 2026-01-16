@@ -23,4 +23,4 @@
 - [x] Task: Refine `systemPrompt` in `NutritionService` to instruct the LLM to strip quantities/weights from `openfoodfacts_search` queries to improve hit rate. 52826b5
 - [x] Task: Fix `dataSource` attribution reliability by tracking OFF tool usage in `NutritionService` and forcing the `dataSource` property on response items. eca9b06
 - [x] Task: Update `CalorieTrackerViewModel.swift` to map `dataSource` from `NutritionResponse` to `FoodItem`. 2470932
-- [ ] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md)
