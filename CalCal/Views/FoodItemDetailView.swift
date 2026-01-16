@@ -53,18 +53,33 @@ struct FoodItemDetailView: View {
                 if item.isSearchGrounded {
                     HStack {
                         Spacer()
-                        HStack(spacing: 4) {
-                            Image(systemName: "magnifyingglass.circle.fill")
-                                .font(.caption)
-                            Text("Google Search grounded")
-                                .font(.caption2.bold())
-                                .textCase(.uppercase)
+                        if let source = item.dataSource, source.contains("OFF") {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.caption)
+                                Text("Verified Brand Data")
+                                    .font(.caption2.bold())
+                                    .textCase(.uppercase)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.green.opacity(0.1))
+                            .foregroundStyle(.green)
+                            .clipShape(Capsule())
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "magnifyingglass.circle.fill")
+                                    .font(.caption)
+                                Text("Google Search grounded")
+                                    .font(.caption2.bold())
+                                    .textCase(.uppercase)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundStyle(.blue)
+                            .clipShape(Capsule())
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundStyle(.blue)
-                        .clipShape(Capsule())
                     }
                     
                     ForEach(item.searchSteps, id: \.self) { step in
