@@ -13,6 +13,10 @@
 
 ## Phase 3: Verification and Refinement
 - [x] Task: Update `OpenRouterModels.swift` and `NutritionService` to support and send `reasoning_effort: "low"` (where supported) to reduce latency. 1b0a71c
+- [x] Task: Implement Dynamic System Prompting in `NutritionService`. 5052289
+    - Create `initialSystemPrompt` focused on tool batching and investigation.
+    - Create `finalSystemPrompt` focused on analysis and JSON generation.
+    - Update logic to swap the system prompt after tool results are obtained.
 - [ ] Task: Verify parallel execution by logging timestamps or observing console logs for simultaneous request start.
 - [ ] Task: Verify retry logic by simulating a network failure (optional/manual).
-- [ ] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
