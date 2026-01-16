@@ -51,4 +51,26 @@ public class SharedDataManager {
             return NutritionStats(date: startOfDay, calories: 0, protein: 0, carbs: 0, fat: 0)
         }
     }
+    
+    @MainActor
+    public func hasLoggedToday() -> Bool {
+        let context = container.mainContext
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: Date())
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        let predicate = #Predicate<FoodItem> { item in
+            item.dateEaten >= startOfDay && item.dateEaten < endOfDay
+        }
+        
+        var descriptor = FetchDescriptor<FoodItem>(predicate: predicate)
+        descriptor.fetchLimit = 1 // We only need to know if at least one exists
+        
+        do {
+            let count = try context.fetchCount(descriptor)
+            return count > 0
+        } catch {
+            return false
+        }
+    }
 }
