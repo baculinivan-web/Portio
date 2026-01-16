@@ -29,5 +29,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Streak & Monthly Contribution System
-*Link: [./conductor/tracks/streak_system_20260116/](./conductor/tracks/streak_system_20260116/)*
+## [~] Track: Streak Achievement Notification
+*Link: [./conductor/tracks/streak_notification_20260116/](./conductor/tracks/streak_notification_20260116/)*

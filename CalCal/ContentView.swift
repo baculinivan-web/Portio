@@ -120,14 +120,14 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button { isShowingStreakHistory = true } label: {
-                            Image(systemName: "flame.fill")
-                                .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
-                                .animation(.spring(), value: hasLoggedToday)
-                        }
-                        EditButton()
+                    Button { isShowingStreakHistory = true } label: {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
+                            .animation(.spring(), value: hasLoggedToday)
                     }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    EditButton()
                 }
             }
             .toolbarBackground(.visible, for: .navigationBar)

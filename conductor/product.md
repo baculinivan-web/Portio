@@ -14,6 +14,7 @@ CalCal is an iOS application designed to track food intake and nutritional infor
 - **AI Recognition:** Intelligent identification of food items from both natural language text descriptions and captured images (via integrated camera or gallery).
 - **Data Persistence:** Reliable local storage of food logs and nutritional data using SwiftData.
 - **Manual Control:** Flexibility for users to manually edit identified items or nutritional values to ensure total accuracy.
+- **Streak & History System:** A visual "fire" streak indicator and a GitHub-style monthly contribution grid with TikTok-style vertical paging. Users can tap any day to view a detailed summary of that day's consumption.
 - **Home Screen Widgets:** Quick-glance calorie and macro tracking with deep-link shortcuts for rapid logging.
 - **Proactive Warnings:** Real-time monitoring of daily limits with warning cards and detailed nutritional analysis when approaching or exceeding goals.
 
