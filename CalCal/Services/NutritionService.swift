@@ -241,68 +241,90 @@ class NutritionService {
             ))
 
             if choice.finishReason == "tool_calls", let toolCalls = message.toolCalls {
-                for toolCall in toolCalls {
-                    if toolCall.function.name == "google_search" {
-                        guard let argsData = toolCall.function.arguments.data(using: .utf8),
-                              let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
-                              let searchQuery = args["query"] as? String else {
-                            continue
-                        }
-                        
-                        let searchStep = try await serperService.searchStructured(query: searchQuery)
-                        capturedSearchSteps.append(searchStep)
-                        
-                        // Convert back to string for the AI
-                        var resultString = ""
-                        if let answer = searchStep.answerBox {
-                            resultString += "Answer: \(answer)\n"
-                        }
-                        resultString += "Top results (4):\n"
-                        for (i, res) in searchStep.results.enumerated() {
-                            resultString += "\(i+1). \(res.title): \(res.snippet)\n"
-                        }
-                        
-                        messages.append(.init(
-                            role: "tool",
-                            content: resultString,
-                            toolCallId: toolCall.id,
-                            name: "google_search"
-                        ))
-                    } else if toolCall.function.name == "openfoodfacts_search" {
-                        guard let argsData = toolCall.function.arguments.data(using: .utf8),
-                              let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
-                              let searchQuery = args["query"] as? String else {
-                            continue
-                        }
-                        
-                        var resultString = ""
-                        do {
-                            let products = try await offService.searchProducts(query: searchQuery)
-                            didUseOFF = true
-                            
-                            if products.isEmpty {
-                                resultString = "No products found in OpenFoodFacts database."
-                            } else {
-                                resultString = "Found \(products.count) products. Top 3 relevant results:\n"
-                                for (i, product) in products.prefix(3).enumerated() {
-                                    resultString += "\(i+1). Name: \(product.productName ?? "Unknown") | Brand: \(product.brands ?? "Unknown") | Serving: \(product.servingSize ?? "Unknown")\n"
-                                    if let nuts = product.nutriments {
-                                        resultString += "   Per 100g: \(nuts.energyKcal100g ?? 0) kcal, P: \(nuts.proteins100g ?? 0)g, C: \(nuts.carbohydrates100g ?? 0)g, F: \(nuts.fat100g ?? 0)g\n"
+                
+                enum ToolResult {
+                    case google(id: String, content: String, step: SearchStep)
+                    case off(id: String, content: String)
+                    case error(id: String, content: String)
+                }
+                
+                // Execute tool calls in parallel
+                let results = await withTaskGroup(of: ToolResult.self) { group in
+                    for toolCall in toolCalls {
+                        group.addTask {
+                            if toolCall.function.name == "google_search" {
+                                guard let argsData = toolCall.function.arguments.data(using: .utf8),
+                                      let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
+                                      let searchQuery = args["query"] as? String else {
+                                    return .error(id: toolCall.id, content: "Error: Invalid arguments")
+                                }
+                                
+                                do {
+                                    let searchStep = try await self.serperService.searchStructured(query: searchQuery)
+                                    var resultString = ""
+                                    if let answer = searchStep.answerBox {
+                                        resultString += "Answer: \(answer)\n"
                                     }
+                                    resultString += "Top results (4):\n"
+                                    for (i, res) in searchStep.results.enumerated() {
+                                        resultString += "\(i+1). \(res.title): \(res.snippet)\n"
+                                    }
+                                    return .google(id: toolCall.id, content: resultString, step: searchStep)
+                                } catch {
+                                    return .error(id: toolCall.id, content: "Error: \(error.localizedDescription)")
+                                }
+                            } else if toolCall.function.name == "openfoodfacts_search" {
+                                guard let argsData = toolCall.function.arguments.data(using: .utf8),
+                                      let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
+                                      let searchQuery = args["query"] as? String else {
+                                    return .error(id: toolCall.id, content: "Error: Invalid arguments")
+                                }
+                                
+                                do {
+                                    let products = try await self.offService.searchProducts(query: searchQuery)
+                                    var resultString = ""
+                                    if products.isEmpty {
+                                        resultString = "No products found in OpenFoodFacts database."
+                                    } else {
+                                        resultString = "Found \(products.count) products. Top 3 relevant results:\n"
+                                        for (i, product) in products.prefix(3).enumerated() {
+                                            resultString += "\(i+1). Name: \(product.productName ?? "Unknown") | Brand: \(product.brands ?? "Unknown") | Serving: \(product.servingSize ?? "Unknown")\n"
+                                            if let nuts = product.nutriments {
+                                                resultString += "   Per 100g: \(nuts.energyKcal100g ?? 0) kcal, P: \(nuts.proteins100g ?? 0)g, C: \(nuts.carbohydrates100g ?? 0)g, F: \(nuts.fat100g ?? 0)g\n"
+                                            }
+                                        }
+                                    }
+                                    return .off(id: toolCall.id, content: resultString)
+                                } catch {
+                                    return .error(id: toolCall.id, content: "Error: \(error.localizedDescription)")
                                 }
                             }
-                        } catch {
-                            resultString = "Error searching OpenFoodFacts: \(error.localizedDescription)"
+                            return .error(id: toolCall.id, content: "Error: Unknown tool")
                         }
-                        
-                        messages.append(.init(
-                            role: "tool",
-                            content: resultString,
-                            toolCallId: toolCall.id,
-                            name: "openfoodfacts_search"
-                        ))
+                    }
+                    
+                    var aggregatedResults: [ToolResult] = []
+                    for await result in group {
+                        aggregatedResults.append(result)
+                    }
+                    return aggregatedResults
+                }
+                
+                // Process results sequentially on the main actor context (or serially after parallel work)
+                // to safely update state and message history
+                for result in results {
+                    switch result {
+                    case .google(let id, let content, let step):
+                        capturedSearchSteps.append(step)
+                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "google_search"))
+                    case .off(let id, let content):
+                        didUseOFF = true
+                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "openfoodfacts_search"))
+                    case .error(let id, let content):
+                        messages.append(.init(role: "tool", content: content, toolCallId: id, name: "error"))
                     }
                 }
+                
                 // Continue the loop to get the next response from the LLM
                 continue
             } else {
