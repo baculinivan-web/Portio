@@ -53,9 +53,11 @@ class NutritionService {
         request.addValue("https://calcal.app", forHTTPHeaderField: "HTTP-Referer")
         request.addValue("CalCal", forHTTPHeaderField: "X-Title")
 
-        var systemPrompt = """
+        var initialSystemPrompt = """
         You are a highly accurate nutritional analysis expert.
-        Analyze the food query and images provided by the user to identify each distinct food item and return its nutritional information.
+        Analyze the food query and images provided by the user to identify each distinct food item.
+        
+        Your primary goal in this turn is to IDENTIFY ALL necessary information gathering steps.
         
         If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use available tools to find the most accurate and up-to-date nutritional information.
         
@@ -66,22 +68,19 @@ class NutritionService {
            CRITICAL: When using `openfoodfacts_search`, pass ONLY the brand and product name (e.g., "Coke Zero", "Snickers", "Сырок Ростагроэкспорт"). DO NOT include weights, volumes, or packaging details (e.g., "0.33l", "50g", "box") in the search query, as this often causes the search to fail. The tool will return available sizes/quantities for you to select from.
         2. `google_search`: Use this if `openfoodfacts_search` returns no results, or for restaurant menu items ("Big Mac"), generic dishes ("Caesar Salad"), or specific queries requiring web synthesis.
         
-        CRITICAL PORTION ESTIMATION RULE: For branded or packaged items, if the user does not specify a weight, you MUST use the serving size or unit weight returned by the tools. NEVER default to 100g if the standard unit weight is different.
+        Do not output JSON yet. Focus on gathering data.
+        """
         
-        CRITICAL SEARCH LANGUAGE RULE: Always perform searches in the SAME language as the user's input query to ensure the most relevant local results.
+        var finalSystemPrompt = """
+        You are a highly accurate nutritional analysis expert.
+        
+        CRITICAL: Analyze the tool results provided in the conversation history and the original user query.
+        
+        CRITICAL PORTION ESTIMATION RULE: For branded or packaged items, if the user does not specify a weight, you MUST use the serving size or unit weight returned by the tools. NEVER default to 100g if the standard unit weight is different.
         
         CRITICAL: If you used a tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
         
         CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
-        """
-        
-        var userPrompt = "Analyze the food query: '\(query)'."
-        
-        if !images.isEmpty {
-            userPrompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
-        }
-        
-        userPrompt += """
         
         The JSON object must have a single key "foods" which is an array of objects. Each object in the array must have these exact keys and value types:
         - "identifiedFood": String (A descriptive name, e.g., "1 large apple")
@@ -101,6 +100,12 @@ class NutritionService {
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
         
+        var userPrompt = "Analyze the food query: '\(query)'."
+        
+        if !images.isEmpty {
+            userPrompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
+        }
+        
         var contentParts: [OpenRouterRequest.ContentPart] = [.text(userPrompt)]
         
         for imageData in images {
@@ -110,7 +115,7 @@ class NutritionService {
         }
         
         var messages: [OpenRouterRequest.Message] = [
-            .init(role: "system", content: .string(systemPrompt)),
+            .init(role: "system", content: .string(initialSystemPrompt)),
             .init(role: "user", content: .parts(contentParts))
         ]
         
@@ -326,6 +331,11 @@ class NutritionService {
                     case .error(let id, let content):
                         messages.append(.init(role: "tool", content: content, toolCallId: id, name: "error"))
                     }
+                }
+                
+                // Swap the system prompt to the final analysis prompt now that we have data
+                if !results.isEmpty {
+                    messages[0] = .init(role: "system", content: .string(finalSystemPrompt))
                 }
                 
                 // Continue the loop to get the next response from the LLM
