@@ -188,12 +188,15 @@ struct ContentView: View {
             .onReceive(timer) { input in
                 currentTime = input
             }
-            .task {
-                // Check for achievements on launch (e.g. if logged via widget)
-                checkForAchievements()
-            }
             .onChange(of: todaysItems) { _, _ in
-                checkForAchievements()
+                if let achievement = StreakAchievementManager.checkAchievement(
+                    totalCalories: totalCalories,
+                    calorieGoal: calorieGoal,
+                    weightGoalMode: UserSettings.weightGoalMode,
+                    hasEntries: !todaysItems.isEmpty
+                ) {
+                    triggerAchievement(achievement)
+                }
             }
             .overlay(alignment: .top) {
                 if showStreakNotification, let level = activeAchievement {
@@ -230,20 +233,6 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 showStreakNotification = false
-            }
-        }
-    }
-
-    private func checkForAchievements() {
-        if let achievement = StreakAchievementManager.checkAchievement(
-            totalCalories: totalCalories,
-            calorieGoal: calorieGoal,
-            weightGoalMode: UserSettings.weightGoalMode,
-            hasEntries: !todaysItems.isEmpty
-        ) {
-            // Delay slightly to ensure UI is ready and icon is in place
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                triggerAchievement(achievement)
             }
         }
     }
