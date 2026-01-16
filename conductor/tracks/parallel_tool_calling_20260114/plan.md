@@ -7,10 +7,9 @@
 - [x] Task: Update the `capturedSearchSteps` and `didUseOFF` tracking to handle concurrent updates safely (e.g., using an Actor or thread-safe array). (Handled via Enum aggregation) 63538a1
 - [x] Task: Conductor - User Manual Verification 'Service Refactoring' (Protocol in workflow.md) 43b3ab3
 
-## Phase 2: Prompt Engineering
+## Phase 2: Prompt Engineering [DONE] Checkpoint: bcec4b6
 - [x] Task: Update the `systemPrompt` in `NutritionService` to explicitly instruct the model to batch tool calls. 728a241
-    - Add: "Analyze the entire query first. If multiple items need searching, emit ALL tool calls in a single turn."
-- [~] Task: Conductor - User Manual Verification 'Prompt Engineering' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Prompt Engineering' (Protocol in workflow.md) bcec4b6
 
 ## Phase 3: Verification and Refinement
 - [ ] Task: Update `OpenRouterModels.swift` and `NutritionService` to support and send `reasoning_effort: "low"` (where supported) to reduce latency.
