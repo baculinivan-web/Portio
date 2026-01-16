@@ -8,11 +8,12 @@
 - [x] Task: Conductor - User Manual Verification 'Service Refactoring' (Protocol in workflow.md) 43b3ab3
 
 ## Phase 2: Prompt Engineering
-- [ ] Task: Update the `systemPrompt` in `NutritionService` to explicitly instruct the model to batch tool calls.
+- [x] Task: Update the `systemPrompt` in `NutritionService` to explicitly instruct the model to batch tool calls. 728a241
     - Add: "Analyze the entire query first. If multiple items need searching, emit ALL tool calls in a single turn."
-- [ ] Task: Conductor - User Manual Verification 'Prompt Engineering' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Prompt Engineering' (Protocol in workflow.md)
 
-## Phase 3: Verification
+## Phase 3: Verification and Refinement
+- [ ] Task: Update `OpenRouterModels.swift` and `NutritionService` to support and send `reasoning_effort: "low"` (where supported) to reduce latency.
 - [ ] Task: Verify parallel execution by logging timestamps or observing console logs for simultaneous request start.
 - [ ] Task: Verify retry logic by simulating a network failure (optional/manual).
 - [ ] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
