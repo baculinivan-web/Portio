@@ -30,6 +30,7 @@ class NutritionService {
     private let modelName: String
     private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
     private let serperService = SerperService()
+    private let offService = OpenFoodFactsService()
 
     init() {
         guard let apiKey = APIKeyManager.getOpenRouterAPIKey() else {
@@ -56,20 +57,17 @@ class NutritionService {
         You are a highly accurate nutritional analysis expert.
         Analyze the food query and images provided by the user to identify each distinct food item and return its nutritional information.
         
-        If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use the `google_search` tool to find the most accurate and up-to-date nutritional information.
+        If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use available tools to find the most accurate and up-to-date nutritional information.
         
-        CRITICAL PORTION ESTIMATION RULE: For branded or packaged items (e.g., "Сырок Ростагроэкспорт", "Big Mac", "Snickers"), if the user does not specify a weight, you MUST estimate the weight of ONE standard unit/serving (e.g., one bar, one burger, one pack). NEVER default to 100g if the standard unit weight is different. If you do not know the weight of a standard unit, you MUST perform a separate `google_search` specifically to find the typical weight of that item (e.g., "weight of one Syrok Rostagroexport").
+        TOOL PRIORITY RULE:
+        1. `openfoodfacts_search`: Use this FIRST for any branded, packaged, or barcoded product query (e.g., "Nutella", "Chobani", "Oreo"). The data is structured and highly reliable.
+        2. `google_search`: Use this if `openfoodfacts_search` returns no results, or for restaurant menu items ("Big Mac"), generic dishes ("Caesar Salad"), or specific queries requiring web synthesis.
         
-        CRITICAL SEARCH LANGUAGE RULE: Always perform `google_search` in the SAME language as the user's input query to ensure the most relevant local results.
+        CRITICAL PORTION ESTIMATION RULE: For branded or packaged items, if the user does not specify a weight, you MUST use the serving size or unit weight returned by the tools. NEVER default to 100g if the standard unit weight is different.
         
-        SEARCH RESULT EVALUATION RULE: When analyzing search results, you MUST verify that the brand or manufacturer in the snippet EXACTLY matches the user's query. Pay close attention to suffixes and specific brand names (e.g., "Rostagroexport" is NOT the same as "Rostagrocomplex"). If results for the exact brand are available, you MUST prioritize them over similar but different brands.
+        CRITICAL SEARCH LANGUAGE RULE: Always perform searches in the SAME language as the user's input query to ensure the most relevant local results.
         
-        SEARCH QUERY CONSTRUCTION RULE: When performing search, you MUST use these specific query patterns:
-        1. For nutritional data: "{product name} nutrition facts" or "{product name} БЖУ".
-        2. For portion/unit weight: "{product name} portion weight", "{product name} serving weight", "{product name} вес порции", or "{product name} вес 1 штуки".
-        Ensure at least one query focuses on nutritional facts and another explicitly on weight if it's not clearly stated in the first result.
-        
-        CRITICAL: If you used the `google_search` tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
+        CRITICAL: If you used a tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
         
         CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
         """
@@ -95,6 +93,7 @@ class NutritionService {
         - "carbsPer100g": Double
         - "fatPer100g": Double
         - "isSearchGrounded": Boolean
+        - "dataSource": String (Optional: "OFF" for OpenFoodFacts, "Google" for Google Search, or null/omitted for internal knowledge)
         If the query is "an apple and a banana", you must return two separate objects in the "foods" array. If the query is "a glass of milk", return one object in the array.
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
@@ -124,6 +123,23 @@ class NutritionService {
                             "query": .object([
                                 "type": .string("string"),
                                 "description": .string("The search query, e.g., 'McDonalds Big Mac nutrition facts', 'weight of one Snickers bar', or 'Сырок Ростагроэкспорт вес 1 шт'.")
+                            ])
+                        ]),
+                        "required": .array([.string("query")])
+                    ]
+                )
+            ),
+            .init(
+                type: "function",
+                function: .init(
+                    name: "openfoodfacts_search",
+                    description: "Search OpenFoodFacts database for branded, packaged products to get precise nutritional data and serving sizes.",
+                    parameters: [
+                        "type": .string("object"),
+                        "properties": .object([
+                            "query": .object([
+                                "type": .string("string"),
+                                "description": .string("The product name or brand to search for, e.g., 'Nutella', 'Coca Cola', 'Oreo'.")
                             ])
                         ]),
                         "required": .array([.string("query")])
@@ -244,6 +260,38 @@ class NutritionService {
                             content: [.text(resultString)],
                             toolCallId: toolCall.id,
                             name: "google_search"
+                        ))
+                    } else if toolCall.function.name == "openfoodfacts_search" {
+                        guard let argsData = toolCall.function.arguments.data(using: .utf8),
+                              let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
+                              let searchQuery = args["query"] as? String else {
+                            continue
+                        }
+                        
+                        var resultString = ""
+                        do {
+                            let products = try await offService.searchProducts(query: searchQuery)
+                            
+                            if products.isEmpty {
+                                resultString = "No products found in OpenFoodFacts database."
+                            } else {
+                                resultString = "Found \(products.count) products. Top 3 relevant results:\n"
+                                for (i, product) in products.prefix(3).enumerated() {
+                                    resultString += "\(i+1). Name: \(product.productName ?? "Unknown") | Brand: \(product.brands ?? "Unknown") | Serving: \(product.servingSize ?? "Unknown")\n"
+                                    if let nuts = product.nutriments {
+                                        resultString += "   Per 100g: \(nuts.energyKcal100g ?? 0) kcal, P: \(nuts.proteins100g ?? 0)g, C: \(nuts.carbohydrates100g ?? 0)g, F: \(nuts.fat100g ?? 0)g\n"
+                                    }
+                                }
+                            }
+                        } catch {
+                            resultString = "Error searching OpenFoodFacts: \(error.localizedDescription)"
+                        }
+                        
+                        messages.append(.init(
+                            role: "tool",
+                            content: [.text(resultString)],
+                            toolCallId: toolCall.id,
+                            name: "openfoodfacts_search"
                         ))
                     }
                 }
