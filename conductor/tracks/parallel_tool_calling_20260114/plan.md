@@ -12,7 +12,7 @@
 - [x] Task: Conductor - User Manual Verification 'Prompt Engineering' (Protocol in workflow.md) bcec4b6
 
 ## Phase 3: Verification and Refinement
-- [ ] Task: Update `OpenRouterModels.swift` and `NutritionService` to support and send `reasoning_effort: "low"` (where supported) to reduce latency.
+- [x] Task: Update `OpenRouterModels.swift` and `NutritionService` to support and send `reasoning_effort: "low"` (where supported) to reduce latency. 1b0a71c
 - [ ] Task: Verify parallel execution by logging timestamps or observing console logs for simultaneous request start.
 - [ ] Task: Verify retry logic by simulating a network failure (optional/manual).
 - [ ] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
