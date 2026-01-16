@@ -25,6 +25,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
 
 ## Phase 5: Polishing & Liquid Glass Aesthetics
-- [ ] Task: Apply translucency and "Liquid Glass" styling to the `StreakHistoryView`.
-- [ ] Task: Optimize SwiftData queries for smoother scrolling (e.g., pre-fetching month data).
+- [x] Task: Apply translucency and "Liquid Glass" styling to the `StreakHistoryView`. 194aa85
+- [x] Task: Optimize SwiftData queries for smoother scrolling (e.g., pre-fetching month data). 194aa85
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Polishing & Liquid Glass Aesthetics' (Protocol in workflow.md)
