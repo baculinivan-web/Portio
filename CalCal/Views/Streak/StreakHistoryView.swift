@@ -57,30 +57,51 @@ struct StreakHistoryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        showingLegend = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary.opacity(0.5))
                     }
                 }
-            }
-            .alert("About Colors", isPresented: $showingLegend) {
-                Button("Got it") { }
-            } message: {
-                Text("• Light Gray: No items logged\n• Translucent Orange: At least one item logged\n• Solid Orange: Goal reached (depends on your Weight Goal Mode)")
-            }
-            .sheet(item: $selectedDate) { date in
-                DaySummaryView(date: date)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingLegend = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .popover(isPresented: $showingLegend) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("About Colors")
+                                .font(.headline)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                LegendRow(color: .black.opacity(0.1), text: "No items logged")
+                                LegendRow(color: .orange.opacity(0.4), text: "At least one item logged")
+                                LegendRow(color: .orange, text: "Daily goal reached")
+                            }
+                        }
+                        .padding()
+                        .presentationCompactAdaptation(.popover)
+                    }
+                }
             }
         }
     }
+
+struct LegendRow: View {
+    let color: Color
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(color)
+                .frame(width: 20, height: 20)
+            Text(text)
+                .font(.subheadline)
+        }
+    }
+}
     
     private func loadStats(month: Int, year: Int) {
         let key = "\(year)-\(month)"
