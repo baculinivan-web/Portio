@@ -24,7 +24,7 @@
 - [x] Task: Add tap interaction to dots in `ContributionGridView` to present `DaySummaryView`. df6f615
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
 
-## Phase 5: Polishing & Liquid Glass Aesthetics
+## Phase 5: Polishing & Liquid Glass Aesthetics [x] Checkpoint: cf47de8
 - [x] Task: Apply translucency and "Liquid Glass" styling to the `StreakHistoryView`. 194aa85
 - [x] Task: Optimize SwiftData queries for smoother scrolling (e.g., pre-fetching month data). 194aa85
-- [~] Task: Conductor - User Manual Verification 'Phase 5: Polishing & Liquid Glass Aesthetics' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Polishing & Liquid Glass Aesthetics' (Protocol in workflow.md)
