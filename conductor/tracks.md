@@ -29,5 +29,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [x] Track: Streak Achievement Notification
+## [~] Track: Streak Achievement Notification
 *Link: [./conductor/tracks/streak_notification_20260116/](./conductor/tracks/streak_notification_20260116/)*
