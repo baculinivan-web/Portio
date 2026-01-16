@@ -2,7 +2,7 @@
 
 ## Phase 1: Data Model & State Management
 - [x] Task: Update `UserSettings` to include `WeightGoalMode` enum and storage. e49443e
-- [ ] Task: Update `OnboardingView` and `SettingsView` to allow users to select their weight goal mode.
+- [x] Task: Update `OnboardingView` and `SettingsView` to allow users to select their weight goal mode. 5762ca7
 - [ ] Task: Implement a utility function/manager to fetch calorie totals for a specific date from SwiftData.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Model & State Management' (Protocol in workflow.md)
 
