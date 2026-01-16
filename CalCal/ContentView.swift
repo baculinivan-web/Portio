@@ -115,20 +115,19 @@ struct ContentView: View {
             .navigationTitle("CalCal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
+                    Button { isShowingSettings = true } label: {
+                        Image(systemName: "gear")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
-                        Button { isShowingSettings = true } label: {
-                            Image(systemName: "gear")
-                        }
-                        
                         Button { isShowingStreakHistory = true } label: {
                             Image(systemName: "flame.fill")
                                 .foregroundStyle(hasLoggedToday ? .orange : .secondary.opacity(0.5))
                                 .animation(.spring(), value: hasLoggedToday)
                         }
+                        EditButton()
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    EditButton()
                 }
             }
             .toolbarBackground(.visible, for: .navigationBar)
