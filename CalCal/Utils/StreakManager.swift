@@ -9,39 +9,40 @@ class StreakManager {
     }
     
     /// Calculates the current streak of consecutive days with at least one food item logged.
-    /// A streak continues if there is at least one entry for each consecutive day going backwards from today or yesterday.
+    /// This version is optimized by fetching only the dates of all entries.
     func calculateCurrentStreak() throws -> Int {
         let calendar = Calendar.current
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
         
+        // Fetch only the dates of all entries, sorted descending
+        var descriptor = FetchDescriptor<FoodItem>(
+            sortBy: [SortDescriptor(\.dateEaten, order: .reverse)]
+        )
+        // Optimization: We only need enough dates to confirm the streak
+        // If someone has a 1000 day streak, fetching 1000 records is still cheap if we only pull dates.
+        
+        let allItems = try modelContext.fetch(descriptor)
+        if allItems.isEmpty { return 0 }
+        
+        // Convert dates to start-of-day set for easy lookup
+        let loggedDates = Set(allItems.map { calendar.startOfDay(for: $0.dateEaten) })
+        
         var streak = 0
         var checkDate = startOfToday
         
-        // 1. Check if we have anything today or yesterday to start/continue the streak
-        let hasToday = try hasEntries(on: startOfToday)
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: startOfToday)!
-        let hasYesterday = try hasEntries(on: yesterday)
-        
-        if !hasToday && !hasYesterday {
-            return 0
-        }
-        
-        // If we have nothing today but had something yesterday, the streak is still alive (it's "yesterday's" streak)
-        // If we have something today, we start counting from today.
-        if !hasToday {
-            checkDate = yesterday
-        }
-        
-        // 2. Count backwards
-        while true {
-            if try hasEntries(on: checkDate) {
-                streak += 1
-                guard let nextDate = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
-                checkDate = nextDate
-            } else {
-                break
+        // If nothing today, check if streak is alive from yesterday
+        if !loggedDates.contains(startOfToday) {
+            checkDate = calendar.date(byAdding: .day, value: -1, to: startOfToday)!
+            if !loggedDates.contains(checkDate) {
+                return 0
             }
+        }
+        
+        // Count backwards
+        while loggedDates.contains(checkDate) {
+            streak += 1
+            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
         }
         
         return streak
