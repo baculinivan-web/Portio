@@ -9,6 +9,7 @@ struct OnboardingView: View {
     @State private var weight: String = "70"
     @State private var gender = CalorieCalculator.Gender.male
     @State private var activityLevel = CalorieCalculator.ActivityLevel.moderatelyActive
+    @State private var weightGoalMode = UserSettings.WeightGoalMode.maintain
     @State private var customGoal: String = "I want to maintain my current weight and feel energetic."
     
     @State private var isLoading = false
@@ -37,6 +38,13 @@ struct OnboardingView: View {
                     Picker("Activity", selection: $activityLevel) {
                         ForEach(CalorieCalculator.ActivityLevel.allCases) { Text($0.rawValue) }
                     }
+                }
+
+                Section("Weight Goal") {
+                    Picker("Goal", selection: $weightGoalMode) {
+                        ForEach(UserSettings.WeightGoalMode.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
                 }
                 
                 Section("Your Goals (e.g., lose weight, build muscle)") {
@@ -77,6 +85,7 @@ struct OnboardingView: View {
                 UserSettings.carbsGoal = goals.carbs
                 UserSettings.fatGoal = goals.fat
                 UserSettings.goalExplanation = goals.explanation
+                UserSettings.weightGoalMode = weightGoalMode
                 
                 isLoading = false
                 onComplete() // Trigger the callback to notify ContentView
