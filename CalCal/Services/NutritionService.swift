@@ -438,6 +438,7 @@ struct NutritionResponse: Codable {
     let carbsPer100g: Double
     let fatPer100g: Double
     let isSearchGrounded: Bool?
+    let dataSource: String?
     var searchSteps: [SearchStep]?
 }
 

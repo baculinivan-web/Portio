@@ -10,6 +10,7 @@ public final class FoodItem {
     public var dateEaten: Date
     public var isProcessing: Bool
     public var isSearchGrounded: Bool = false
+    public var dataSource: String? // "OFF", "Google", or nil
     public var searchSteps: [SearchStep] = []
     public var imageDatas: [Data] = []
 
@@ -26,7 +27,7 @@ public final class FoodItem {
     public var carbsPer100g: Double
     public var fatPer100g: Double
 
-    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, isSearchGrounded: Bool = false, searchSteps: [SearchStep] = [], imageDatas: [Data] = [],
+    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, isSearchGrounded: Bool = false, dataSource: String? = nil, searchSteps: [SearchStep] = [], imageDatas: [Data] = [],
          calories: Double, protein: Double, carbs: Double, fat: Double,
          weightGrams: Double, caloriesPer100g: Double, proteinPer100g: Double, carbsPer100g: Double, fatPer100g: Double) {
         self.id = UUID()
@@ -36,6 +37,7 @@ public final class FoodItem {
         self.dateEaten = dateEaten
         self.isProcessing = isProcessing
         self.isSearchGrounded = isSearchGrounded
+        self.dataSource = dataSource
         self.searchSteps = searchSteps
         self.imageDatas = imageDatas
         self.calories = calories
@@ -51,7 +53,7 @@ public final class FoodItem {
     
     // Convenience initializer for the processing state
     public convenience init(name: String) {
-        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, searchSteps: [], imageDatas: [],
+        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, dataSource: nil, searchSteps: [], imageDatas: [],
                   calories: 0, protein: 0, carbs: 0, fat: 0,
                   weightGrams: 0, caloriesPer100g: 0, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0)
     }
