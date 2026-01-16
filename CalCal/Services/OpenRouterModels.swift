@@ -41,19 +41,25 @@ struct OpenRouterRequest: Encodable {
     let responseFormat: ResponseFormat?
     let tools: [Tool]?
     let toolChoice: ToolChoice?
+    let reasoning: Reasoning?
     
-    init(model: String, messages: [Message], responseFormat: ResponseFormat? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil) {
+    init(model: String, messages: [Message], responseFormat: ResponseFormat? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, reasoning: Reasoning? = nil) {
         self.model = model
         self.messages = messages
         self.responseFormat = responseFormat
         self.tools = tools
         self.toolChoice = toolChoice
+        self.reasoning = reasoning
     }
     
     enum CodingKeys: String, CodingKey {
-        case model, messages, tools
+        case model, messages, tools, reasoning
         case responseFormat = "response_format"
         case toolChoice = "tool_choice"
+    }
+    
+    struct Reasoning: Encodable {
+        let effort: String // "high", "medium", "low" (default high for some models)
     }
     
     struct Message: Encodable {
