@@ -51,6 +51,40 @@ class NutritionAggregator {
         
         return stats.reversed() // Oldest to newest
     }
+
+    func fetchDailyStats(for date: Date) throws -> NutritionStats {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            throw NSError(domain: "NutritionAggregator", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid date"])
+        }
+        return try fetchStats(start: startOfDay, end: endOfDay)
+    }
+
+    func fetchMonthlyStats(month: Int, year: Int) throws -> [NutritionStats] {
+        let calendar = Calendar.current
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = 1
+        
+        guard let startOfMonth = calendar.date(from: components) else {
+            return []
+        }
+        
+        guard let monthRange = calendar.range(of: .day, in: .month, for: startOfMonth) else {
+            return []
+        }
+        
+        var stats: [NutritionStats] = []
+        for day in monthRange {
+            var dayComponents = components
+            dayComponents.day = day
+            guard let date = calendar.date(from: dayComponents) else { continue }
+            stats.append(try fetchDailyStats(for: date))
+        }
+        return stats
+    }
     
     func fetchStats(start: Date, end: Date) throws -> NutritionStats {
         let predicate = #Predicate<FoodItem> { item in
