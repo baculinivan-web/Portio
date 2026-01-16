@@ -22,7 +22,7 @@
 ## Phase 4: Day Interaction & Summary
 - [x] Task: Create a `DaySummaryView` to display food items and totals for a selected date. df6f615
 - [x] Task: Add tap interaction to dots in `ContributionGridView` to present `DaySummaryView`. df6f615
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Day Interaction & Summary' (Protocol in workflow.md)
 
 ## Phase 5: Polishing & Liquid Glass Aesthetics
 - [ ] Task: Apply translucency and "Liquid Glass" styling to the `StreakHistoryView`.
