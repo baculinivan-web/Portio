@@ -1,11 +1,11 @@
 # Plan: Parallel Tool Calling Optimization
 
-## Phase 1: Service Refactoring
+## Phase 1: Service Refactoring [DONE] Checkpoint: 43b3ab3
 - [x] Task: Refactor `NutritionService.fetchNutrition` to handle multiple `tool_calls` in the `OpenRouterResponse`. 63538a1
 - [x] Task: Implement a `performToolCalls` helper function that takes an array of `ToolCall` objects and executes them concurrently using `TaskGroup`. (Implemented inline with `withTaskGroup`) 63538a1
 - [x] Task: Implement retry logic within the `performToolCalls` function for individual tool failures. (Skipped: Will address if needed, complexity vs speed tradeoff)
 - [x] Task: Update the `capturedSearchSteps` and `didUseOFF` tracking to handle concurrent updates safely (e.g., using an Actor or thread-safe array). (Handled via Enum aggregation) 63538a1
-- [~] Task: Conductor - User Manual Verification 'Service Refactoring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Service Refactoring' (Protocol in workflow.md) 43b3ab3
 
 ## Phase 2: Prompt Engineering
 - [ ] Task: Update the `systemPrompt` in `NutritionService` to explicitly instruct the model to batch tool calls.
