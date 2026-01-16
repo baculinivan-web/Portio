@@ -160,7 +160,12 @@ struct ContentView: View {
                 StreakHistoryView()
             }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
-
+                OnboardingView() {
+                    // This gets called when onboarding is finished.
+                    hasCompletedOnboarding = true
+                    showGoalSummary = true // Trigger the summary sheet.
+                }
+            }
             .sheet(isPresented: $showGoalSummary) {
                 GoalSummaryView()
             }
