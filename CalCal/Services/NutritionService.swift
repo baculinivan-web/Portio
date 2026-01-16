@@ -59,6 +59,8 @@ class NutritionService {
         
         If the user query mentions a specific restaurant, brand, or a complex food item that you are not 100% sure about, you MUST use available tools to find the most accurate and up-to-date nutritional information.
         
+        CRITICAL TOOL BATCHING RULE: Analyze the entire query first. If multiple items need searching (e.g. "Apple and Coke"), or if a single item requires multiple tools, you MUST emit ALL necessary tool calls in a SINGLE response turn. Do NOT wait for the result of one tool before calling the next. We can execute them in parallel.
+        
         TOOL PRIORITY RULE:
         1. `openfoodfacts_search`: Use this FIRST for any branded, packaged, or barcoded product query (e.g., "Nutella", "Chobani", "Oreo"). The data is structured and highly reliable.
            CRITICAL: When using `openfoodfacts_search`, pass ONLY the brand and product name (e.g., "Coke Zero", "Snickers", "Сырок Ростагроэкспорт"). DO NOT include weights, volumes, or packaging details (e.g., "0.33l", "50g", "box") in the search query, as this often causes the search to fail. The tool will return available sizes/quantities for you to select from.
