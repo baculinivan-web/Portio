@@ -17,6 +17,8 @@
 - [x] Task: Conductor - User Manual Verification 'Data Model and UI Synchronization' (Protocol in workflow.md) 5dedf67
 
 ## Phase 4: Verification and Refinement
-- [ ] Task: Verify with global brands (e.g., "Coca Cola", "Oreo").
-- [ ] Task: Verify portion estimation improvement using OFF serving sizes.
+- [x] Task: Create `NutritionFactsTable` view to display structured nutritional data in an FDA-style label format. 98f0cbb
+- [x] Task: Update `FoodItemDetailView` to show `NutritionFactsTable` when `dataSource` is OFF, and ensure `SearchDetailRow` list appears for Google sources. 8b507db
+- [x] Task: Update OFF badge text to "Grounded by Open Food Facts". 8b507db
+- [x] Task: Refine `systemPrompt` in `NutritionService` to instruct the LLM to strip quantities/weights from `openfoodfacts_search` queries to improve hit rate. 52826b5
 - [ ] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md)
