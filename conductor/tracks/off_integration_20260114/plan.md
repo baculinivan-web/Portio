@@ -12,9 +12,9 @@
 - [x] Task: Conductor - User Manual Verification 'NutritionService Tool Integration' (Protocol in workflow.md) e2769fe
 
 ## Phase 3: Data Model and UI Synchronization
-- [ ] Task: Update `NutritionResponse` and `FoodItem` models to include a source identifier (e.g., `dataSource`).
-- [ ] Task: Update `FoodItemDetailView` to display different badges based on the data source (e.g., "Verified Brand" for OFF, "Google Grounded" for Serper).
-- [ ] Task: Conductor - User Manual Verification 'Data Model and UI Synchronization' (Protocol in workflow.md)
+- [x] Task: Update `NutritionResponse` and `FoodItem` models to include a source identifier (e.g., `dataSource`). f5b6e35
+- [x] Task: Update `FoodItemDetailView` to display different badges based on the data source (e.g., "Verified Brand" for OFF, "Google Grounded" for Serper). 13fcfe4
+- [~] Task: Conductor - User Manual Verification 'Data Model and UI Synchronization' (Protocol in workflow.md)
 
 ## Phase 4: Verification and Refinement
 - [ ] Task: Verify with global brands (e.g., "Coca Cola", "Oreo").
