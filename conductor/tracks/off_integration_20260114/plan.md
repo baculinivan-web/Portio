@@ -21,4 +21,5 @@
 - [x] Task: Update `FoodItemDetailView` to show `NutritionFactsTable` when `dataSource` is OFF, and ensure `SearchDetailRow` list appears for Google sources. 8b507db
 - [x] Task: Update OFF badge text to "Grounded by Open Food Facts". 8b507db
 - [x] Task: Refine `systemPrompt` in `NutritionService` to instruct the LLM to strip quantities/weights from `openfoodfacts_search` queries to improve hit rate. 52826b5
+- [x] Task: Fix `dataSource` attribution reliability by tracking OFF tool usage in `NutritionService` and forcing the `dataSource` property on response items. eca9b06
 - [ ] Task: Conductor - User Manual Verification 'Verification and Refinement' (Protocol in workflow.md)
