@@ -57,7 +57,7 @@ struct FoodItemDetailView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "checkmark.seal.fill")
                                     .font(.caption)
-                                Text("Verified Brand Data")
+                                Text("Grounded by Open Food Facts")
                                     .font(.caption2.bold())
                                     .textCase(.uppercase)
                             }
@@ -82,8 +82,19 @@ struct FoodItemDetailView: View {
                         }
                     }
                     
-                    ForEach(item.searchSteps, id: \.self) { step in
-                        SearchDetailRow(step: step)
+                    if let source = item.dataSource, source.contains("OFF") {
+                        NutritionFactsTable(
+                            calories: item.calories,
+                            protein: item.protein,
+                            carbs: item.carbs,
+                            fat: item.fat,
+                            servingSize: "\(Int(item.weightGrams))g"
+                        )
+                        .padding(.top, 8)
+                    } else {
+                        ForEach(item.searchSteps, id: \.self) { step in
+                            SearchDetailRow(step: step)
+                        }
                     }
                 }
             }
