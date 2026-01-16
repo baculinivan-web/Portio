@@ -67,6 +67,9 @@ struct StreakHistoryView: View {
             } message: {
                 Text("• Light Gray: No items logged\n• Translucent Orange: At least one item logged\n• Solid Orange: Goal reached (depends on your Weight Goal Mode)")
             }
+            .sheet(item: $selectedDate) { date in
+                DaySummaryView(date: date)
+            }
         }
     }
     
@@ -91,4 +94,8 @@ struct StreakHistoryView: View {
 
 #Preview {
     StreakHistoryView()
+}
+
+extension Date: Identifiable {
+    public var id: TimeInterval { self.timeIntervalSince1970 }
 }
