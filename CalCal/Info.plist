@@ -6,5 +6,9 @@
 	<string>CalCal needs camera access to identify food from photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>CalCal needs photo library access to allow you to pick food photos from your gallery.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>CalCal needs permission to write your logged food data to Apple Health.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>CalCal needs permission to sync your nutrition data with Apple Health.</string>
 </dict>
 </plist>
