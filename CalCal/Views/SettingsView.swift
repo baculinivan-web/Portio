@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage("isAppleHealthSyncEnabled", store: UserSettings.shared) private var isAppleHealthSyncEnabled: Bool = UserSettings.isAppleHealthSyncEnabled
     @AppStorage("goalExplanation", store: UserSettings.shared) private var goalExplanation: String = UserSettings.goalExplanation
 
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         NavigationStack {
             Form {
@@ -35,6 +37,7 @@ struct SettingsView: View {
                             if newValue {
                                 Task {
                                     try? await HealthKitManager.shared.requestAuthorization()
+                                    await syncExistingData()
                                 }
                             }
                         }
@@ -65,6 +68,14 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+
+    private func syncExistingData() async {
+        let descriptor = FetchDescriptor<FoodItem>()
+        if let items = try? modelContext.fetch(descriptor) {
+            await HealthKitManager.shared.syncAllData(items: items)
+            try? modelContext.save()
         }
     }
 }

@@ -100,4 +100,18 @@ class HealthKitManager: ObservableObject {
             try await healthStore.deleteObjects(of: quantityType, predicate: predicate)
         }
     }
+    
+    /// Synchronizes all provided items that haven't been synced yet
+    func syncAllData(items: [FoodItem]) async {
+        guard isHealthDataAvailable else { return }
+        
+        for item in items {
+            // Only sync if not already synced
+            if item.healthKitSampleUUIDs.isEmpty {
+                if let uuids = try? await writeNutrition(for: item) {
+                    item.healthKitSampleUUIDs = uuids
+                }
+            }
+        }
+    }
 }

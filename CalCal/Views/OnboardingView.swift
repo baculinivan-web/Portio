@@ -3,6 +3,8 @@ import SwiftUI
 struct OnboardingView: View {
     // This callback will be triggered when onboarding is complete.
     var onComplete: () -> Void
+    
+    @Environment(\.modelContext) private var modelContext
 
     @State private var age: String = "28"
     @State private var height: String = "175"
@@ -92,6 +94,7 @@ struct OnboardingView: View {
             do {
                 if isHealthSyncEnabled {
                     try? await HealthKitManager.shared.requestAuthorization()
+                    await syncExistingData()
                 }
                 
                 let goals = try await nutritionService.fetchAIGoals(userStats: userStats, userGoals: customGoal, baselineTDEE: tdee)
@@ -111,6 +114,14 @@ struct OnboardingView: View {
                 errorMessage = error.localizedDescription
                 isLoading = false
             }
+        }
+    }
+
+    private func syncExistingData() async {
+        let descriptor = FetchDescriptor<FoodItem>()
+        if let items = try? modelContext.fetch(descriptor) {
+            await HealthKitManager.shared.syncAllData(items: items)
+            try? modelContext.save()
         }
     }
 }
