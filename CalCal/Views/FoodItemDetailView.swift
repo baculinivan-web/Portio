@@ -118,23 +118,28 @@ struct FoodItemDetailView: View {
         .navigationTitle("Edit Entry")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item.weightGrams) { _, _ in
+            syncToHealthKit()
             item.recalculateNutrients()
             try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.calories) { _, _ in
+            syncToHealthKit()
             try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.protein) { _, _ in
+            syncToHealthKit()
             try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.carbs) { _, _ in
+            syncToHealthKit()
             try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
         .onChange(of: item.fat) { _, _ in
+            syncToHealthKit()
             try? item.modelContext?.save()
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -153,8 +158,32 @@ struct FoodItemDetailView: View {
         }
     }
     
+    private func syncToHealthKit() {
+        guard UserSettings.isAppleHealthSyncEnabled else { return }
+        
+        Task {
+            // 1. Delete old samples if they exist
+            if !item.healthKitSampleUUIDs.isEmpty {
+                try? await HealthKitManager.shared.deleteNutrition(uuids: item.healthKitSampleUUIDs)
+            }
+            
+            // 2. Write new samples
+            if let newUUIDs = try? await HealthKitManager.shared.writeNutrition(for: item) {
+                item.healthKitSampleUUIDs = newUUIDs
+            }
+        }
+    }
+    
     private func deleteItem() {
         withAnimation {
+            // Remove from HealthKit if enabled
+            if UserSettings.isAppleHealthSyncEnabled && !item.healthKitSampleUUIDs.isEmpty {
+                let uuids = item.healthKitSampleUUIDs
+                Task {
+                    try? await HealthKitManager.shared.deleteNutrition(uuids: uuids)
+                }
+            }
+            
             modelContext.delete(item)
             try? modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()

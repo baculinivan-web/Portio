@@ -214,6 +214,15 @@ struct ContentView: View {
         withAnimation(.spring()) {
             for index in offsets {
                 let itemToDelete = todaysItems[index]
+                
+                // Remove from HealthKit if enabled and UUIDs exist
+                if UserSettings.isAppleHealthSyncEnabled && !itemToDelete.healthKitSampleUUIDs.isEmpty {
+                    let uuids = itemToDelete.healthKitSampleUUIDs
+                    Task {
+                        try? await HealthKitManager.shared.deleteNutrition(uuids: uuids)
+                    }
+                }
+                
                 modelContext.delete(itemToDelete)
             }
             try? modelContext.save()

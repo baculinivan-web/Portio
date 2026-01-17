@@ -47,6 +47,15 @@ class CalorieTrackerViewModel: ObservableObject {
                         placeholderItem.dataSource = firstItemData.dataSource
                         placeholderItem.searchSteps = firstItemData.searchSteps ?? []
                         
+                        // Sync first item to HealthKit if enabled
+                        if UserSettings.isAppleHealthSyncEnabled {
+                            Task {
+                                if let uuids = try? await HealthKitManager.shared.writeNutrition(for: placeholderItem) {
+                                    placeholderItem.healthKitSampleUUIDs = uuids
+                                }
+                            }
+                        }
+                        
                         // Create new records for any additional items
                         let remainingItemsData = nutritionDataArray.dropFirst()
                         for itemData in remainingItemsData {
@@ -70,6 +79,15 @@ class CalorieTrackerViewModel: ObservableObject {
                                 fatPer100g: itemData.fatPer100g
                             )
                             context.insert(newItem)
+                            
+                            // Sync new item to HealthKit if enabled
+                            if UserSettings.isAppleHealthSyncEnabled {
+                                Task {
+                                    if let uuids = try? await HealthKitManager.shared.writeNutrition(for: newItem) {
+                                        newItem.healthKitSampleUUIDs = uuids
+                                    }
+                                }
+                            }
                         }
                         
                         try? context.save()
