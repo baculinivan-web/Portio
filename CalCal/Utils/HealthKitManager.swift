@@ -1,7 +1,7 @@
 import Foundation
 import HealthKit
 
-class HealthKitManager: ObservableObject {
+class HealthKitManager {
     static let shared = HealthKitManager()
     
     private let healthStore = HKHealthStore()
@@ -27,7 +27,7 @@ class HealthKitManager: ObservableObject {
             throw HKError(.errorHealthDataUnavailable)
         }
         
-        try await healthStore.requestAuthorization(toShare: typesToWrite, read: nil)
+        try await healthStore.requestAuthorization(toShare: typesToWrite, read: [])
     }
     
     /// Checks the current authorization status for nutritional types
