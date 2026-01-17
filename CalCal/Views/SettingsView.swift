@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("carbsGoal", store: UserSettings.shared) private var carbsGoal: Double = UserSettings.carbsGoal
     @AppStorage("fatGoal", store: UserSettings.shared) private var fatGoal: Double = UserSettings.fatGoal
     @AppStorage("weightGoalMode", store: UserSettings.shared) private var weightGoalModeRaw: String = UserSettings.weightGoalMode.rawValue
+    @AppStorage("isAppleHealthSyncEnabled", store: UserSettings.shared) private var isAppleHealthSyncEnabled: Bool = UserSettings.isAppleHealthSyncEnabled
     @AppStorage("goalExplanation", store: UserSettings.shared) private var goalExplanation: String = UserSettings.goalExplanation
 
     var body: some View {
@@ -26,6 +27,17 @@ struct SettingsView: View {
                     NutrientEditor(label: "Protein (g)", value: $proteinGoal)
                     NutrientEditor(label: "Carbs (g)", value: $carbsGoal)
                     NutrientEditor(label: "Fat (g)", value: $fatGoal)
+                }
+
+                Section("Integrations") {
+                    Toggle("Apple Health Sync", isOn: $isAppleHealthSyncEnabled)
+                        .onChange(of: isAppleHealthSyncEnabled) { _, newValue in
+                            if newValue {
+                                Task {
+                                    try? await HealthKitManager.shared.requestAuthorization()
+                                }
+                            }
+                        }
                 }
                 
                 if !goalExplanation.isEmpty {

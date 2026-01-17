@@ -11,6 +11,7 @@ struct OnboardingView: View {
     @State private var activityLevel = CalorieCalculator.ActivityLevel.moderatelyActive
     @State private var weightGoalMode = UserSettings.WeightGoalMode.maintain
     @State private var customGoal: String = "I want to maintain my current weight and feel energetic."
+    @State private var isHealthSyncEnabled = true
     
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -51,6 +52,17 @@ struct OnboardingView: View {
                     TextEditor(text: $customGoal)
                         .frame(height: 100)
                 }
+
+                Section("Integrations") {
+                    Toggle(isOn: $isHealthSyncEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Apple Health Sync")
+                            Text("Automatically log your nutrition data to Apple Health.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 
                 Section {
                     Button("Calculate My Goals", action: calculateGoals)
@@ -78,6 +90,10 @@ struct OnboardingView: View {
         
         Task {
             do {
+                if isHealthSyncEnabled {
+                    try? await HealthKitManager.shared.requestAuthorization()
+                }
+                
                 let goals = try await nutritionService.fetchAIGoals(userStats: userStats, userGoals: customGoal, baselineTDEE: tdee)
                 
                 UserSettings.calorieGoal = goals.calories
@@ -86,6 +102,7 @@ struct OnboardingView: View {
                 UserSettings.fatGoal = goals.fat
                 UserSettings.goalExplanation = goals.explanation
                 UserSettings.weightGoalMode = weightGoalMode
+                UserSettings.isAppleHealthSyncEnabled = isHealthSyncEnabled
                 
                 isLoading = false
                 onComplete() // Trigger the callback to notify ContentView

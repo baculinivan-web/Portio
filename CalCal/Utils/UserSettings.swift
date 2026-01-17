@@ -50,6 +50,11 @@ struct UserSettings {
         set { shared.set(newValue, forKey: "hasCompletedOnboarding") }
     }
     
+    static var isAppleHealthSyncEnabled: Bool {
+        get { shared.bool(forKey: "isAppleHealthSyncEnabled") }
+        set { shared.set(newValue, forKey: "isAppleHealthSyncEnabled") }
+    }
+    
     // MARK: - Streak Achievement Tracking
     
     static var lastLevel1ShownDate: Date? {
