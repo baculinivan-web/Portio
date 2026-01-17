@@ -36,4 +36,68 @@ class HealthKitManager: ObservableObject {
         let energyType = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
         return healthStore.authorizationStatus(for: energyType)
     }
+    
+    /// Writes nutritional data from a FoodItem to HealthKit
+    func writeNutrition(for item: FoodItem) async throws -> [String] {
+        guard isHealthDataAvailable else { return [] }
+        
+        let date = item.dateEaten
+        let metadata: [String: Any] = [
+            HKMetadataKeyFoodType: item.cleanFoodName,
+            "CalCalItemID": item.id.uuidString
+        ]
+        
+        var samples: [HKQuantitySample] = []
+        
+        // 1. Energy
+        if item.calories > 0 {
+            let energyType = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+            let energyQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: item.calories)
+            samples.append(HKQuantitySample(type: energyType, quantity: energyQuantity, start: date, end: date, metadata: metadata))
+        }
+        
+        // 2. Protein
+        if item.protein > 0 {
+            let proteinType = HKQuantityType.quantityType(forIdentifier: .dietaryProtein)!
+            let proteinQuantity = HKQuantity(unit: .gram(), doubleValue: item.protein)
+            samples.append(HKQuantitySample(type: proteinType, quantity: proteinQuantity, start: date, end: date, metadata: metadata))
+        }
+        
+        // 3. Carbs
+        if item.carbs > 0 {
+            let carbsType = HKQuantityType.quantityType(forIdentifier: .dietaryCarbohydrates)!
+            let carbsQuantity = HKQuantity(unit: .gram(), doubleValue: item.carbs)
+            samples.append(HKQuantitySample(type: carbsType, quantity: carbsQuantity, start: date, end: date, metadata: metadata))
+        }
+        
+        // 4. Fat
+        if item.fat > 0 {
+            let fatType = HKQuantityType.quantityType(forIdentifier: .dietaryFatTotal)!
+            let fatQuantity = HKQuantity(unit: .gram(), doubleValue: item.fat)
+            samples.append(HKQuantitySample(type: fatType, quantity: fatQuantity, start: date, end: date, metadata: metadata))
+        }
+        
+        guard !samples.isEmpty else { return [] }
+        
+        try await healthStore.save(samples)
+        return samples.map { $0.uuid.uuidString }
+    }
+    
+    /// Deletes specific samples from HealthKit by their UUIDs
+    func deleteNutrition(uuids: [String]) async throws {
+        guard isHealthDataAvailable, !uuids.isEmpty else { return }
+        
+        let sampleUUIDs = uuids.compactMap { UUID(uuidString: $0) }
+        guard !sampleUUIDs.isEmpty else { return }
+        
+        // We need to delete from each type potentially
+        for type in typesToWrite {
+            guard let quantityType = type as? HKQuantityType else { continue }
+            let predicate = HKQuery.predicateForObjects(with: Set(sampleUUIDs))
+            
+            // HealthKit's deleteObjects requires a slightly different approach for quantity samples
+            // but we can use the predicate to find and delete.
+            try await healthStore.deleteObjects(of: quantityType, predicate: predicate)
+        }
+    }
 }

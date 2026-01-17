@@ -13,6 +13,7 @@ public final class FoodItem {
     public var dataSource: String? // "OFF", "Google", or nil
     public var searchSteps: [SearchStep] = []
     public var imageDatas: [Data] = []
+    public var healthKitSampleUUIDs: [String] = []
 
     // Nutritional values for the current weight
     public var calories: Double
@@ -27,7 +28,7 @@ public final class FoodItem {
     public var carbsPer100g: Double
     public var fatPer100g: Double
 
-    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, isSearchGrounded: Bool = false, dataSource: String? = nil, searchSteps: [SearchStep] = [], imageDatas: [Data] = [],
+    public init(name: String, identifiedFood: String, cleanFoodName: String, dateEaten: Date, isProcessing: Bool = false, isSearchGrounded: Bool = false, dataSource: String? = nil, searchSteps: [SearchStep] = [], imageDatas: [Data] = [], healthKitSampleUUIDs: [String] = [],
          calories: Double, protein: Double, carbs: Double, fat: Double,
          weightGrams: Double, caloriesPer100g: Double, proteinPer100g: Double, carbsPer100g: Double, fatPer100g: Double) {
         self.id = UUID()
@@ -40,6 +41,7 @@ public final class FoodItem {
         self.dataSource = dataSource
         self.searchSteps = searchSteps
         self.imageDatas = imageDatas
+        self.healthKitSampleUUIDs = healthKitSampleUUIDs
         self.calories = calories
         self.protein = protein
         self.carbs = carbs
@@ -53,7 +55,7 @@ public final class FoodItem {
     
     // Convenience initializer for the processing state
     public convenience init(name: String) {
-        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, dataSource: nil, searchSteps: [], imageDatas: [],
+        self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, dataSource: nil, searchSteps: [], imageDatas: [], healthKitSampleUUIDs: [],
                   calories: 0, protein: 0, carbs: 0, fat: 0,
                   weightGrams: 0, caloriesPer100g: 0, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0)
     }
