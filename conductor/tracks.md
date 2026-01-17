@@ -31,3 +31,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## [~] Track: Streak Achievement Notification
 *Link: [./conductor/tracks/streak_notification_20260116/](./conductor/tracks/streak_notification_20260116/)*
+
+---
+
+## [~] Track: Apple HealthKit Integration
+*Link: [./conductor/tracks/health_sync_20260116/](./conductor/tracks/health_sync_20260116/)*

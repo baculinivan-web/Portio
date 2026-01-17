@@ -1,0 +1,8 @@
+{
+  "track_id": "health_sync_20260116",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-16T23:45:00Z",
+  "updated_at": "2026-01-16T23:45:00Z",
+  "description": "Add Apple Health sync for all nutrition data (Calories, Protein, Carbs, Fat) in real-time."
+}
