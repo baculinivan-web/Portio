@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct OnboardingView: View {
     // This callback will be triggered when onboarding is complete.
