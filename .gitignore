@@ -20,5 +20,5 @@ iOS app/*.xcworkspace/xcuserdata/
 .kiro/
 
 # iOS app extras
-ios app/conductor/
-ios app/Images/
+iOS app/conductor/
+iOS app/Images/

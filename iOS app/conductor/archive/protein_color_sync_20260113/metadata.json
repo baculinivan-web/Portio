@@ -1,8 +1,0 @@
-{
-  "track_id": "protein_color_sync_20260113",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-13T16:00:00Z",
-  "updated_at": "2026-01-13T16:00:00Z",
-  "description": "color code protein to red in stats and widgets"
-}

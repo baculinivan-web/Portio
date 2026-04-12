@@ -1,8 +1,0 @@
-{
-  "track_id": "streak_system_20260116",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-16T12:00:00Z",
-  "updated_at": "2026-01-16T12:00:00Z",
-  "description": "Add a streak system with a GitHub-style monthly contribution grid in a TikTok-style vertically paged view."
-}

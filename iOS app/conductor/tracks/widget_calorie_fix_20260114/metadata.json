@@ -1,8 +1,0 @@
-{
-  "track_id": "widget_calorie_fix_20260114",
-  "type": "bug",
-  "status": "new",
-  "created_at": "2026-01-14T12:30:00Z",
-  "updated_at": "2026-01-14T12:30:00Z",
-  "description": "On small iPhones, the medium-sized widget calorie amount (3+ digits) is truncated. This track fixes it using dynamic font scaling."
-}
