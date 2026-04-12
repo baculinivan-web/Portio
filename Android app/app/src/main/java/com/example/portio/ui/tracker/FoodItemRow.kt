@@ -27,13 +27,13 @@ fun FoodItemRow(item: FoodItem, onClick: () -> Unit, onDelete: () -> Unit) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             icon = { Icon(Icons.Default.Delete, contentDescription = null) },
-            title = { Text("Удалить запись?") },
+            title = { Text("Delete entry?") },
             text = { Text(item.cleanFoodName.ifBlank { item.name }) },
             confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; onDelete() }) { Text("Удалить") }
+                TextButton(onClick = { showDeleteDialog = false; onDelete() }) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Отмена") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
     }

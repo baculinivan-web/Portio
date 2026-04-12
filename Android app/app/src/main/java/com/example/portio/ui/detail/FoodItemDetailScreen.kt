@@ -65,13 +65,13 @@ fun FoodItemDetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             icon = { Icon(Icons.Default.Delete, contentDescription = null) },
-            title = { Text("Удалить запись?") },
+            title = { Text("Delete entry?") },
             text = { Text(item.cleanFoodName.ifBlank { item.name }) },
             confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; onDelete() }) { Text("Удалить") }
+                TextButton(onClick = { showDeleteDialog = false; onDelete() }) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Отмена") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -115,7 +115,7 @@ fun FoodItemDetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                     }
                 }
             )
@@ -242,7 +242,7 @@ fun FoodItemDetailScreen(
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Удалить запись")
+                Text("Delete entry")
             }
         }
     }
