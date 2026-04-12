@@ -7,19 +7,30 @@ struct OnboardingView: View {
     
     @Environment(\.modelContext) private var modelContext
 
-    @State private var age: String = "28"
-    @State private var height: String = "175"
-    @State private var weight: String = "70"
+    @State private var age: String = ""
+    @State private var height: String = ""
+    @State private var weight: String = ""
     @State private var gender = CalorieCalculator.Gender.male
     @State private var activityLevel = CalorieCalculator.ActivityLevel.moderatelyActive
     @State private var weightGoalMode = UserSettings.WeightGoalMode.maintain
-    @State private var customGoal: String = "I want to maintain my current weight and feel energetic."
+    @State private var customGoal: String = ""
     @State private var isHealthSyncEnabled = true
     
     @State private var isLoading = false
     @State private var errorMessage: String?
     
-    private let nutritionService = NutritionService()
+    @State private var openRouterApiKey: String = ""
+    @State private var serperApiKey: String = ""
+    @State private var modelName: String = ""
+    @State private var isOpenRouterKeyVisible = false
+    @State private var isSerperKeyVisible = false
+    
+    private var nutritionService: NutritionService {
+        let apiKey = openRouterApiKey.isEmpty ? (APIKeyManager.getOpenRouterAPIKey() ?? "") : openRouterApiKey
+        let serperKey = serperApiKey.isEmpty ? (APIKeyManager.getSerperAPIKey() ?? "") : serperApiKey
+        let model = modelName.isEmpty ? (APIKeyManager.getModelName() ?? "openai/gpt-oss-120b:free") : modelName
+        return NutritionService(apiKey: apiKey, modelName: model, serperApiKey: serperKey)
+    }
     
     private var isFormValid: Bool {
         !age.isEmpty && !height.isEmpty && !weight.isEmpty &&
@@ -30,9 +41,9 @@ struct OnboardingView: View {
         NavigationStack {
             Form {
                 Section("Your Stats") {
-                    TextField("Age", text: $age).keyboardType(.numberPad)
-                    TextField("Height (cm)", text: $height).keyboardType(.decimalPad)
-                    TextField("Weight (kg)", text: $weight).keyboardType(.decimalPad)
+                    TextField("e.g. 28", text: $age).keyboardType(.numberPad)
+                    TextField("e.g. 175", text: $height).keyboardType(.decimalPad)
+                    TextField("e.g. 70", text: $weight).keyboardType(.decimalPad)
                     Picker("Gender", selection: $gender) {
                         ForEach(CalorieCalculator.Gender.allCases) { Text($0.rawValue) }
                     }
@@ -65,6 +76,42 @@ struct OnboardingView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                }
+                
+                Section {
+                    HStack {
+                        if isOpenRouterKeyVisible {
+                            TextField("sk-or-...", text: $openRouterApiKey)
+                        } else {
+                            SecureField("sk-or-...", text: $openRouterApiKey)
+                        }
+                        Button { isOpenRouterKeyVisible.toggle() } label: {
+                            Image(systemName: isOpenRouterKeyVisible ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("OpenRouter API Key")
+                } footer: {
+                    Text("Get your free key at openrouter.ai/keys — the free tier is sufficient for normal app usage.")
+                }
+                
+                Section {
+                    HStack {
+                        if isSerperKeyVisible {
+                            TextField("...", text: $serperApiKey)
+                        } else {
+                            SecureField("...", text: $serperApiKey)
+                        }
+                        Button { isSerperKeyVisible.toggle() } label: {
+                            Image(systemName: isSerperKeyVisible ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Serper API Key")
+                } footer: {
+                    Text("Get your free key at serper.dev — 2,500 free searches/month, enough for everyday use.")
                 }
                 
                 Section {
@@ -107,6 +154,10 @@ struct OnboardingView: View {
                 UserSettings.goalExplanation = goals.explanation
                 UserSettings.weightGoalMode = weightGoalMode
                 UserSettings.isAppleHealthSyncEnabled = isHealthSyncEnabled
+                
+                if !openRouterApiKey.isEmpty { UserSettings.openRouterApiKey = openRouterApiKey }
+                if !serperApiKey.isEmpty { UserSettings.serperApiKey = serperApiKey }
+                if !modelName.isEmpty { UserSettings.modelName = modelName }
                 
                 isLoading = false
                 onComplete() // Trigger the callback to notify ContentView

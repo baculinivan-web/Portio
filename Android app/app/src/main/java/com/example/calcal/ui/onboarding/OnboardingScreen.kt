@@ -3,10 +3,17 @@ package com.example.calcal.ui.onboarding
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.calcal.domain.util.CalorieCalculator
@@ -17,12 +24,16 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
-    val weightKg by viewModel.weightKg.collectAsState()
-    val heightCm by viewModel.heightCm.collectAsState()
-    val age by viewModel.age.collectAsState()
     val gender by viewModel.gender.collectAsState()
     val activityLevel by viewModel.activityLevel.collectAsState()
     val goalText by viewModel.goalText.collectAsState()
+    val openRouterApiKey by viewModel.openRouterApiKey.collectAsState()
+    val serperApiKey by viewModel.serperApiKey.collectAsState()
+    var apiKeyVisible by remember { mutableStateOf(false) }
+    var serperKeyVisible by remember { mutableStateOf(false) }
+    var weightText by remember { mutableStateOf("") }
+    var heightText by remember { mutableStateOf("") }
+    var ageText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -35,22 +46,28 @@ fun OnboardingScreen(
         Text("Let's set up your profile", style = MaterialTheme.typography.bodyLarge)
 
         OutlinedTextField(
-            value = weightKg.toString(),
-            onValueChange = { it.toDoubleOrNull()?.let { v -> viewModel.weightKg.value = v } },
+            value = weightText,
+            onValueChange = { weightText = it; it.toDoubleOrNull()?.let { v -> viewModel.weightKg.value = v } },
             label = { Text("Weight (kg)") },
-            modifier = Modifier.fillMaxWidth()
+            placeholder = { Text("e.g. 70") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
         OutlinedTextField(
-            value = heightCm.toString(),
-            onValueChange = { it.toDoubleOrNull()?.let { v -> viewModel.heightCm.value = v } },
+            value = heightText,
+            onValueChange = { heightText = it; it.toDoubleOrNull()?.let { v -> viewModel.heightCm.value = v } },
             label = { Text("Height (cm)") },
-            modifier = Modifier.fillMaxWidth()
+            placeholder = { Text("e.g. 175") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
         OutlinedTextField(
-            value = age.toString(),
-            onValueChange = { it.toIntOrNull()?.let { v -> viewModel.age.value = v } },
+            value = ageText,
+            onValueChange = { ageText = it; it.toIntOrNull()?.let { v -> viewModel.age.value = v } },
             label = { Text("Age") },
-            modifier = Modifier.fillMaxWidth()
+            placeholder = { Text("e.g. 28") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
         // Gender selector
@@ -82,6 +99,46 @@ fun OnboardingScreen(
             label = { Text("Your goal (optional)") },
             placeholder = { Text("e.g. lose 5kg, build muscle...") },
             modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = openRouterApiKey,
+            onValueChange = { viewModel.openRouterApiKey.value = it },
+            label = { Text("OpenRouter API Key") },
+            placeholder = { Text("sk-or-...") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                    Icon(
+                        if (apiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (apiKeyVisible) "Hide key" else "Show key"
+                    )
+                }
+            },
+            supportingText = { Text("Free key at openrouter.ai/keys — free tier is enough for normal use") }
+        )
+
+        OutlinedTextField(
+            value = serperApiKey,
+            onValueChange = { viewModel.serperApiKey.value = it },
+            label = { Text("Serper API Key") },
+            placeholder = { Text("...") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = if (serperKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { serperKeyVisible = !serperKeyVisible }) {
+                    Icon(
+                        if (serperKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (serperKeyVisible) "Hide key" else "Show key"
+                    )
+                }
+            },
+            supportingText = { Text("Free key at serper.dev — 2,500 free searches/month, enough for everyday use") }
         )
 
         Button(

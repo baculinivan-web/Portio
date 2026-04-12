@@ -21,12 +21,7 @@ class SerperService {
     private let apiKey: String
     private let apiURL = URL(string: "https://google.serper.dev/search")!
 
-    init() {
-        guard let apiKey = APIKeyManager.getSerperAPIKey() else {
-            // In a real app we might want to handle this more gracefully, 
-            // but following NutritionService's pattern for now.
-            fatalError("Serper API Key not found. Please add SERPER_API_KEY to Gemini-Info.plist")
-        }
+    init(apiKey: String) {
         self.apiKey = apiKey
     }
 

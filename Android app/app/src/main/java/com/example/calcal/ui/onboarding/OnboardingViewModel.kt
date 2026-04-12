@@ -17,13 +17,15 @@ class OnboardingViewModel @Inject constructor(
     private val repository: FoodRepository
 ) : ViewModel() {
 
-    var weightKg = MutableStateFlow(70.0)
-    var heightCm = MutableStateFlow(170.0)
-    var age = MutableStateFlow(25)
+    var weightKg = MutableStateFlow(0.0)
+    var heightCm = MutableStateFlow(0.0)
+    var age = MutableStateFlow(0)
     var gender = MutableStateFlow(CalorieCalculator.Gender.MALE)
     var activityLevel = MutableStateFlow(CalorieCalculator.ActivityLevel.SEDENTARY)
     var goalText = MutableStateFlow("")
     var weightGoalMode = MutableStateFlow("Maintain Weight")
+    var openRouterApiKey = MutableStateFlow("")
+    var serperApiKey = MutableStateFlow("")
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -64,8 +66,13 @@ class OnboardingViewModel @Inject constructor(
                 userSettings.setActivityLevel(activityLevel.value.name)
                 userSettings.setUserGoalText(goalText.value)
                 userSettings.setWeightGoalMode(weightGoalMode.value)
+                if (openRouterApiKey.value.isNotBlank()) {
+                    userSettings.setOpenRouterApiKey(openRouterApiKey.value.trim())
+                }
+                if (serperApiKey.value.isNotBlank()) {
+                    userSettings.setSerperApiKey(serperApiKey.value.trim())
+                }
                 userSettings.setHasCompletedOnboarding(true)
-
                 onDone()
             } catch (e: Exception) {
                 // Fallback: use TDEE-based defaults without AI

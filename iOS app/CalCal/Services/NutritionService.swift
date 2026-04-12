@@ -28,20 +28,14 @@ enum NutritionError: Error, LocalizedError {
 class NutritionService {
     private let apiKey: String
     private let modelName: String
+    private let serperService: SerperService
     private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
-    private let serperService = SerperService()
     private let offService = OpenFoodFactsService()
 
-    init() {
-        guard let apiKey = APIKeyManager.getOpenRouterAPIKey() else {
-            fatalError("OpenRouter API Key not found. Please add it to Gemini-Info.plist")
-        }
+    init(apiKey: String, modelName: String, serperApiKey: String) {
         self.apiKey = apiKey
-        
-        guard let modelName = APIKeyManager.getModelName() else {
-             fatalError("Model Name not found. Please add MODEL_NAME to Gemini-Info.plist")
-        }
         self.modelName = modelName
+        self.serperService = SerperService(apiKey: serperApiKey)
     }
 
     func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {

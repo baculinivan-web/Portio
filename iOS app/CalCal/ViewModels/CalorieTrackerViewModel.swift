@@ -7,7 +7,18 @@ import WidgetKit
 class CalorieTrackerViewModel: ObservableObject {
     @Published var errorMessage: String?
 
-    private let nutritionService = NutritionService()
+    private var nutritionService: NutritionService {
+        let apiKey = UserSettings.openRouterApiKey.isEmpty
+            ? (APIKeyManager.getOpenRouterAPIKey() ?? "")
+            : UserSettings.openRouterApiKey
+        let serperKey = UserSettings.serperApiKey.isEmpty
+            ? (APIKeyManager.getSerperAPIKey() ?? "")
+            : UserSettings.serperApiKey
+        let model = UserSettings.modelName.isEmpty
+            ? (APIKeyManager.getModelName() ?? "openai/gpt-oss-120b:free")
+            : UserSettings.modelName
+        return NutritionService(apiKey: apiKey, modelName: model, serperApiKey: serperKey)
+    }
 
     func addItem(query: String, imageDatas: [Data] = [], context: ModelContext) {
         let placeholderItem = FoodItem(name: query)

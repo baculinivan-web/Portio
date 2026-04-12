@@ -66,4 +66,23 @@ struct UserSettings {
         get { shared.object(forKey: "lastLevel2ShownDate") as? Date }
         set { shared.set(newValue, forKey: "lastLevel2ShownDate") }
     }
+    
+    // MARK: - API Keys
+    
+    static var openRouterApiKey: String {
+        get { shared.string(forKey: "openRouterApiKey") ?? "" }
+        set { shared.set(newValue, forKey: "openRouterApiKey") }
+    }
+    
+    static var serperApiKey: String {
+        get { shared.string(forKey: "serperApiKey") ?? "" }
+        set { shared.set(newValue, forKey: "serperApiKey") }
+    }
+    
+    // MARK: - Model Name
+    
+    static var modelName: String {
+        get { shared.string(forKey: "modelName") ?? "" }
+        set { shared.set(newValue, forKey: "modelName") }
+    }
 }

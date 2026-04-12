@@ -30,6 +30,8 @@ object UserSettingsKeys {
     val ACTIVITY_LEVEL = stringPreferencesKey("activityLevel")
     val USER_GOAL_TEXT = stringPreferencesKey("userGoalText")
     val MODEL_NAME = stringPreferencesKey("modelName")
+    val OPENROUTER_API_KEY = stringPreferencesKey("openRouterApiKey")
+    val SERPER_API_KEY = stringPreferencesKey("serperApiKey")
 }
 
 @Singleton
@@ -49,7 +51,9 @@ class UserSettings @Inject constructor(@ApplicationContext private val context: 
     val gender: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.GENDER] ?: "Male" }
     val activityLevel: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.ACTIVITY_LEVEL] ?: "Sedentary" }
     val userGoalText: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.USER_GOAL_TEXT] ?: "" }
-    val modelName: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.MODEL_NAME] ?: BuildConfig.MODEL_NAME }
+    val modelName: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.MODEL_NAME] ?: BuildConfig.MODEL_NAME.ifBlank { "openai/gpt-oss-120b:free" } }
+    val openRouterApiKey: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.OPENROUTER_API_KEY] ?: "" }
+    val serperApiKey: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.SERPER_API_KEY] ?: "" }
 
     suspend fun setCalorieGoal(value: Double) = context.dataStore.edit { it[UserSettingsKeys.CALORIE_GOAL] = value }
     suspend fun setProteinGoal(value: Double) = context.dataStore.edit { it[UserSettingsKeys.PROTEIN_GOAL] = value }
@@ -66,4 +70,6 @@ class UserSettings @Inject constructor(@ApplicationContext private val context: 
     suspend fun setActivityLevel(value: String) = context.dataStore.edit { it[UserSettingsKeys.ACTIVITY_LEVEL] = value }
     suspend fun setUserGoalText(value: String) = context.dataStore.edit { it[UserSettingsKeys.USER_GOAL_TEXT] = value }
     suspend fun setModelName(value: String) = context.dataStore.edit { it[UserSettingsKeys.MODEL_NAME] = value }
+    suspend fun setOpenRouterApiKey(value: String) = context.dataStore.edit { it[UserSettingsKeys.OPENROUTER_API_KEY] = value }
+    suspend fun setSerperApiKey(value: String) = context.dataStore.edit { it[UserSettingsKeys.SERPER_API_KEY] = value }
 }

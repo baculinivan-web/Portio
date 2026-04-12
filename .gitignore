@@ -1,0 +1,24 @@
+# API Keys — never commit
+Android app/local.properties
+iOS app/CalCal/Gemini-Info.plist
+
+# Android
+Android app/.gradle/
+Android app/build/
+Android app/app/build/
+Android app/local.properties
+Android app/.kotlin/
+
+# iOS
+iOS app/CalCal.xcodeproj/xcuserdata/
+iOS app/*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+
+# Kiro
+.kiro/
+
+# iOS app extras
+ios app/conductor/
+ios app/Images/

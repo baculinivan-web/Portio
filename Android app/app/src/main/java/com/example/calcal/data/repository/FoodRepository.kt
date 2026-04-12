@@ -49,6 +49,8 @@ class FoodRepository @Inject constructor(
         onError: (String) -> Unit = {}
     ) {
         val modelName = userSettings.modelName.first().ifBlank { BuildConfig.MODEL_NAME }
+        val apiKey = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
+        val serperKey = userSettings.serperApiKey.first().ifBlank { BuildConfig.SERPER_API_KEY }
         val placeholder = FoodItem(
             id = UUID.randomUUID().toString(),
             name = query,
@@ -60,9 +62,9 @@ class FoodRepository @Inject constructor(
             val results = nutritionService.fetchNutrition(
                 query = query,
                 images = images,
-                apiKey = BuildConfig.OPENROUTER_API_KEY,
+                apiKey = apiKey,
                 modelName = modelName,
-                serperApiKey = BuildConfig.SERPER_API_KEY
+                serperApiKey = serperKey
             )
 
             val firstResult = results.firstOrNull()
@@ -143,11 +145,12 @@ class FoodRepository @Inject constructor(
 
     suspend fun fetchAIGoals(userStats: String, userGoals: String, baselineTdee: Double): GoalResponse {
         val modelName = userSettings.modelName.first().ifBlank { BuildConfig.MODEL_NAME }
+        val apiKey = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
         return nutritionService.fetchAIGoals(
             userStats = userStats,
             userGoals = userGoals,
             baselineTdee = baselineTdee,
-            apiKey = BuildConfig.OPENROUTER_API_KEY,
+            apiKey = apiKey,
             modelName = modelName
         )
     }
