@@ -71,6 +71,39 @@ flowchart TD
     Domain --> Data
 ```
 
+## LLM Loop
+
+Each food query goes through a two-pass agentic loop via OpenRouter.
+
+```mermaid
+flowchart TD
+    A([User query + optional image]) --> B[Insert placeholder item\nwith isProcessing = true]
+    B --> C[Pass 1 — Tool gathering\nLLM with tools enabled]
+
+    C --> D{finish_reason?}
+    D -- tool_calls --> E[Execute tools in parallel]
+
+    E --> F{Tool type}
+    F -- openfoodfacts_search --> G[OpenFoodFacts API]
+    F -- google_search --> H[Serper Google Search]
+
+    G --> I[Merge tool results]
+    H --> I
+
+    I --> J[Pass 2 — Final analysis\nNew prompt with gathered data\ntools disabled]
+    J --> K[LLM returns JSON\nfoods array]
+
+    D -- stop --> K
+
+    K --> L[Parse FoodArrayResponse]
+    L --> M[Update placeholder\nwith nutrition data]
+    M --> N[Sync to Health Connect]
+    N --> O[Update widget]
+    O --> P([Done])
+
+    C -- error / max 4 iterations --> Q([Delete placeholder\nshow error])
+```
+
 ## Requirements
 
 - iOS 26+ (liquid glass UI)
