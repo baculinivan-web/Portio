@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CalCal"
+rootProject.name = "Portio"
 include(":app")

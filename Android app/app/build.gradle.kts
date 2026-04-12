@@ -15,11 +15,11 @@ val localProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.example.calcal"
+    namespace = "com.example.portio"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.calcal"
+        applicationId = "com.example.portio"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
