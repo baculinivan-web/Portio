@@ -48,21 +48,27 @@ Required keys:
 
 Both platforms follow MVVM + Repository pattern. The AI pipeline is identical: insert a placeholder item immediately for optimistic UI, fire the LLM request, update the record on completion.
 
-```
-data/
-  local/       — Room / SwiftData
-  remote/      — NutritionService, OpenFoodFactsService, SerperService
-  repository/  — FoodRepository
-domain/
-  model/       — FoodItem, NutritionResponse
-  util/        — CalorieCalculator, StreakManager, NutrientWarningManager
-ui/
-  tracker/     — main screen
-  statistics/  — charts and history
-  streak/      — streak history
-  settings/    — goals and API keys
-  onboarding/  — first launch profile setup
-  camera/      — food photo capture
+```mermaid
+flowchart TD
+    UI["UI Layer"]
+    UI --> Tracker["tracker — main screen"]
+    UI --> Statistics["statistics — charts and history"]
+    UI --> Streak["streak — streak history"]
+    UI --> Settings["settings — goals and API keys"]
+    UI --> Onboarding["onboarding — first launch profile setup"]
+    UI --> Camera["camera — food photo capture"]
+
+    Domain["Domain Layer"]
+    Domain --> Model["model — FoodItem, NutritionResponse"]
+    Domain --> Util["util — CalorieCalculator, StreakManager, NutrientWarningManager"]
+
+    Data["Data Layer"]
+    Data --> Local["local — Room / SwiftData"]
+    Data --> Remote["remote — NutritionService, OpenFoodFactsService, SerperService"]
+    Data --> Repo["repository — FoodRepository"]
+
+    UI --> Domain
+    Domain --> Data
 ```
 
 ## Requirements
