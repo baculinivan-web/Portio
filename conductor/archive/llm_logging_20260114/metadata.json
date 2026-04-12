@@ -1,8 +1,0 @@
-{
-  "track_id": "llm_logging_20260114",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-01-14T14:30:00Z",
-  "updated_at": "2026-01-14T14:30:00Z",
-  "description": "add console messeges for every llm queury"
-}

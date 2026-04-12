@@ -1,8 +1,0 @@
-{
-  "track_id": "widget_calculation_fix_20260114",
-  "type": "bug",
-  "status": "new",
-  "created_at": "2026-01-14T13:00:00Z",
-  "updated_at": "2026-01-14T13:00:00Z",
-  "description": "The small calorie widget calculates the 'over' calorie amount incorrectly, showing vastly different values than expected."
-}

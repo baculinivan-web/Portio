@@ -1,8 +1,0 @@
-{
-  "track_id": "restore_standard_stats_theme_20260114",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-01-14T13:45:00Z",
-  "updated_at": "2026-01-14T13:45:00Z",
-  "description": "now in stats view bg is custom pink-ish color and cards are grey-ish. make bg standart whit/black as in main view and cards grey standart"
-}
