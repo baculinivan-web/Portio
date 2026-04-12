@@ -1,0 +1,8 @@
+{
+  "track_id": "stats_system_headers_20260114",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-14T12:30:00Z",
+  "updated_at": "2026-01-14T12:30:00Z",
+  "description": "lets change headers in stats views to system headers that collapse on scroll"
+}

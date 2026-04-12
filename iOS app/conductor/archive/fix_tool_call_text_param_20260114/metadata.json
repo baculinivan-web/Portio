@@ -1,0 +1,8 @@
+{
+  "track_id": "fix_tool_call_text_param_20260114",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-01-14T17:00:00Z",
+  "updated_at": "2026-01-14T17:00:00Z",
+  "description": "Fix 'Param Incorrect: text is not present' error from OpenRouter providers during tool calls."
+}

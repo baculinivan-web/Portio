@@ -1,0 +1,8 @@
+{
+  "track_id": "nutrient_warnings_20260114",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-14T15:20:00Z",
+  "updated_at": "2026-01-14T15:20:00Z",
+  "description": "lets add a new feature. if user comes close to the goal of cal, carbs or fats and it is not the end of the day, or user overshoots these nutrients/cal, add a card under the main summary card saying that he wight want to decrease consumption of high Carb/Fat/Cal food and on clich oа this card should appear the sheet with the explanation why it bad, what is the % of overshoot (if any), what is the item(s) with highes Cal/Fat/Carb content"
+}
