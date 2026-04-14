@@ -21,6 +21,7 @@ class SettingsViewModel @Inject constructor(private val userSettings: UserSettin
     val modelName = userSettings.modelName.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
     val openRouterApiKey = userSettings.openRouterApiKey.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
     val serperApiKey = userSettings.serperApiKey.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+    val customApiBaseUrl = userSettings.customApiBaseUrl.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
 
     fun setCalorieGoal(v: Double) = viewModelScope.launch { userSettings.setCalorieGoal(v) }
     fun setProteinGoal(v: Double) = viewModelScope.launch { userSettings.setProteinGoal(v) }
@@ -30,4 +31,5 @@ class SettingsViewModel @Inject constructor(private val userSettings: UserSettin
     fun setModelName(v: String) = viewModelScope.launch { userSettings.setModelName(v) }
     fun setOpenRouterApiKey(v: String) = viewModelScope.launch { userSettings.setOpenRouterApiKey(v) }
     fun setSerperApiKey(v: String) = viewModelScope.launch { userSettings.setSerperApiKey(v) }
+    fun setCustomApiBaseUrl(v: String) = viewModelScope.launch { userSettings.setCustomApiBaseUrl(v) }
 }

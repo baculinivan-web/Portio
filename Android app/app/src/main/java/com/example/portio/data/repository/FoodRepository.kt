@@ -1,6 +1,11 @@
 package com.example.portio.data.repository
 
 import android.content.Context
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.portio.BuildConfig
 import com.example.portio.data.local.FoodItemDao
 import com.example.portio.data.remote.NutritionService
@@ -11,6 +16,7 @@ import com.example.portio.domain.model.toEntity
 import com.example.portio.data.preferences.UserSettings
 import com.example.portio.health.HealthConnectManager
 import com.example.portio.widget.PortioWidget
+import com.example.portio.worker.NutritionWorker
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -40,17 +46,15 @@ class FoodRepository @Inject constructor(
     suspend fun countForDay(start: Long, end: Long): Int = dao.countForDay(start, end)
 
     /**
-     * Inserts a placeholder immediately, then fetches nutrition from AI and updates the record.
-     * Mirrors iOS CalorieTrackerViewModel.addItem pattern.
+     * Inserts a placeholder immediately, then enqueues a WorkManager job to fetch nutrition.
+     * The job runs even if the app is closed — WorkManager guarantees execution.
+     * Images are not supported in background mode (no persistent storage for byte arrays).
      */
     suspend fun addItem(
         query: String,
         images: List<ByteArray> = emptyList(),
         onError: (String) -> Unit = {}
     ) {
-        val modelName = userSettings.modelName.first().ifBlank { BuildConfig.MODEL_NAME }
-        val apiKey = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
-        val serperKey = userSettings.serperApiKey.first().ifBlank { BuildConfig.SERPER_API_KEY }
         val placeholder = FoodItem(
             id = UUID.randomUUID().toString(),
             name = query,
@@ -58,78 +62,21 @@ class FoodRepository @Inject constructor(
         )
         dao.insert(placeholder.toEntity())
 
-        try {
-            val results = nutritionService.fetchNutrition(
-                query = query,
-                images = images,
-                apiKey = apiKey,
-                modelName = modelName,
-                serperApiKey = serperKey
+        val inputData = Data.Builder()
+            .putString(NutritionWorker.KEY_ITEM_ID, placeholder.id)
+            .putString(NutritionWorker.KEY_QUERY, query)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<NutritionWorker>()
+            .setInputData(inputData)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
             )
+            .build()
 
-            val firstResult = results.firstOrNull()
-            if (firstResult == null) {
-                dao.delete(placeholder.toEntity())
-                return
-            }
-            val first = firstResult.response
-
-            // Update placeholder with first result
-            val updated = placeholder.copy(
-                identifiedFood = first.identifiedFood,
-                cleanFoodName = first.cleanFoodName,
-                calories = first.calories,
-                protein = first.protein,
-                carbs = first.carbs,
-                fat = first.fat,
-                weightGrams = first.estimatedWeightGrams,
-                caloriesPer100g = first.caloriesPer100g,
-                proteinPer100g = first.proteinPer100g,
-                carbsPer100g = first.carbsPer100g,
-                fatPer100g = first.fatPer100g,
-                isProcessing = false,
-                isSearchGrounded = first.isSearchGrounded ?: false,
-                dataSource = first.dataSource,
-                searchSteps = firstResult.searchSteps
-            )
-            dao.update(updated.toEntity())
-
-            // Sync to Health Connect
-            val hcId = healthConnect.writeNutrition(updated)
-            if (hcId != null) dao.update(updated.copy(healthConnectIds = listOf(hcId)).toEntity())
-
-            // Update widget
-            PortioWidget().updateAll(context)
-
-            // Insert additional items if AI returned multiple foods
-            results.drop(1).forEach { itemResult ->
-                val item = itemResult.response
-                val extra = FoodItem(
-                    id = UUID.randomUUID().toString(),
-                    name = query,
-                    identifiedFood = item.identifiedFood,
-                    cleanFoodName = item.cleanFoodName,
-                    calories = item.calories,
-                    protein = item.protein,
-                    carbs = item.carbs,
-                    fat = item.fat,
-                    weightGrams = item.estimatedWeightGrams,
-                    caloriesPer100g = item.caloriesPer100g,
-                    proteinPer100g = item.proteinPer100g,
-                    carbsPer100g = item.carbsPer100g,
-                    fatPer100g = item.fatPer100g,
-                    isProcessing = false,
-                    isSearchGrounded = item.isSearchGrounded ?: false,
-                    dataSource = item.dataSource,
-                    searchSteps = itemResult.searchSteps
-                )
-                dao.insert(extra.toEntity())
-            }
-
-        } catch (e: Exception) {
-            dao.delete(placeholder.toEntity())
-            onError(e.message ?: "Unknown error")
-        }
+        WorkManager.getInstance(context).enqueue(request)
     }
 
     suspend fun updateItem(item: FoodItem) = dao.update(item.toEntity())
@@ -146,12 +93,14 @@ class FoodRepository @Inject constructor(
     suspend fun fetchAIGoals(userStats: String, userGoals: String, baselineTdee: Double): GoalResponse {
         val modelName = userSettings.modelName.first().ifBlank { BuildConfig.MODEL_NAME }
         val apiKey = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
+        val customApiBaseUrl = userSettings.customApiBaseUrl.first()
         return nutritionService.fetchAIGoals(
             userStats = userStats,
             userGoals = userGoals,
             baselineTdee = baselineTdee,
             apiKey = apiKey,
-            modelName = modelName
+            modelName = modelName,
+            customApiBaseUrl = customApiBaseUrl
         )
     }
 

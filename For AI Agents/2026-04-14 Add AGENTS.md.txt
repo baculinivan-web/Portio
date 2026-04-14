@@ -1,0 +1,16 @@
+Date: 2026-04-14
+Task: Add AGENTS.md
+
+Created the root AGENTS.md file to give AI coding agents project-specific context about Portio.
+
+Covers:
+- Repository structure (iOS + Android)
+- Build & run instructions
+- API key handling (user-entered via Settings, stored in DataStore / UserDefaults)
+- Core architectural patterns (placeholder pattern, tool-calling rules)
+- iOS → Android platform mapping
+- Code conventions for both platforms
+- Data models (FoodItem, UserSettings)
+- Known limitations and no-touch zones
+
+Also established the convention of creating a note file in "For AI Agents/" for every new feature or bug fix (see AGENTS.md for details).

@@ -24,6 +24,9 @@ interface FoodItemDao {
     @Delete
     suspend fun delete(item: FoodItemEntity)
 
+    @Query("DELETE FROM food_items WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("SELECT COUNT(*) FROM food_items WHERE dateEaten >= :start AND dateEaten < :end")
     suspend fun countForDay(start: Long, end: Long): Int
 }

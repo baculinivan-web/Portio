@@ -31,6 +31,7 @@ fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltV
     val modelName by viewModel.modelName.collectAsState()
     val openRouterApiKey by viewModel.openRouterApiKey.collectAsState()
     val serperApiKey by viewModel.serperApiKey.collectAsState()
+    val customApiBaseUrl by viewModel.customApiBaseUrl.collectAsState()
 
     Scaffold(
         topBar = {
@@ -60,13 +61,28 @@ fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltV
 
             Spacer(Modifier.height(8.dp))
             SectionHeader("AI Model")
-            ModelField("OpenRouter Model", modelName) { viewModel.setModelName(it) }
+            ModelField("Model Name", modelName) { viewModel.setModelName(it) }
 
             Spacer(Modifier.height(8.dp))
-            SectionHeader("OpenRouter API Key")
+            SectionHeader("AI API")
+            ModelField(
+                label = "Custom API Base URL",
+                value = customApiBaseUrl,
+                placeholder = "Leave blank to use OpenRouter",
+                onSave = { viewModel.setCustomApiBaseUrl(it) }
+            )
+            Text(
+                "OpenAI-compatible endpoint, e.g. https://api.openai.com/v1 or http://localhost:11434/v1 (Ollama). Leave blank to use OpenRouter.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+
+            Spacer(Modifier.height(8.dp))
+            SectionHeader("API Key")
             ApiKeyField("API Key", openRouterApiKey) { viewModel.setOpenRouterApiKey(it) }
             Text(
-                "Get your free key at openrouter.ai/keys — the free tier is sufficient for normal app usage.",
+                "For OpenRouter: get your free key at openrouter.ai/keys. For other providers, paste the corresponding key here.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -160,7 +176,7 @@ private fun GoalField(label: String, value: Double, onSave: (Double) -> Unit) {
 }
 
 @Composable
-private fun ModelField(label: String, value: String, onSave: (String) -> Unit) {
+private fun ModelField(label: String, value: String, placeholder: String = "e.g. google/gemini-flash-1.5", onSave: (String) -> Unit) {
     var text by remember(value) { mutableStateOf(value) }
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -170,7 +186,7 @@ private fun ModelField(label: String, value: String, onSave: (String) -> Unit) {
             value = text,
             onValueChange = { text = it },
             label = { Text(label) },
-            placeholder = { Text("e.g. google/gemini-flash-1.5") },
+            placeholder = { Text(placeholder) },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -178,7 +194,7 @@ private fun ModelField(label: String, value: String, onSave: (String) -> Unit) {
                 focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
             ),
             trailingIcon = {
-                TextButton(onClick = { if (text.isNotBlank()) onSave(text.trim()) }) { Text("Save") }
+                TextButton(onClick = { onSave(text.trim()) }) { Text("Save") }
             }
         )
     }

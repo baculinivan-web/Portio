@@ -32,6 +32,7 @@ object UserSettingsKeys {
     val MODEL_NAME = stringPreferencesKey("modelName")
     val OPENROUTER_API_KEY = stringPreferencesKey("openRouterApiKey")
     val SERPER_API_KEY = stringPreferencesKey("serperApiKey")
+    val CUSTOM_API_BASE_URL = stringPreferencesKey("customApiBaseUrl")
 }
 
 @Singleton
@@ -54,6 +55,8 @@ class UserSettings @Inject constructor(@ApplicationContext private val context: 
     val modelName: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.MODEL_NAME] ?: BuildConfig.MODEL_NAME.ifBlank { "openai/gpt-oss-120b:free" } }
     val openRouterApiKey: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.OPENROUTER_API_KEY] ?: "" }
     val serperApiKey: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.SERPER_API_KEY] ?: "" }
+    // Empty = use OpenRouter (default). Set to any OpenAI-compatible base URL, e.g. "https://api.openai.com/v1"
+    val customApiBaseUrl: Flow<String> = context.dataStore.data.map { it[UserSettingsKeys.CUSTOM_API_BASE_URL] ?: "" }
 
     suspend fun setCalorieGoal(value: Double) = context.dataStore.edit { it[UserSettingsKeys.CALORIE_GOAL] = value }
     suspend fun setProteinGoal(value: Double) = context.dataStore.edit { it[UserSettingsKeys.PROTEIN_GOAL] = value }
@@ -72,4 +75,5 @@ class UserSettings @Inject constructor(@ApplicationContext private val context: 
     suspend fun setModelName(value: String) = context.dataStore.edit { it[UserSettingsKeys.MODEL_NAME] = value }
     suspend fun setOpenRouterApiKey(value: String) = context.dataStore.edit { it[UserSettingsKeys.OPENROUTER_API_KEY] = value }
     suspend fun setSerperApiKey(value: String) = context.dataStore.edit { it[UserSettingsKeys.SERPER_API_KEY] = value }
+    suspend fun setCustomApiBaseUrl(value: String) = context.dataStore.edit { it[UserSettingsKeys.CUSTOM_API_BASE_URL] = value }
 }

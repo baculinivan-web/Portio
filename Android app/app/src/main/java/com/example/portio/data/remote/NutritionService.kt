@@ -26,8 +26,16 @@ class NutritionService @Inject constructor(
     private val serperService: SerperService,
     private val offService: OpenFoodFactsService
 ) {
-    private val apiUrl = "https://openrouter.ai/api/v1/chat/completions"
+    private val defaultApiUrl = "https://openrouter.ai/api/v1/chat/completions"
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+
+    /** Resolves the chat completions URL from a base URL or falls back to OpenRouter. */
+    private fun resolveApiUrl(customBaseUrl: String): String {
+        if (customBaseUrl.isBlank()) return defaultApiUrl
+        val base = customBaseUrl.trimEnd('/')
+        // If the user already passed a full path ending in /completions, use as-is
+        return if (base.endsWith("/completions")) base else "$base/chat/completions"
+    }
 
     private val toolsJson = buildJsonArray {
         addJsonObject {
@@ -71,8 +79,10 @@ class NutritionService @Inject constructor(
         images: List<ByteArray> = emptyList(),
         apiKey: String,
         modelName: String,
-        serperApiKey: String
+        serperApiKey: String,
+        customApiBaseUrl: String = ""
     ): List<NutritionResponseWithSteps> {
+        val apiUrl = resolveApiUrl(customApiBaseUrl)
         val initialSystemPrompt = buildInitialSystemPrompt()
         val finalSystemPrompt = buildFinalSystemPrompt()
 
@@ -247,8 +257,10 @@ class NutritionService @Inject constructor(
         userGoals: String,
         baselineTdee: Double,
         apiKey: String,
-        modelName: String
+        modelName: String,
+        customApiBaseUrl: String = ""
     ): GoalResponse {
+        val apiUrl = resolveApiUrl(customApiBaseUrl)
         val prompt = """
             Act as a nutrition planning expert. Based on the following user data, determine their daily nutritional goals.
             User Data: $userStats

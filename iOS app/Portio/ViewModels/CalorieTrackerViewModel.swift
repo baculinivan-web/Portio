@@ -29,6 +29,8 @@ class CalorieTrackerViewModel: ObservableObject {
             try? context.save()
         }
         WidgetCenter.shared.reloadAllTimelines()
+        // Schedule background task in case the app is closed before the request completes
+        BackgroundTaskManager.shared.scheduleIfNeeded()
 
         Task {
             do {
