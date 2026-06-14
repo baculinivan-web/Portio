@@ -2,6 +2,7 @@ import Foundation
 
 // Custom, more descriptive errors
 enum NutritionError: Error, LocalizedError {
+    case missingAPIKey(String)
     case invalidAPIKey
     case badRequest
     case badResponse
@@ -10,6 +11,8 @@ enum NutritionError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
+        case .missingAPIKey(let providerName):
+            return "\(providerName) API key is missing. Open Settings and enter the key again for this installation."
         case .invalidAPIKey:
             return "Invalid OpenRouter API key. Please check your key in Settings."
         case .badRequest:
@@ -30,6 +33,7 @@ class NutritionService {
     private let modelName: String
     private let serperService: SerperService
     private let apiURL: URL
+    private let provider: UserSettings.LLMProvider
     private let offService = OpenFoodFactsService()
     nonisolated static var initialSystemPromptForTesting: String { initialSystemPrompt }
     nonisolated static func initialToolChoiceForTesting(hasImages: Bool) -> OpenRouterRequest.ToolChoice {
@@ -108,6 +112,7 @@ class NutritionService {
         self.apiKey = apiKey
         self.modelName = modelName
         self.serperService = SerperService(apiKey: serperApiKey)
+        self.provider = provider
 
         if provider == .blockRun {
             let base = UserSettings.blockRunProxyUrl.trimmingCharacters(in: .init(charactersIn: "/"))
@@ -260,6 +265,8 @@ class NutritionService {
     }
 
     func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
+        try validateProviderCredentials()
+
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
 
@@ -498,6 +505,8 @@ class NutritionService {
     }
 
     func fetchAIGoals(userStats: String, userGoals: String, baselineTdee: Double) async throws -> GoalResponse {
+        try validateProviderCredentials()
+
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
 
@@ -575,6 +584,22 @@ class NutritionService {
             return try JSONDecoder().decode(GoalResponse.self, from: Data(goalJSONText.utf8))
         } catch let decodingError {
             throw NutritionError.unparsableJSON(decodingError.localizedDescription)
+        }
+    }
+
+    private func validateProviderCredentials() throws {
+        let trimmedApiKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch provider {
+        case .openRouter:
+            guard !trimmedApiKey.isEmpty else {
+                throw NutritionError.missingAPIKey("OpenRouter")
+            }
+        case .custom:
+            guard !trimmedApiKey.isEmpty else {
+                throw NutritionError.missingAPIKey("Custom provider")
+            }
+        case .blockRun:
+            return
         }
     }
 }

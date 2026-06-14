@@ -43,11 +43,10 @@ class CalorieTrackerViewModel: ObservableObject {
         WidgetCenter.shared.reloadAllTimelines()
         // Schedule background task in case the app is closed before the request completes
         BackgroundTaskManager.shared.scheduleIfNeeded()
+        _ = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
 
-        if !BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable() {
-            let jobId = "foreground-\(UUID().uuidString)"
-            processItem(placeholderItem, jobId: jobId, context: context)
-        }
+        let jobId = "foreground-\(UUID().uuidString)"
+        processItem(placeholderItem, jobId: jobId, context: context)
     }
 
     func retryItem(_ item: FoodItem, context: ModelContext) {
@@ -55,12 +54,11 @@ class CalorieTrackerViewModel: ObservableObject {
         try? context.save()
         WidgetCenter.shared.reloadAllTimelines()
         BackgroundTaskManager.shared.scheduleIfNeeded()
+        _ = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
 
-        if !BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable() {
-            let jobId = "foreground-\(UUID().uuidString)"
-            _ = item.claimProcessingJob(id: jobId, at: .now)
-            processItem(item, jobId: jobId, context: context)
-        }
+        let jobId = "foreground-\(UUID().uuidString)"
+        _ = item.claimProcessingJob(id: jobId, at: .now)
+        processItem(item, jobId: jobId, context: context)
     }
 
     func addManualItem(_ entry: ManualFoodEntry, context: ModelContext) {
