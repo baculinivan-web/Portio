@@ -11,7 +11,7 @@ enum NutritionError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey:
-            return "Invalid OpenRouter API Key. Please check your key in Gemini-Info.plist."
+            return "Invalid OpenRouter API key. Please check your key in Settings."
         case .badRequest:
             return "The request to the server was malformed."
         case .badResponse:
@@ -29,32 +29,34 @@ class NutritionService {
     private let apiKey: String
     private let modelName: String
     private let serperService: SerperService
-    private let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+    private let apiURL: URL
     private let offService = OpenFoodFactsService()
-
-    init(apiKey: String, modelName: String, serperApiKey: String) {
-        self.apiKey = apiKey
-        self.modelName = modelName
-        self.serperService = SerperService(apiKey: serperApiKey)
+    nonisolated static var initialSystemPromptForTesting: String { initialSystemPrompt }
+    nonisolated static func initialToolChoiceForTesting(hasImages: Bool) -> OpenRouterRequest.ToolChoice {
+        initialToolChoice(hasImages: hasImages)
+    }
+    nonisolated static func canAcceptFinalResponseForTesting(hasExecutedTools: Bool, hasImages: Bool) -> Bool {
+        canAcceptFinalResponse(hasExecutedTools: hasExecutedTools, hasImages: hasImages)
     }
 
-    func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "POST"
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        // Add HTTP Referer (required by OpenRouter for some tiers, good practice)
-        request.addValue("https://portio.app", forHTTPHeaderField: "HTTP-Referer")
-        request.addValue("Portio", forHTTPHeaderField: "X-Title")
+    private enum ToolResult {
+        case google(id: String, content: String, step: SearchStep)
+        case off(id: String, content: String)
+        case error(id: String, content: String)
+    }
 
-        var initialSystemPrompt = """
+    nonisolated private static let initialSystemPrompt = """
         You are a highly accurate nutritional analysis expert.
         Analyze the food query and images provided by the user to identify each distinct food item.
-        
-        Your primary goal in this turn is to IDENTIFY ALL necessary information gathering steps.
-        
+
+        Your primary goal is reliable nutrition data. Use your internal nutrition knowledge for ordinary generic foods, and use tools when the item needs grounding.
+
         LANGUAGE & BRAND RULE: The query can be in ANY language (Russian, English, etc.). Brand names may be local/regional brands from any country — do NOT assume a foreign-sounding name maps to a well-known global brand. For example, "актимуно" is a Russian brand and is NOT the same as "Actimel". Always search for the exact name as given.
-        
+
+        FIRST-PASS DECISION RULE:
+        - If the food is generic, unbranded, and you can estimate it reliably, output the final JSON immediately without tools.
+        - If the item is branded, packaged, restaurant-made, regional, ambiguous, or uncertain, use tools before final JSON.
+
         CRITICAL SEARCH RULE: You MUST use tools for ANY of the following — no exceptions:
         - Any branded or packaged product (Oreo, Activia, Lay's, Snickers, Актимуно, etc.)
         - Any product with a recognizable brand name, even if you think you know the nutrition
@@ -62,30 +64,220 @@ class NutritionService {
         - Any product name that sounds like a brand (even if unfamiliar or in a foreign language)
         - Any query where the user specifies a quantity of a packaged item (e.g. "3 oreo", "2 актимуно")
         - When in doubt — always search, never guess
-        
-        Only skip tools for completely generic, unbranded whole foods (e.g. "apple", "boiled egg", "rice", "яблоко", "варёное яйцо").
-        
+
+        Skip tools for completely generic, unbranded foods when reliable nutrition data is common knowledge (e.g. "apple", "boiled egg", "rice", "яблоко", "варёное яйцо").
+
         CRITICAL TOOL BATCHING RULE: Analyze the entire query first. If multiple items need searching (e.g. "Apple and Coke"), or if a single item requires multiple tools, you MUST emit ALL necessary tool calls in a SINGLE response turn. Do NOT wait for the result of one tool before calling the next. We can execute them in parallel.
-        
+
         TOOL PRIORITY RULE:
         1. `openfoodfacts_search`: Use this FIRST for ALL branded/packaged products. The data is structured and highly reliable.
            CRITICAL: When using `openfoodfacts_search`, pass ONLY the brand and product name (e.g., "Coke Zero", "Snickers", "Актимуно"). DO NOT include weights, volumes, or packaging details (e.g., "0.33l", "50g", "box") in the search query, as this often causes the search to fail. The tool will return available sizes/quantities for you to select from.
         2. `google_search`: Use this if `openfoodfacts_search` returns no results, or for restaurant menu items ("Big Mac"), generic dishes ("Caesar Salad"), or specific queries requiring web synthesis.
-        
-        Do not output JSON yet. Focus on gathering data.
+
+        After tool results are available, use those results in the final JSON. If no tools were needed, output final JSON from your internal nutrition knowledge and set "isSearchGrounded" to false.
         """
-        
-        var finalSystemPrompt = """
+
+    nonisolated private static func initialToolChoice(hasImages _: Bool) -> OpenRouterRequest.ToolChoice {
+        .auto
+    }
+
+    nonisolated private static func canAcceptFinalResponse(hasExecutedTools _: Bool, hasImages _: Bool) -> Bool {
+        true
+    }
+
+    init(apiKey: String, modelName: String, serperApiKey: String, customBaseURL: String? = nil, provider: UserSettings.LLMProvider = .openRouter) {
+        self.apiKey = apiKey
+        self.modelName = modelName
+        self.serperService = SerperService(apiKey: serperApiKey)
+
+        if provider == .blockRun {
+            let base = UserSettings.blockRunProxyUrl.trimmingCharacters(in: .init(charactersIn: "/"))
+            let fullURL = base.hasSuffix("/chat/completions") ? base : "\(base)/chat/completions"
+            self.apiURL = URL(string: fullURL) ?? URL(string: "https://api.blockrun.ai/v1/chat/completions")!
+        } else if let customBaseURL = customBaseURL, !customBaseURL.isEmpty {
+            let base = customBaseURL.trimmingCharacters(in: .init(charactersIn: "/"))
+            let fullURL = base.hasSuffix("/chat/completions") ? base : "\(base)/chat/completions"
+            self.apiURL = URL(string: fullURL) ?? URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+        } else {
+            self.apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+        }
+    }
+
+    nonisolated static func extractManualToolCall(from content: String) -> ToolCall? {
+        struct ManualToolCallEnvelope: Decodable {
+            let name: String
+            let parameters: [String: JSONValue]
+
+            private enum CodingKeys: String, CodingKey {
+                case name
+                case parameters
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                let keys = Set(container.allKeys.map(\.stringValue))
+                guard keys == ["name", "parameters"] else {
+                    throw DecodingError.dataCorrupted(
+                        .init(codingPath: decoder.codingPath, debugDescription: "Unexpected manual tool call shape")
+                    )
+                }
+
+                name = try container.decode(String.self, forKey: .name)
+                parameters = try container.decode([String: JSONValue].self, forKey: .parameters)
+            }
+        }
+
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.first == "{", trimmed.last == "}" else { return nil }
+
+        let decoder = JSONDecoder()
+        guard let envelope = try? decoder.decode(ManualToolCallEnvelope.self, from: Data(trimmed.utf8)),
+              ["google_search", "openfoodfacts_search"].contains(envelope.name) else {
+            return nil
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        guard let argumentData = try? encoder.encode(envelope.parameters),
+              let argumentString = String(data: argumentData, encoding: .utf8) else {
+            return nil
+        }
+
+        return ToolCall(
+            id: "call_manual_\(UUID().uuidString.prefix(8))",
+            type: "function",
+            function: .init(name: envelope.name, arguments: argumentString)
+        )
+    }
+
+    private func executeToolCalls(_ toolCalls: [ToolCall]) async -> [ToolResult] {
+        await withTaskGroup(of: ToolResult.self) { group in
+            for toolCall in toolCalls {
+                group.addTask {
+                    guard let argsData = toolCall.function.arguments.data(using: .utf8),
+                          let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
+                          let searchQuery = args["query"] as? String else {
+                        return .error(id: toolCall.id, content: "Error: Invalid arguments")
+                    }
+
+                    switch toolCall.function.name {
+                    case "google_search":
+                        return await self.executeGoogleSearch(id: toolCall.id, query: searchQuery)
+                    case "openfoodfacts_search":
+                        return await self.executeOpenFoodFactsSearch(id: toolCall.id, query: searchQuery)
+                    default:
+                        return .error(id: toolCall.id, content: "Error: Unknown tool")
+                    }
+                }
+            }
+
+            var results: [ToolResult] = []
+            for await result in group {
+                results.append(result)
+            }
+            return results
+        }
+    }
+
+    private func executeGoogleSearch(id: String, query: String) async -> ToolResult {
+        do {
+            let searchStep = try await serperService.searchStructured(query: query)
+            var resultString = ""
+            if let answer = searchStep.answerBox {
+                resultString += "Answer: \(answer)\n"
+            }
+            resultString += "Top results (4):\n"
+            for (i, res) in searchStep.results.enumerated() {
+                resultString += "\(i + 1). \(res.title): \(res.snippet)\n"
+            }
+            return .google(id: id, content: resultString, step: searchStep)
+        } catch {
+            return .error(id: id, content: "Google Search error: \(error.localizedDescription)")
+        }
+    }
+
+    private func executeOpenFoodFactsSearch(id: String, query: String) async -> ToolResult {
+        do {
+            let products = try await offService.searchProducts(query: query)
+            var resultString = ""
+            if products.isEmpty {
+                resultString = "No products found in OpenFoodFacts database."
+            } else {
+                resultString = "Found \(products.count) products. Top 3 relevant results:\n"
+                for (i, product) in products.prefix(3).enumerated() {
+                    resultString += "\(i + 1). Name: \(product.productName ?? "Unknown") | Brand: \(product.brands ?? "Unknown") | Serving: \(product.servingSize ?? "Unknown")\n"
+                    if let nuts = product.nutriments {
+                        resultString += "   Per 100g: \(nuts.energyKcal100g ?? 0) kcal, P: \(nuts.proteins100g ?? 0)g, C: \(nuts.carbohydrates100g ?? 0)g, F: \(nuts.fat100g ?? 0)g\n"
+                    }
+                }
+            }
+            return .off(id: id, content: resultString)
+        } catch {
+            return .error(id: id, content: "OpenFoodFacts error: \(error.localizedDescription)")
+        }
+    }
+
+    private func summarizeToolResults(_ results: [ToolResult], capturedSearchSteps: inout [SearchStep], didUseOFF: inout Bool) -> String {
+        var resultsSummary = ""
+        for result in results {
+            switch result {
+            case .google(_, let content, let step):
+                capturedSearchSteps.append(step)
+                resultsSummary += "\n[Search Result]: \(content)\n"
+            case .off(_, let content):
+                didUseOFF = true
+                resultsSummary += "\n[Branded Product Data]: \(content)\n"
+            case .error(_, let content):
+                resultsSummary += "\n[Tool Error]: \(content)\n"
+            }
+        }
+        return resultsSummary
+    }
+
+    private func toolMessages(from results: [ToolResult]) -> [OpenRouterRequest.Message] {
+        results.map { result in
+            switch result {
+            case .google(let id, let content, _):
+                return .init(role: "tool", content: .string(content), toolCallId: id, name: "google_search")
+            case .off(let id, let content):
+                return .init(role: "tool", content: .string(content), toolCallId: id, name: "openfoodfacts_search")
+            case .error(let id, let content):
+                return .init(role: "tool", content: .string(content), toolCallId: id)
+            }
+        }
+    }
+
+    func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "POST"
+
+        // BlockRun (ClawRouter) uses either 'x402' for local-only auth or the wallet ID for signed requests.
+        // We'll use the wallet ID if provided, otherwise x402.
+        if UserSettings.llmProvider == .blockRun {
+            let authKey = UserSettings.blockRunWalletId.isEmpty ? "x402" : UserSettings.blockRunWalletId
+            request.addValue("Bearer \(authKey)", forHTTPHeaderField: "Authorization")
+        } else {
+            request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Add HTTP Referer (required by OpenRouter for some tiers, good practice)
+        request.addValue("https://portio.app", forHTTPHeaderField: "HTTP-Referer")
+        request.addValue("Portio", forHTTPHeaderField: "X-Title")
+
+        let initialSystemPrompt = Self.initialSystemPrompt
+
+        let finalSystemPrompt = """
         You are a highly accurate nutritional analysis expert.
-        
+
         CRITICAL: Analyze the tool results provided in the conversation history and the original user query.
-        
+
         CRITICAL PORTION ESTIMATION RULE: For branded or packaged items, if the user does not specify a weight, you MUST use the serving size or unit weight returned by the tools. NEVER default to 100g if the standard unit weight is different.
-        
+
         CRITICAL: If you used a tool to find information for a food item, you MUST set the "isSearchGrounded" key to true for that item in your JSON response.
-        
+
         CRITICAL: Your final response MUST be ONLY a single, minified JSON object with the "foods" array.
-        
+
         The JSON object must have a single key "foods" which is an array of objects. Each object in the array must have these exact keys and value types:
         - "identifiedFood": String (A descriptive name, e.g., "1 large apple")
         - "cleanFoodName": String (A simple, clean name for the food, e.g., "Apple" or "Beef Patty". This should not include quantities or weights.)
@@ -103,26 +295,28 @@ class NutritionService {
         If the query is "an apple and a banana", you must return two separate objects in the "foods" array. If the query is "a glass of milk", return one object in the array.
         CRITICAL: The `identifiedFood` and `cleanFoodName` strings in your JSON response MUST be in the same language as the input query.
         """
-        
+
         var userPrompt = "Analyze the food query: '\(query)'."
-        
+
         if !images.isEmpty {
             userPrompt += " The user has also provided images of the food. Use them to identify the food and estimate portions."
         }
-        
+
         var contentParts: [OpenRouterRequest.ContentPart] = [.text(userPrompt)]
-        
+
         for imageData in images {
             let base64 = imageData.base64EncodedString()
             let url = "data:image/jpeg;base64,\(base64)"
             contentParts.append(.imageUrl(url))
         }
-        
+
+        let systemPrompt = "\(initialSystemPrompt)\n\n\(finalSystemPrompt)"
+
         var messages: [OpenRouterRequest.Message] = [
-            .init(role: "system", content: .string(initialSystemPrompt)),
+            .init(role: "system", content: .string(systemPrompt)),
             .init(role: "user", content: .parts(contentParts))
         ]
-        
+
         let tools: [OpenRouterRequest.Tool] = [
             .init(
                 type: "function",
@@ -162,73 +356,31 @@ class NutritionService {
 
         var capturedSearchSteps: [SearchStep] = []
         var didUseOFF = false
-        var isAnalysisPass = false
+        var hasExecutedTools = false
 
         // Loop for tool calling
         for _ in 0...3 { // Limit to 3 iterations to avoid infinite loops
-            #if DEBUG
-            print("\n--- OPENROUTER REQUEST ---")
-            print("Model: \(self.modelName)")
-            print("Is Analysis Pass: \(isAnalysisPass)")
-            for (index, msg) in messages.enumerated() {
-                print("Message [\(index)] (\(msg.role)):")
-                if let content = msg.content {
-                    switch content {
-                    case .string(let text):
-                        print("  Text: \(text)")
-                    case .parts(let parts):
-                        for part in parts {
-                            switch part {
-                            case .text(let text):
-                                print("  Text: \(text)")
-                            case .imageUrl(let url):
-                                if url.hasPrefix("data:image") {
-                                    print("  Image: [Base64 Data Truncated]")
-                                } else {
-                                    print("  Image URL: \(url)")
-                                }
-                            }
-                        }
-                    }
-                }
-                if let toolCalls = msg.toolCalls {
-                    for tc in toolCalls {
-                        print("  Tool Call: \(tc.function.name)(\(tc.function.arguments))")
-                    }
-                }
-                if let tcId = msg.toolCallId {
-                    print("  Tool Call ID: \(tcId)")
-                }
-            }
-            #endif
+            NutritionDiagnostics.log("OpenRouter request model=\(self.modelName), hasExecutedTools=\(hasExecutedTools), messageCount=\(messages.count)")
 
             let openRouterRequest = OpenRouterRequest(
                 model: self.modelName,
                 messages: messages,
                 responseFormat: nil,
-                tools: isAnalysisPass ? nil : tools,
-                toolChoice: isAnalysisPass ? nil : .auto,
+                tools: tools,
+                toolChoice: hasExecutedTools ? .auto : Self.initialToolChoice(hasImages: !images.isEmpty),
                 reasoning: .init(effort: "low") // Optimize for speed
             )
-            
+
             request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
             let (data, response) = try await URLSession.shared.data(for: request)
-            
-            #if DEBUG
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("\n--- OPENROUTER RESPONSE ---")
-                print(responseString)
-                print("---------------------------\n")
-            }
-            #endif
-            
+
+            NutritionDiagnostics.log("OpenRouter response bytes=\(data.count)")
+
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 if let httpResponse = response as? HTTPURLResponse {
-                     print("--- NETWORKING ERROR (fetchNutrition) ---")
-                     print("Status Code: \(httpResponse.statusCode)")
-                     print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
-                     
+                     NutritionDiagnostics.log("fetchNutrition failed status=\(httpResponse.statusCode), bytes=\(data.count)")
+
                      if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
                         throw NutritionError.apiError(errorResponse.error.message)
                      }
@@ -244,118 +396,30 @@ class NutritionService {
             guard let choice = openRouterResponse.choices.first else {
                 throw NutritionError.badResponse
             }
-            
-            let message = choice.message
-            
+
+            var message = choice.message
+
+            // Check if the model returned a tool call in the 'content' field instead of 'tool_calls'
+            if (message.toolCalls == nil || message.toolCalls?.isEmpty == true),
+               let content = message.content,
+               let manualToolCall = Self.extractManualToolCall(from: content) {
+                message.toolCalls = [manualToolCall]
+            }
+
             // Add the assistant's message to the history
             messages.append(.init(
                 role: "assistant",
                 content: message.content != nil ? .string(message.content!) : nil,
-                toolCalls: message.toolCalls
+                toolCalls: (message.toolCalls?.isEmpty == true) ? nil : message.toolCalls
             ))
 
-            if choice.finishReason == "tool_calls", let toolCalls = message.toolCalls {
-                
-                enum ToolResult {
-                    case google(id: String, content: String, step: SearchStep)
-                    case off(id: String, content: String)
-                    case error(id: String, content: String)
-                }
-                
-                // Execute tool calls in parallel
-                let results = await withTaskGroup(of: ToolResult.self) { group in
-                    for toolCall in toolCalls {
-                        group.addTask {
-                            if toolCall.function.name == "google_search" {
-                                guard let argsData = toolCall.function.arguments.data(using: .utf8),
-                                      let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
-                                      let searchQuery = args["query"] as? String else {
-                                    return .error(id: toolCall.id, content: "Error: Invalid arguments")
-                                }
-                                
-                                do {
-                                    let searchStep = try await self.serperService.searchStructured(query: searchQuery)
-                                    var resultString = ""
-                                    if let answer = searchStep.answerBox {
-                                        resultString += "Answer: \(answer)\n"
-                                    }
-                                    resultString += "Top results (4):\n"
-                                    for (i, res) in searchStep.results.enumerated() {
-                                        resultString += "\(i+1). \(res.title): \(res.snippet)\n"
-                                    }
-                                    return .google(id: toolCall.id, content: resultString, step: searchStep)
-                                } catch {
-                                    return .error(id: toolCall.id, content: "Error: \(error.localizedDescription)")
-                                }
-                            } else if toolCall.function.name == "openfoodfacts_search" {
-                                guard let argsData = toolCall.function.arguments.data(using: .utf8),
-                                      let args = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any],
-                                      let searchQuery = args["query"] as? String else {
-                                    return .error(id: toolCall.id, content: "Error: Invalid arguments")
-                                }
-                                
-                                do {
-                                    let products = try await self.offService.searchProducts(query: searchQuery)
-                                    var resultString = ""
-                                    if products.isEmpty {
-                                        resultString = "No products found in OpenFoodFacts database."
-                                    } else {
-                                        resultString = "Found \(products.count) products. Top 3 relevant results:\n"
-                                        for (i, product) in products.prefix(3).enumerated() {
-                                            resultString += "\(i+1). Name: \(product.productName ?? "Unknown") | Brand: \(product.brands ?? "Unknown") | Serving: \(product.servingSize ?? "Unknown")\n"
-                                            if let nuts = product.nutriments {
-                                                resultString += "   Per 100g: \(nuts.energyKcal100g ?? 0) kcal, P: \(nuts.proteins100g ?? 0)g, C: \(nuts.carbohydrates100g ?? 0)g, F: \(nuts.fat100g ?? 0)g\n"
-                                            }
-                                        }
-                                    }
-                                    return .off(id: toolCall.id, content: resultString)
-                                } catch {
-                                    return .error(id: toolCall.id, content: "Error: \(error.localizedDescription)")
-                                }
-                            }
-                            return .error(id: toolCall.id, content: "Error: Unknown tool")
-                        }
-                    }
-                    
-                    var aggregatedResults: [ToolResult] = []
-                    for await result in group {
-                        aggregatedResults.append(result)
-                    }
-                    return aggregatedResults
-                }
-                
-                // Safely update state and aggregate results
-                var resultsSummary = ""
-                for result in results {
-                    switch result {
-                    case .google(_, let content, let step):
-                        capturedSearchSteps.append(step)
-                        resultsSummary += "\n[Search Result]: \(content)\n"
-                    case .off(_, let content):
-                        didUseOFF = true
-                        resultsSummary += "\n[Branded Product Data]: \(content)\n"
-                    case .error(_, let content):
-                        resultsSummary += "\n[Tool Error]: \(content)\n"
-                    }
-                }
-                
-                // Collapse context for the final turn
-                let finalUserPrompt = """
-                User's Original Query: "\(query)"
-                
-                Gathered Information:
-                \(resultsSummary)
-                
-                Based on the information above, provide the final nutritional analysis.
-                """
-                
-                messages = [
-                    .init(role: "system", content: .string(finalSystemPrompt)),
-                    .init(role: "user", content: .string(finalUserPrompt))
-                ]
-                
-                isAnalysisPass = true
-                
+            if (choice.finishReason == "tool_calls" || (message.toolCalls != nil && !message.toolCalls!.isEmpty)),
+               let toolCalls = message.toolCalls, !toolCalls.isEmpty {
+                let results = await executeToolCalls(toolCalls)
+                _ = summarizeToolResults(results, capturedSearchSteps: &capturedSearchSteps, didUseOFF: &didUseOFF)
+                messages.append(contentsOf: toolMessages(from: results))
+                hasExecutedTools = true
+
                 // Continue the loop to get the next response from the LLM
                 continue
             } else {
@@ -372,7 +436,7 @@ class NutritionService {
                 do {
                     let foodArrayResponse = try JSONDecoder().decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
                     var foods = foodArrayResponse.foods
-                    
+
                     // Attach search steps to any item that is grounded
                     if !capturedSearchSteps.isEmpty {
                         for i in 0..<foods.count {
@@ -381,7 +445,7 @@ class NutritionService {
                             }
                         }
                     }
-                    
+
                     // Enforce OFF data source if tool was used
                     if didUseOFF {
                         for i in 0..<foods.count {
@@ -395,21 +459,28 @@ class NutritionService {
                             }
                         }
                     }
-                    
+
                     return foods
                 } catch let decodingError {
                     throw NutritionError.unparsableJSON(decodingError.localizedDescription)
                 }
             }
         }
-        
+
         throw NutritionError.badResponse
     }
-    
-    func fetchAIGoals(userStats: String, userGoals: String, baselineTDEE: Double) async throws -> GoalResponse {
-         var request = URLRequest(url: apiURL)
+
+    func fetchAIGoals(userStats: String, userGoals: String, baselineTdee: Double) async throws -> GoalResponse {
+        var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        if UserSettings.llmProvider == .blockRun {
+            let authKey = UserSettings.blockRunWalletId.isEmpty ? "x402" : UserSettings.blockRunWalletId
+            request.addValue("Bearer \(authKey)", forHTTPHeaderField: "Authorization")
+        } else {
+            request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("https://portio.app", forHTTPHeaderField: "HTTP-Referer")
         request.addValue("Portio", forHTTPHeaderField: "X-Title")
@@ -418,7 +489,7 @@ class NutritionService {
         Act as a nutrition planning expert. Based on the following user data, determine their daily nutritional goals.
         User Data: \(userStats)
         User's Personal Goals: "\(userGoals)"
-        The user's calculated baseline TDEE (Total Daily Energy Expenditure) for maintenance is \(String(format: "%.0f", baselineTDEE)) calories. Use this as a starting point.
+        The user's calculated baseline TDEE (Total Daily Energy Expenditure) for maintenance is \(String(format: "%.0f", baselineTdee)) calories. Use this as a starting point.
 
         CRITICAL: Your entire response must be ONLY a single, minified JSON object. Do not include any other text, explanations, or markdown formatting.
         The JSON object must have these exact keys and value types:
@@ -427,9 +498,9 @@ class NutritionService {
         - "carbs": Double
         - "fat": Double
         - "explanation": String
-        
+
         In the "explanation" string, you MUST do the following:
-        1.  Start by explaining how you adjusted the baseline TDEE to arrive at the new calorie goal, explicitly referencing the user's personal goal. (e.g., "To help you achieve your goal of losing weight, I've applied a 20% calorie deficit to your baseline TDEE of \(String(format: "%.0f", baselineTDEE)) kcal, resulting in a target of...").
+        1.  Start by explaining how you adjusted the baseline TDEE to arrive at the new calorie goal, explicitly referencing the user's personal goal. (e.g., "To help you achieve your goal of losing weight, I've applied a 20% calorie deficit to your baseline TDEE of \(String(format: "%.0f", baselineTdee)) kcal, resulting in a target of...").
         2.  Briefly explain the macronutrient split (e.g., "This high-protein diet will support muscle growth...").
         3.  Provide a simple, sample one-day meal plan (e.g., Breakfast, Lunch, Dinner, Snacks) with specific food examples that would help the user meet these new targets.
         """
@@ -437,33 +508,21 @@ class NutritionService {
         let openRouterRequest = OpenRouterRequest(
             model: self.modelName,
             messages: [.init(role: "user", content: .string(prompt))],
-            responseFormat: nil 
+            responseFormat: nil
         )
-        
-        #if DEBUG
-        print("\n--- OPENROUTER REQUEST (fetchAIGoals) ---")
-        print("Model: \(self.modelName)")
-        print("Prompt: \(prompt)")
-        #endif
+
+        NutritionDiagnostics.log("OpenRouter goals request model=\(self.modelName)")
 
         request.httpBody = try JSONEncoder().encode(openRouterRequest)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        #if DEBUG
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("\n--- OPENROUTER RESPONSE (fetchAIGoals) ---")
-            print(responseString)
-            print("---------------------------\n")
-        }
-        #endif
-        
+
+        NutritionDiagnostics.log("OpenRouter goals response bytes=\(data.count)")
+
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             if let httpResponse = response as? HTTPURLResponse {
-                print("--- NETWORKING ERROR (AIGoals) ---")
-                print("Status Code: \(httpResponse.statusCode)")
-                print("Response Body: \(String(data: data, encoding: .utf8) ?? "Unable to print body")")
-                
+                NutritionDiagnostics.log("fetchAIGoals failed status=\(httpResponse.statusCode), bytes=\(data.count)")
+
                 if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
                     throw NutritionError.apiError(errorResponse.error.message)
                 }
@@ -490,6 +549,17 @@ class NutritionService {
         } catch let decodingError {
             throw NutritionError.unparsableJSON(decodingError.localizedDescription)
         }
+    }
+}
+
+private enum NutritionDiagnostics {
+    private static let isEnabled = false
+
+    static func log(_ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        #if DEBUG
+        print("[NutritionService] \(message())")
+        #endif
     }
 }
 

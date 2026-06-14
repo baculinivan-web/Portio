@@ -8,7 +8,7 @@ enum SerperError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey:
-            return "Serper API Key not found. Please add it to Gemini-Info.plist."
+            return "Serper API key not found. Please add it in Settings."
         case .badResponse:
             return "The Serper server returned an invalid response."
         case .apiError(let message):
@@ -43,7 +43,7 @@ class SerperService {
             throw SerperError.badResponse
         }
 
-        // We return a simplified string representation of the search results 
+        // We return a simplified string representation of the search results
         // that the LLM can easily consume.
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw SerperError.badResponse
@@ -78,7 +78,7 @@ class SerperService {
 
         return resultString
     }
-    
+
     func searchStructured(query: String) async throws -> SearchStep {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"

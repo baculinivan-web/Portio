@@ -20,6 +20,7 @@ data class FoodItem(
     val fatPer100g: Double = 0.0,
     val dateEaten: Long = System.currentTimeMillis(),
     val isProcessing: Boolean = false,
+    val processingError: String? = null,
     val isSearchGrounded: Boolean = false,
     val dataSource: String? = null,
     val healthConnectIds: List<String> = emptyList(),
@@ -40,7 +41,7 @@ fun FoodItemEntity.toDomain(): FoodItem {
         weightGrams = weightGrams, caloriesPer100g = caloriesPer100g,
         proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
         dateEaten = dateEaten, isProcessing = isProcessing, isSearchGrounded = isSearchGrounded,
-        dataSource = dataSource,
+        processingError = processingError, dataSource = dataSource,
         healthConnectIds = if (healthConnectIds.isBlank()) emptyList() else healthConnectIds.split(","),
         searchSteps = steps
     )
@@ -58,7 +59,7 @@ fun FoodItem.toEntity(): FoodItemEntity {
         weightGrams = weightGrams, caloriesPer100g = caloriesPer100g,
         proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
         dateEaten = dateEaten, isProcessing = isProcessing, isSearchGrounded = isSearchGrounded,
-        dataSource = dataSource,
+        processingError = processingError, dataSource = dataSource,
         healthConnectIds = healthConnectIds.joinToString(","),
         searchStepsJson = stepsJson
     )

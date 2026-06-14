@@ -1,0 +1,5 @@
+Fixed the iOS nutrition analysis first pass so ordinary generic foods no longer have to trigger search.
+
+The initial OpenRouter tool choice is now `auto` for text and image requests. The prompt tells the model to either return final JSON immediately for reliable generic foods or call search tools for branded, packaged, restaurant-made, regional, ambiguous, or uncertain items.
+
+Final nutrition JSON is accepted even when no tools were used; searched results still mark grounded items and attach search steps as before.

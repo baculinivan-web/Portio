@@ -1,6 +1,7 @@
 package com.example.portio.data.remote
 
 import android.util.Base64
+import com.example.portio.data.preferences.UserSettings
 import com.example.portio.domain.model.FoodArrayResponse
 import com.example.portio.domain.model.GoalResponse
 import com.example.portio.domain.model.NutritionResponse
@@ -17,6 +18,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,6 +28,14 @@ class NutritionService @Inject constructor(
     private val serperService: SerperService,
     private val offService: OpenFoodFactsService
 ) {
+    private data class ToolExecutionResult(
+        val toolId: String,
+        val content: String,
+        val type: String,
+        val searchStep: SearchStep? = null,
+        val usedOff: Boolean = false
+    )
+
     private val defaultApiUrl = "https://openrouter.ai/api/v1/chat/completions"
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
@@ -33,8 +43,7 @@ class NutritionService @Inject constructor(
     private fun resolveApiUrl(customBaseUrl: String): String {
         if (customBaseUrl.isBlank()) return defaultApiUrl
         val base = customBaseUrl.trimEnd('/')
-        // If the user already passed a full path ending in /completions, use as-is
-        return if (base.endsWith("/completions")) base else "$base/chat/completions"
+        return if (base.endsWith("/chat/completions")) base else "$base/chat/completions"
     }
 
     private val toolsJson = buildJsonArray {
@@ -80,9 +89,26 @@ class NutritionService @Inject constructor(
         apiKey: String,
         modelName: String,
         serperApiKey: String,
-        customApiBaseUrl: String = ""
+        customApiBaseUrl: String = "",
+        llmProvider: UserSettings.LLMProvider = UserSettings.LLMProvider.OPEN_ROUTER,
+        blockRunWalletId: String = "",
+        blockRunProxyUrl: String = ""
     ): List<NutritionResponseWithSteps> {
-        val apiUrl = resolveApiUrl(customApiBaseUrl)
+        val apiUrl = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN) {
+            val base = blockRunProxyUrl.trimEnd('/')
+            if (base.endsWith("/chat/completions")) base else "$base/chat/completions"
+        } else {
+            resolveApiUrl(customApiBaseUrl)
+        }
+
+        val actualApiKey = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN) {
+            blockRunWalletId.ifBlank { throw Exception("BlockRun wallet key is required") }
+        } else {
+            apiKey
+        }
+
+        val actualModel = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN && modelName.isBlank()) "nvidia/mistral-small-4-119b" else modelName
+
         val initialSystemPrompt = buildInitialSystemPrompt()
         val finalSystemPrompt = buildFinalSystemPrompt()
 
@@ -106,13 +132,13 @@ class NutritionService @Inject constructor(
             addJsonObject { put("role", "user"); put("content", userContentParts) }
         }
 
-        var capturedSearchSteps = mutableListOf<SearchStep>()
+        val capturedSearchSteps = mutableListOf<SearchStep>()
         var didUseOFF = false
         var isAnalysisPass = false
 
         repeat(4) { // max 4 iterations
             val requestBody = buildJsonObject {
-                put("model", modelName)
+                put("model", actualModel)
                 put("messages", messages)
                 if (!isAnalysisPass) {
                     put("tools", toolsJson)
@@ -121,23 +147,69 @@ class NutritionService @Inject constructor(
                 putJsonObject("reasoning") { put("effort", "low") }
             }
 
-            val response = postJson(apiUrl, requestBody.toString(), apiKey)
+            val response = postJson(
+                url = apiUrl,
+                body = requestBody.toString(),
+                apiKey = actualApiKey,
+                includeOpenRouterHeaders = llmProvider == UserSettings.LLMProvider.OPEN_ROUTER
+            )
             val responseObj = json.parseToJsonElement(response).jsonObject
             val choice = responseObj["choices"]?.jsonArray?.firstOrNull()?.jsonObject
                 ?: throw Exception("No choices in response")
 
-            val message = choice["message"]?.jsonObject ?: throw Exception("No message")
-            val finishReason = choice["finish_reason"]?.jsonPrimitive?.contentOrNull
+            var message = choice["message"]?.jsonObject ?: throw Exception("No message")
+            var finishReason = choice["finish_reason"]?.jsonPrimitive?.contentOrNull
+
+            // Check if the model returned a tool call in the 'content' field instead of 'tool_calls'
+            val content = message["content"]?.jsonPrimitive?.contentOrNull
+            if ((message["tool_calls"] == null || message["tool_calls"]?.jsonArray?.isEmpty() == true) &&
+                content != null && content.contains("\"name\":") && content.contains("\"parameters\":")) {
+
+                val start = content.indexOf('{')
+                val end = content.lastIndexOf('}')
+                if (start >= 0 && end > start) {
+                    val tcStr = content.substring(start, end + 1)
+                    try {
+                        val tcJson = json.parseToJsonElement(tcStr).jsonObject
+                        val funcName = tcJson["name"]?.jsonPrimitive?.contentOrNull
+                        if (funcName != null) {
+                            val params = tcJson["parameters"]?.jsonObject ?: buildJsonObject {}
+                            val manualToolCall = buildJsonObject {
+                                put("id", "call_manual_${UUID.randomUUID().toString().take(8)}")
+                                put("type", "function")
+                                putJsonObject("function") {
+                                    put("name", funcName)
+                                    put("arguments", params.toString())
+                                }
+                            }
+                            val updatedMessage = message.toMutableMap()
+                            updatedMessage["tool_calls"] = buildJsonArray { add(manualToolCall) }
+                            message = JsonObject(updatedMessage)
+                            finishReason = "tool_calls"
+                        }
+                    } catch (e: Exception) {
+                        // Ignore parsing error for manual tool call detection
+                    }
+                }
+            }
 
             // Append assistant message to history
             val updatedMessages = messages.toMutableList()
-            updatedMessages.add(message)
+            // Some models return empty tool_calls array, we should normalize it to null/omitted for history
+            val messageToStore = if (message["tool_calls"]?.jsonArray?.isEmpty() == true) {
+                val map = message.toMutableMap()
+                map.remove("tool_calls")
+                JsonObject(map)
+            } else {
+                message
+            }
+            updatedMessages.add(messageToStore)
             messages = JsonArray(updatedMessages)
 
-            if (finishReason == "tool_calls") {
+            if (finishReason == "tool_calls" && message["tool_calls"]?.jsonArray?.isNotEmpty() == true) {
                 val toolCalls = message["tool_calls"]?.jsonArray ?: return@repeat
 
-                // Execute tool calls in parallel
+                // Execute tool calls in parallel; each task returns immutable metadata.
                 val toolResults = coroutineScope {
                     toolCalls.map { toolCallEl ->
                         async {
@@ -153,20 +225,18 @@ class NutritionService @Inject constructor(
                                 "google_search" -> {
                                     try {
                                         val step = serperService.searchStructured(q, serperApiKey)
-                                        capturedSearchSteps.add(step)
                                         var result = ""
                                         step.answerBox?.let { result += "Answer: $it\n" }
                                         result += "Top results:\n"
                                         step.results.forEachIndexed { i, r -> result += "${i+1}. ${r.title}: ${r.snippet}\n" }
-                                        Triple(toolId, result, "google")
+                                        ToolExecutionResult(toolId, result, "google", step, usedOff = false)
                                     } catch (e: Exception) {
-                                        Triple(toolId, "Error: ${e.message}", "error")
+                                        ToolExecutionResult(toolId, "Error: ${e.message}", "error")
                                     }
                                 }
                                 "openfoodfacts_search" -> {
                                     try {
                                         val products = offService.searchProducts(q)
-                                        didUseOFF = true
                                         val result = if (products.isEmpty()) {
                                             "No products found in OpenFoodFacts."
                                         } else {
@@ -180,22 +250,24 @@ class NutritionService @Inject constructor(
                                                 }
                                             }
                                         }
-                                        Triple(toolId, result, "off")
+                                        ToolExecutionResult(toolId, result, "off", usedOff = true)
                                     } catch (e: Exception) {
-                                        Triple(toolId, "Error: ${e.message}", "error")
+                                        ToolExecutionResult(toolId, "Error: ${e.message}", "error")
                                     }
                                 }
-                                else -> Triple(toolId, "Unknown tool", "error")
+                                else -> ToolExecutionResult(toolId, "Unknown tool", "error")
                             }
                         }
                     }.awaitAll().filterNotNull()
                 }
+                capturedSearchSteps.addAll(toolResults.mapNotNull { it.searchStep })
+                didUseOFF = didUseOFF || toolResults.any { it.usedOff }
 
-                val resultsSummary = toolResults.joinToString("\n") { (_, content, type) ->
-                    when (type) {
-                        "google" -> "[Search Result]: $content"
-                        "off" -> "[Branded Product Data]: $content"
-                        else -> "[Tool Error]: $content"
+                val resultsSummary = toolResults.joinToString("\n") { result ->
+                    when (result.type) {
+                        "google" -> "[Search Result]: ${result.content}"
+                        "off" -> "[Branded Product Data]: ${result.content}"
+                        else -> "[Tool Error]: ${result.content}"
                     }
                 }
 
@@ -258,27 +330,49 @@ class NutritionService @Inject constructor(
         baselineTdee: Double,
         apiKey: String,
         modelName: String,
-        customApiBaseUrl: String = ""
+        customApiBaseUrl: String = "",
+        llmProvider: UserSettings.LLMProvider = UserSettings.LLMProvider.OPEN_ROUTER,
+        blockRunWalletId: String = "",
+        blockRunProxyUrl: String = ""
     ): GoalResponse {
-        val apiUrl = resolveApiUrl(customApiBaseUrl)
+        val apiUrl = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN) {
+            val base = blockRunProxyUrl.trimEnd('/')
+            if (base.endsWith("/chat/completions")) base else "$base/chat/completions"
+        } else {
+            resolveApiUrl(customApiBaseUrl)
+        }
+
+        val actualApiKey = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN) {
+            blockRunWalletId.ifBlank { throw Exception("BlockRun wallet key is required") }
+        } else {
+            apiKey
+        }
+
+        val actualModel = if (llmProvider == UserSettings.LLMProvider.BLOCKRUN && modelName.isBlank()) "nvidia/mistral-small-4-119b" else modelName
+
         val prompt = """
             Act as a nutrition planning expert. Based on the following user data, determine their daily nutritional goals.
             User Data: $userStats
             User's Personal Goals: "$userGoals"
             The user's calculated baseline TDEE is ${baselineTdee.toInt()} calories.
-            
+
             CRITICAL: Your entire response must be ONLY a single, minified JSON object with keys:
             "calories", "protein", "carbs", "fat" (all Double), "explanation" (String).
         """.trimIndent()
 
         val requestBody = buildJsonObject {
-            put("model", modelName)
+            put("model", actualModel)
             putJsonArray("messages") {
                 addJsonObject { put("role", "user"); put("content", prompt) }
             }
         }
 
-        val response = postJson(apiUrl, requestBody.toString(), apiKey)
+        val response = postJson(
+            url = apiUrl,
+            body = requestBody.toString(),
+            apiKey = actualApiKey,
+            includeOpenRouterHeaders = llmProvider == UserSettings.LLMProvider.OPEN_ROUTER
+        )
         val responseObj = json.parseToJsonElement(response).jsonObject
         var goalText = responseObj["choices"]?.jsonArray?.firstOrNull()
             ?.jsonObject?.get("message")?.jsonObject?.get("content")?.jsonPrimitive?.content
@@ -291,15 +385,25 @@ class NutritionService @Inject constructor(
         return json.decodeFromString(goalText)
     }
 
-    private suspend fun postJson(url: String, body: String, apiKey: String): String = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
+    private suspend fun postJson(
+        url: String,
+        body: String,
+        apiKey: String,
+        includeOpenRouterHeaders: Boolean
+    ): String = withContext(Dispatchers.IO) {
+        val requestBuilder = Request.Builder()
             .url(url)
             .post(body.toRequestBody("application/json".toMediaType()))
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("Content-Type", "application/json")
-            .addHeader("HTTP-Referer", "https://portio.app")
-            .addHeader("X-Title", "Portio")
-            .build()
+
+        if (includeOpenRouterHeaders) {
+            requestBuilder
+                .addHeader("HTTP-Referer", "https://portio.app")
+                .addHeader("X-Title", "Portio")
+        }
+
+        val request = requestBuilder.build()
 
         val response = okHttpClient.newCall(request).execute()
         val responseBody = response.body?.string() ?: throw Exception("Empty response")
@@ -310,9 +414,13 @@ class NutritionService @Inject constructor(
     private fun buildInitialSystemPrompt() = """
         You are a highly accurate nutritional analysis expert.
         Analyze the food query and images provided by the user to identify each distinct food item.
-        
+
+        CRITICAL: If the query contains generic, unbranded whole foods (e.g. "apple", "boiled egg", "rice", "яблоко", "варёное яйцо") and you have enough information to provide nutritional data, you MUST output the final JSON immediately.
+
+        Otherwise, if you need more information for branded products, restaurant items, or specific queries, you MUST use the provided tools.
+
         LANGUAGE & BRAND RULE: The query can be in ANY language (Russian, English, etc.). Brand names may be local/regional brands from any country — do NOT assume a foreign-sounding name maps to a well-known global brand. For example, "актимуно" is a Russian brand and is NOT the same as "Actimel". Always search for the exact name as given.
-        
+
         CRITICAL SEARCH RULE: You MUST use tools for ANY of the following — no exceptions:
         - Any branded or packaged product (Oreo, Activia, Lay's, Snickers, Актимуно, etc.)
         - Any product with a recognizable brand name, even if you think you know the nutrition
@@ -320,29 +428,33 @@ class NutritionService @Inject constructor(
         - Any product name that sounds like a brand (even if unfamiliar or in a foreign language)
         - Any query where the user specifies a quantity of a packaged item (e.g. "3 oreo", "2 актимуно")
         - When in doubt — always search, never guess
-        
-        Only skip tools for completely generic, unbranded whole foods (e.g. "apple", "boiled egg", "rice", "яблоко", "варёное яйцо").
-        
+
         CRITICAL TOOL BATCHING RULE: Emit ALL necessary tool calls in a SINGLE response turn. Execute them in parallel.
-        
+
         TOOL PRIORITY RULE:
         1. openfoodfacts_search: Use FIRST for ALL branded/packaged products. Pass ONLY brand and product name, no weights or quantities.
         2. google_search: Use if OFF returns no results, or for restaurant items/generic dishes.
-        
-        Do not output JSON yet. Focus on gathering data.
+
+        IF YOU ARE OUTPUTTING THE FINAL JSON:
+        - It MUST be a single, minified JSON object with the "foods" array.
+        - Each food item MUST have these exact keys: "identifiedFood", "cleanFoodName", "calories", "protein", "carbs", "fat", "estimatedWeightGrams", "caloriesPer100g", "proteinPer100g", "carbsPer100g", "fatPer100g", "isSearchGrounded" (boolean).
+        - Set "isSearchGrounded" to true ONLY if you used a tool.
+        - DO NOT include any text before or after the JSON.
+
+        SCHEMA: {"foods": [{"identifiedFood": String, "cleanFoodName": String, "calories": Double, "protein": Double, "carbs": Double, "fat": Double, "estimatedWeightGrams": Double, "caloriesPer100g": Double, "proteinPer100g": Double, "carbsPer100g": Double, "fatPer100g": Double, "isSearchGrounded": Boolean, "dataSource": String|null}]}
     """.trimIndent()
 
     private fun buildFinalSystemPrompt() = """
         You are a highly accurate nutritional analysis expert.
-        
+
         Analyze the tool results and original query. For branded items without specified weight, use the standard serving size from tools.
-        
+
         If you used a tool, set "isSearchGrounded" to true for that item.
         Set "dataSource" to "OFF" if data came from OpenFoodFacts, "Google" if from Google Search, or null if from internal knowledge.
-        
+
         Your final response MUST be ONLY a single minified JSON object:
         {"foods": [{"identifiedFood": String, "cleanFoodName": String, "calories": Double, "protein": Double, "carbs": Double, "fat": Double, "estimatedWeightGrams": Double, "caloriesPer100g": Double, "proteinPer100g": Double, "carbsPer100g": Double, "fatPer100g": Double, "isSearchGrounded": Boolean, "dataSource": String|null}]}
-        
+
         identifiedFood and cleanFoodName MUST be in the same language as the input query.
     """.trimIndent()
 }

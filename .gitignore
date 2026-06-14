@@ -1,6 +1,10 @@
 # API Keys — never commit
 Android app/local.properties
 iOS app/CalCal/Gemini-Info.plist
+iOS app/Portio/Gemini-Info.local.plist
+iOS app/Portio/*-Secrets.plist
+*.env
+*.env.*
 
 # Android
 Android app/.gradle/
@@ -10,11 +14,21 @@ Android app/local.properties
 Android app/.kotlin/
 
 # iOS
+build/
+DerivedData/
+*.ipa
 iOS app/CalCal.xcodeproj/xcuserdata/
 iOS app/*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+**/xcuserdata/
+*.xcbkptlist
 
 # macOS
 .DS_Store
+
+# Local accidental copies
+.gitignore 2
 
 # Kiro
 .kiro/

@@ -22,6 +22,9 @@ class SettingsViewModel @Inject constructor(private val userSettings: UserSettin
     val openRouterApiKey = userSettings.openRouterApiKey.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
     val serperApiKey = userSettings.serperApiKey.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
     val customApiBaseUrl = userSettings.customApiBaseUrl.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+    val llmProvider = userSettings.llmProvider.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserSettings.LLMProvider.OPEN_ROUTER)
+    val blockRunWalletId = userSettings.blockRunWalletId.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+    val blockRunProxyUrl = userSettings.blockRunProxyUrl.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "https://blockrun.ai/api/v1")
 
     fun setCalorieGoal(v: Double) = viewModelScope.launch { userSettings.setCalorieGoal(v) }
     fun setProteinGoal(v: Double) = viewModelScope.launch { userSettings.setProteinGoal(v) }
@@ -32,4 +35,7 @@ class SettingsViewModel @Inject constructor(private val userSettings: UserSettin
     fun setOpenRouterApiKey(v: String) = viewModelScope.launch { userSettings.setOpenRouterApiKey(v) }
     fun setSerperApiKey(v: String) = viewModelScope.launch { userSettings.setSerperApiKey(v) }
     fun setCustomApiBaseUrl(v: String) = viewModelScope.launch { userSettings.setCustomApiBaseUrl(v) }
+    fun setLlmProvider(v: UserSettings.LLMProvider) = viewModelScope.launch { userSettings.setLlmProvider(v) }
+    fun setBlockRunWalletId(v: String) = viewModelScope.launch { userSettings.setBlockRunWalletId(v) }
+    fun setBlockRunProxyUrl(v: String) = viewModelScope.launch { userSettings.setBlockRunProxyUrl(v) }
 }

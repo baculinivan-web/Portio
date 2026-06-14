@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FoodItemRowView: View {
     let item: FoodItem
+    var onRetry: (() -> Void)? = nil
 
     var body: some View {
         HStack {
@@ -13,12 +14,17 @@ struct FoodItemRowView: View {
                     .frame(width: 44, height: 44)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.isProcessing ? item.name : item.cleanFoodName)
+                Text(item.isProcessing || item.hasFailedProcessing ? item.name : item.cleanFoodName)
                     .font(.headline)
-                
-                if !item.isProcessing {
+
+                if item.hasFailedProcessing {
+                    Text(item.processingErrorMessage ?? "Analysis failed")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .lineLimit(2)
+                } else if !item.isProcessing {
                     HStack(spacing: 8) {
                         Text("\(item.weightGrams, format: .number.precision(.fractionLength(0)))g")
                         Text("•")
@@ -28,12 +34,20 @@ struct FoodItemRowView: View {
                     .foregroundStyle(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             if item.isProcessing {
                 ProgressView()
                     .progressViewStyle(.circular)
+            } else if item.hasFailedProcessing {
+                Button {
+                    onRetry?()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Retry analysis")
             } else {
                 Text("\(item.calories, format: .number.precision(.fractionLength(0))) kcal")
                     .font(.title2)

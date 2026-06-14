@@ -1,0 +1,13 @@
+Added manual food logging to the iOS tracker.
+
+The bottom chat input now shows camera, prompt, and a trailing glass button. The trailing button is a plus by default and opens a medium-height manual entry sheet; when the prompt is focused, the same button becomes the send action for the AI entry flow.
+
+Manual entries create completed FoodItem records immediately with dataSource set to "Manual" and per-100g values derived from the entered serving weight. The AI placeholder processing path remains unchanged.
+
+Follow-up fixes: the manual sheet opens with every field empty, including weight and nutrients. Bottom glass action buttons now use interactive Liquid Glass inside a GlassEffectContainer, and the sheet Add action uses blue prominent glass when available.
+
+Second follow-up: the prompt bubble also uses interactive Liquid Glass. The manual entry sheet manages field focus and advances from the name field into the numeric field chain where the keyboard supports submit.
+
+Third follow-up: the bottom circular buttons now place their 58pt frame and circular content shape inside the Button label so the whole glass circle is tappable, not just the SF Symbol.
+
+Fourth follow-up: manual entries now reject more than 10,000 kcal, more than 10,000 g of food, negative nutrition values, and macro totals where protein + carbs + fat exceeds the entered food weight.

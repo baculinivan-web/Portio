@@ -30,6 +30,7 @@ android {
         buildConfigField("String", "OPENROUTER_API_KEY", "\"${localProperties["OPENROUTER_API_KEY"] ?: ""}\"")
         buildConfigField("String", "SERPER_API_KEY", "\"${localProperties["SERPER_API_KEY"] ?: ""}\"")
         buildConfigField("String", "MODEL_NAME", "\"${localProperties["MODEL_NAME"] ?: "google/gemini-flash-1.5"}\"")
+        buildConfigField("String", "BLOCKRUN_WALLET_KEY", "\"${localProperties["BLOCKRUN_WALLET_KEY"] ?: ""}\"")
     }
 
     buildTypes {
@@ -54,6 +55,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     // Core
     implementation(libs.androidx.core.ktx)
@@ -61,6 +66,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.security.crypto)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))

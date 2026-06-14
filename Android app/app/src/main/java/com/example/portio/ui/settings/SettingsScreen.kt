@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -18,8 +19,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.portio.data.preferences.UserSettings
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltViewModel()) {
     val calorieGoal by viewModel.calorieGoal.collectAsState()
@@ -32,6 +34,9 @@ fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltV
     val openRouterApiKey by viewModel.openRouterApiKey.collectAsState()
     val serperApiKey by viewModel.serperApiKey.collectAsState()
     val customApiBaseUrl by viewModel.customApiBaseUrl.collectAsState()
+    val llmProvider by viewModel.llmProvider.collectAsState()
+    val blockRunWalletId by viewModel.blockRunWalletId.collectAsState()
+    val blockRunProxyUrl by viewModel.blockRunProxyUrl.collectAsState()
 
     Scaffold(
         topBar = {
@@ -60,33 +65,111 @@ fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltV
             GoalField("Fat (g)", fatGoal) { viewModel.setFatGoal(it) }
 
             Spacer(Modifier.height(8.dp))
-            SectionHeader("AI Model")
-            ModelField("Model Name", modelName) { viewModel.setModelName(it) }
+            SectionHeader("AI Provider")
 
-            Spacer(Modifier.height(8.dp))
-            SectionHeader("AI API")
-            ModelField(
-                label = "Custom API Base URL",
-                value = customApiBaseUrl,
-                placeholder = "Leave blank to use OpenRouter",
-                onSave = { viewModel.setCustomApiBaseUrl(it) }
-            )
-            Text(
-                "OpenAI-compatible endpoint, e.g. https://api.openai.com/v1 or http://localhost:11434/v1 (Ollama). Leave blank to use OpenRouter.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            var showProviderMenu by remember { mutableStateOf(false) }
+            Box {
+                OutlinedCard(
+                    onClick = { showProviderMenu = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Row(
+                        Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(llmProvider.displayName)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    }
+                }
+                DropdownMenu(expanded = showProviderMenu, onDismissRequest = { showProviderMenu = false }) {
+                    UserSettings.LLMProvider.values().forEach { provider ->
+                        DropdownMenuItem(
+                            text = { Text(provider.displayName) },
+                            onClick = {
+                                viewModel.setLlmProvider(provider)
+                                showProviderMenu = false
+                            }
+                        )
+                    }
+                }
+            }
 
-            Spacer(Modifier.height(8.dp))
-            SectionHeader("API Key")
-            ApiKeyField("API Key", openRouterApiKey) { viewModel.setOpenRouterApiKey(it) }
-            Text(
-                "For OpenRouter: get your free key at openrouter.ai/keys. For other providers, paste the corresponding key here.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            when (llmProvider) {
+                UserSettings.LLMProvider.OPEN_ROUTER -> {
+                    Spacer(Modifier.height(8.dp))
+                    SectionHeader("OpenRouter Settings")
+                    ApiKeyField("API Key", openRouterApiKey) { viewModel.setOpenRouterApiKey(it) }
+                    ModelField("Model Name", modelName) { viewModel.setModelName(it) }
+                }
+                UserSettings.LLMProvider.CUSTOM -> {
+                    Spacer(Modifier.height(8.dp))
+                    SectionHeader("Custom Provider Settings")
+                    ModelField(
+                        label = "Base URL",
+                        value = customApiBaseUrl,
+                        placeholder = "https://api.openai.com/v1",
+                        onSave = { viewModel.setCustomApiBaseUrl(it) }
+                    )
+                    ApiKeyField("API Key", openRouterApiKey) { viewModel.setOpenRouterApiKey(it) }
+                    ModelField("Model Name", modelName) { viewModel.setModelName(it) }
+                }
+                UserSettings.LLMProvider.BLOCKRUN -> {
+                    Spacer(Modifier.height(8.dp))
+                    SectionHeader("BlockRun Settings")
+                    ModelField(
+                        label = "API Endpoint",
+                        value = blockRunProxyUrl,
+                        placeholder = "https://blockrun.ai/api/v1",
+                        onSave = { viewModel.setBlockRunProxyUrl(it) }
+                    )
+                    Text(
+                        "Default is https://blockrun.ai/api/v1. This cloud gateway connects directly to models.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+                    ApiKeyField(
+                        label = "Wallet Key / ID",
+                        value = blockRunWalletId,
+                        onSave = { viewModel.setBlockRunWalletId(it) }
+                    )
+                    Text(
+                        "Your wallet key used for Bearer authentication.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Choose Model", style = MaterialTheme.typography.labelMedium)
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val freeModels = listOf(
+                            "nvidia/gpt-oss-120b" to "GPT OSS 120B",
+                            "nvidia/gpt-oss-20b" to "GPT OSS 20B",
+                            "nvidia/deepseek-v3.2" to "DeepSeek V3.2",
+                            "nvidia/qwen3-coder-480b" to "Qwen3 Coder",
+                            "nvidia/glm-4.7" to "GLM 4.7",
+                            "nvidia/llama-4-maverick" to "Llama 4",
+                            "nvidia/qwen3-next-80b-a3b-thinking" to "Qwen3 Think",
+                            "nvidia/mistral-small-4-119b" to "Mistral Small"
+                        )
+                        freeModels.forEach { (id, label) ->
+                            FilterChip(
+                                selected = modelName == id,
+                                onClick = { viewModel.setModelName(id) },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(Modifier.height(8.dp))
             SectionHeader("Serper API Key")
@@ -111,10 +194,10 @@ fun SettingsScreen(onBack: () -> Unit = {}, viewModel: SettingsViewModel = hiltV
                 ) {
                     Column {
                         Text("Health Connect", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium))
-                        Text("Sync nutrition data", style = MaterialTheme.typography.bodySmall,
+                        Text("Unavailable until the Android dependency is enabled", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = healthConnectEnabled, onCheckedChange = { viewModel.setHealthConnectEnabled(it) })
+                    Switch(checked = false, enabled = false, onCheckedChange = {})
                 }
             }
 

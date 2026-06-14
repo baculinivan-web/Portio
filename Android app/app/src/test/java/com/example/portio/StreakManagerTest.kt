@@ -20,6 +20,7 @@ class StreakManagerTest {
         override suspend fun insert(item: FoodItemEntity) {}
         override suspend fun update(item: FoodItemEntity) {}
         override suspend fun delete(item: FoodItemEntity) {}
+        override suspend fun deleteById(id: String) {}
         override suspend fun countForDay(start: Long, end: Long): Int =
             if (activeDays.any { it >= start && it < end }) 1 else 0
     }

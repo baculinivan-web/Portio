@@ -1,0 +1,9 @@
+Fixed the iOS bottom prompt input corner radius so it is concentric with the phone edge and adjacent camera control.
+
+The prompt bubble now derives its corner radius from the shared control height instead of using a smaller hardcoded value. This keeps the bottom input visually capsule-shaped and aligned with the surrounding Liquid Glass controls.
+
+The bottom safe-area inset is compensated when the prompt is rendered in `safeAreaInset`, with the system inset spacing disabled. This keeps the visual distance to the screen bottom in line with the side margins on home-indicator iPhones.
+
+The bottom compensation is disabled while the text field is focused, so SwiftUI's keyboard avoidance can lift the prompt fully above the keyboard instead of leaving it partially overlapped.
+
+No tests were run because this was a UI-only adjustment and the user explicitly asked not to run tests.

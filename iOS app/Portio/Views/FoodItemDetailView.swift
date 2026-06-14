@@ -7,7 +7,7 @@ struct FoodItemDetailView: View {
     @Bindable var item: FoodItem
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     // State for the multi-image picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
     // State for the full-screen image viewer
@@ -31,7 +31,7 @@ struct FoodItemDetailView: View {
                         }
                     }
                 }
-                
+
                 PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 5, matching: .images) {
                     Text(item.imageDatas.isEmpty ? "Add Photos" : "Add More Photos")
                 }
@@ -44,12 +44,12 @@ struct FoodItemDetailView: View {
                 NutrientEditor(label: "Carbs (g)", value: $item.carbs)
                 NutrientEditor(label: "Fat (g)", value: $item.fat)
             }
-            
+
             Section("Entry Info") {
                 LabeledContent("Original Query", value: item.name)
                 LabeledContent("Identified As", value: item.identifiedFood)
                 LabeledContent("Logged At", value: item.dateEaten, format: .dateTime.hour().minute())
-                
+
                 if item.isSearchGrounded {
                     VStack(alignment: .trailing, spacing: 8) {
                         if let source = item.dataSource, source.contains("OFF") {
@@ -66,7 +66,7 @@ struct FoodItemDetailView: View {
                             .foregroundStyle(.green)
                             .clipShape(Capsule())
                         }
-                        
+
                         if !item.searchSteps.isEmpty {
                             HStack(spacing: 4) {
                                 Image(systemName: "magnifyingglass.circle.fill")
@@ -83,7 +83,7 @@ struct FoodItemDetailView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
-                    
+
                     if let source = item.dataSource, source.contains("OFF") {
                         NutritionFactsTable(
                             calories: item.calories,
@@ -94,7 +94,7 @@ struct FoodItemDetailView: View {
                         )
                         .padding(.top, 8)
                     }
-                    
+
                     if !item.searchSteps.isEmpty {
                         ForEach(item.searchSteps, id: \.self) { step in
                             SearchDetailRow(step: step)
@@ -102,7 +102,7 @@ struct FoodItemDetailView: View {
                     }
                 }
             }
-            
+
             Section {
                 Button(role: .destructive) {
                     deleteItem()
@@ -157,23 +157,23 @@ struct FoodItemDetailView: View {
             PhotoViewer(imageData: data)
         }
     }
-    
+
     private func syncToHealthKit() {
         guard UserSettings.isAppleHealthSyncEnabled else { return }
-        
+
         Task {
             // 1. Delete old samples if they exist
             if !item.healthKitSampleUUIDs.isEmpty {
                 try? await HealthKitManager.shared.deleteNutrition(uuids: item.healthKitSampleUUIDs)
             }
-            
+
             // 2. Write new samples
             if let newUUIDs = try? await HealthKitManager.shared.writeNutrition(for: item) {
                 item.healthKitSampleUUIDs = newUUIDs
             }
         }
     }
-    
+
     private func deleteItem() {
         withAnimation {
             // Remove from HealthKit if enabled
@@ -183,7 +183,7 @@ struct FoodItemDetailView: View {
                     try? await HealthKitManager.shared.deleteNutrition(uuids: uuids)
                 }
             }
-            
+
             modelContext.delete(item)
             try? modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
@@ -197,7 +197,7 @@ struct ImageThumbnailView: View {
     let imageData: Data
     var viewAction: () -> Void
     var deleteAction: () -> Void
-    
+
     var body: some View {
         // Only create the view if the image data is valid
         if let uiImage = UIImage(data: imageData) {
@@ -236,7 +236,7 @@ struct PhotoViewer: View {
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            
+
             Button("Done") { dismiss() }
                 .padding()
                 .background(.thinMaterial, in: Capsule())
@@ -262,7 +262,6 @@ struct NutrientEditor: View {
 }
 
 // Make Data identifiable for the .sheet modifier
-extension Data: Identifiable {
+extension Data: @retroactive Identifiable {
     public var id: Self { self }
 }
-

@@ -10,16 +10,16 @@ class CameraManager: NSObject, ObservableObject {
     @Published var isSessionRunning = false
     @Published var latestThumbnail: UIImage?
     @Published var cameraError: CameraError?
-    
+
     private let output = AVCapturePhotoOutput()
     private var videoDeviceInput: AVCaptureDeviceInput?
-    
+
     enum CameraError: Error, LocalizedError {
         case cameraUnavailable
         case cannotAddInput
         case cannotAddOutput
         case captureFailed
-        
+
         var errorDescription: String? {
             switch self {
             case .cameraUnavailable:
@@ -33,23 +33,22 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
     }
-    
+
     override init() {
         super.init()
     }
-    
+
     func checkPermissionsAndSetup() {
         #if targetEnvironment(simulator)
         DispatchQueue.main.async {
             self.cameraError = .cameraUnavailable
         }
-        return
-        #endif
-        
+        #else
         checkCameraPermissions()
         checkPhotoLibraryPermissions()
+        #endif
     }
-    
+
     private func checkCameraPermissions() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -74,16 +73,16 @@ class CameraManager: NSObject, ObservableObject {
             break
         }
     }
-    
+
     private func setupSession() {
         session.beginConfiguration()
-        
+
         // Add Input
         guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             self.cameraError = .cameraUnavailable
             return
         }
-        
+
         do {
             let input = try AVCaptureDeviceInput(device: videoDevice)
             if session.canAddInput(input) {
@@ -97,7 +96,7 @@ class CameraManager: NSObject, ObservableObject {
             self.cameraError = .cannotAddInput
             return
         }
-        
+
         // Add Output
         if session.canAddOutput(output) {
             session.addOutput(output)
@@ -105,9 +104,9 @@ class CameraManager: NSObject, ObservableObject {
             self.cameraError = .cannotAddOutput
             return
         }
-        
+
         session.commitConfiguration()
-        
+
         DispatchQueue.global(qos: .background).async {
             self.session.startRunning()
             DispatchQueue.main.async {
@@ -115,19 +114,19 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
     }
-    
+
     func capturePhoto() {
         let settings = AVCapturePhotoSettings()
         output.capturePhoto(with: settings, delegate: self)
     }
-    
+
     func stopSession() {
         if session.isRunning {
             session.stopRunning()
             isSessionRunning = session.isRunning
         }
     }
-    
+
     private func checkPhotoLibraryPermissions() {
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
             if status == .authorized || status == .limited {
@@ -135,19 +134,19 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
     }
-    
+
     private func fetchLatestPhoto() {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.fetchLimit = 1
-        
+
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
         if let firstAsset = fetchResult.firstObject {
             let manager = PHImageManager.default()
             let option = PHImageRequestOptions()
             option.isSynchronous = false
             option.deliveryMode = .highQualityFormat
-            
+
             manager.requestImage(for: firstAsset, targetSize: CGSize(width: 100, height: 100), contentMode: .aspectFill, options: option) { image, _ in
                 DispatchQueue.main.async {
                     self.latestThumbnail = image
@@ -160,12 +159,23 @@ class CameraManager: NSObject, ObservableObject {
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
-            print("Error capturing photo: \(error.localizedDescription)")
+            CameraDiagnostics.log("Error capturing photo: \(error.localizedDescription)")
             self.cameraError = .captureFailed
             return
         }
-        
+
         guard let imageData = photo.fileDataRepresentation() else { return }
         self.capturedImage = UIImage(data: imageData)
+    }
+}
+
+private enum CameraDiagnostics {
+    private static let isEnabled = false
+
+    static func log(_ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        #if DEBUG
+        print("[CameraManager] \(message())")
+        #endif
     }
 }

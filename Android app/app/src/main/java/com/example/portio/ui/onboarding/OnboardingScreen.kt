@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -16,8 +17,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.portio.data.preferences.UserSettings
 import com.example.portio.domain.util.CalorieCalculator
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     onComplete: () -> Unit,
@@ -29,11 +32,19 @@ fun OnboardingScreen(
     val goalText by viewModel.goalText.collectAsState()
     val openRouterApiKey by viewModel.openRouterApiKey.collectAsState()
     val serperApiKey by viewModel.serperApiKey.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val llmProvider by viewModel.llmProvider.collectAsState()
+    val modelName by viewModel.modelName.collectAsState()
+    val customApiBaseUrl by viewModel.customApiBaseUrl.collectAsState()
+    val blockRunWalletId by viewModel.blockRunWalletId.collectAsState()
+    val blockRunProxyUrl by viewModel.blockRunProxyUrl.collectAsState()
     var apiKeyVisible by remember { mutableStateOf(false) }
     var serperKeyVisible by remember { mutableStateOf(false) }
+    var walletKeyVisible by remember { mutableStateOf(false) }
     var weightText by remember { mutableStateOf("") }
     var heightText by remember { mutableStateOf("") }
     var ageText by remember { mutableStateOf("") }
+    var showProviderMenu by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -44,6 +55,14 @@ fun OnboardingScreen(
     ) {
         Text("Welcome to Portio", style = MaterialTheme.typography.headlineMedium)
         Text("Let's set up your profile", style = MaterialTheme.typography.bodyLarge)
+
+        error?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
 
         OutlinedTextField(
             value = weightText,
@@ -101,25 +120,135 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = openRouterApiKey,
-            onValueChange = { viewModel.openRouterApiKey.value = it },
-            label = { Text("OpenRouter API Key") },
-            placeholder = { Text("sk-or-...") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
-                    Icon(
-                        if (apiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (apiKeyVisible) "Hide key" else "Show key"
+        Text("AI Provider", style = MaterialTheme.typography.labelLarge)
+        Box {
+            OutlinedCard(onClick = { showProviderMenu = true }, modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(llmProvider.displayName)
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                }
+            }
+            DropdownMenu(expanded = showProviderMenu, onDismissRequest = { showProviderMenu = false }) {
+                UserSettings.LLMProvider.entries.forEach { provider ->
+                    DropdownMenuItem(
+                        text = { Text(provider.displayName) },
+                        onClick = {
+                            viewModel.llmProvider.value = provider
+                            showProviderMenu = false
+                        }
                     )
                 }
-            },
-            supportingText = { Text("Free key at openrouter.ai/keys — free tier is enough for normal use") }
-        )
+            }
+        }
+
+        when (llmProvider) {
+            UserSettings.LLMProvider.OPEN_ROUTER -> {
+                OutlinedTextField(
+                    value = openRouterApiKey,
+                    onValueChange = { viewModel.openRouterApiKey.value = it },
+                    label = { Text("OpenRouter API Key") },
+                    placeholder = { Text("sk-or-...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                            Icon(
+                                if (apiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (apiKeyVisible) "Hide key" else "Show key"
+                            )
+                        }
+                    },
+                    supportingText = { Text("Free key at openrouter.ai/keys") }
+                )
+                OutlinedTextField(
+                    value = modelName,
+                    onValueChange = { viewModel.modelName.value = it },
+                    label = { Text("Model") },
+                    placeholder = { Text("e.g. google/gemini-flash-1.5") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+            UserSettings.LLMProvider.CUSTOM -> {
+                OutlinedTextField(
+                    value = customApiBaseUrl,
+                    onValueChange = { viewModel.customApiBaseUrl.value = it },
+                    label = { Text("Base URL") },
+                    placeholder = { Text("https://api.openai.com/v1") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    supportingText = { Text("OpenAI-compatible endpoint; /chat/completions is appended automatically") }
+                )
+                OutlinedTextField(
+                    value = openRouterApiKey,
+                    onValueChange = { viewModel.openRouterApiKey.value = it },
+                    label = { Text("API Key") },
+                    placeholder = { Text("sk-...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                            Icon(
+                                if (apiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (apiKeyVisible) "Hide key" else "Show key"
+                            )
+                        }
+                    }
+                )
+                OutlinedTextField(
+                    value = modelName,
+                    onValueChange = { viewModel.modelName.value = it },
+                    label = { Text("Model") },
+                    placeholder = { Text("e.g. gpt-4o") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+            UserSettings.LLMProvider.BLOCKRUN -> {
+                OutlinedTextField(
+                    value = blockRunProxyUrl,
+                    onValueChange = { viewModel.blockRunProxyUrl.value = it },
+                    label = { Text("API Endpoint") },
+                    placeholder = { Text("https://blockrun.ai/api/v1") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = blockRunWalletId,
+                    onValueChange = { viewModel.blockRunWalletId.value = it },
+                    label = { Text("Wallet Key / ID") },
+                    placeholder = { Text("0x...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (walletKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { walletKeyVisible = !walletKeyVisible }) {
+                            Icon(
+                                if (walletKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (walletKeyVisible) "Hide key" else "Show key"
+                            )
+                        }
+                    }
+                )
+                OutlinedTextField(
+                    value = modelName,
+                    onValueChange = { viewModel.modelName.value = it },
+                    label = { Text("Model") },
+                    placeholder = { Text("nvidia/mistral-small-4-119b") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        }
 
         OutlinedTextField(
             value = serperApiKey,

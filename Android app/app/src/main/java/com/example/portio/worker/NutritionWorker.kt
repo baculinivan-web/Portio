@@ -16,6 +16,7 @@ import androidx.glance.appwidget.updateAll
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import java.io.File
 
 /**
  * WorkManager worker that completes nutrition lookup for a food item.
@@ -38,11 +39,13 @@ class NutritionWorker @AssistedInject constructor(
     companion object {
         const val KEY_ITEM_ID = "ITEM_ID"
         const val KEY_QUERY   = "QUERY"
+        const val KEY_IMAGE_PATHS = "IMAGE_PATHS"
     }
 
     override suspend fun doWork(): Result {
         val itemId = inputData.getString(KEY_ITEM_ID) ?: return Result.failure()
         val query  = inputData.getString(KEY_QUERY)   ?: return Result.failure()
+        val imagePaths = inputData.getStringArray(KEY_IMAGE_PATHS)?.toList().orEmpty()
 
         // If item was already resolved (e.g. app was open and finished it), skip
         val existing = dao.getById(itemId) ?: return Result.success()
@@ -52,20 +55,27 @@ class NutritionWorker @AssistedInject constructor(
         val apiKey          = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
         val serperKey       = userSettings.serperApiKey.first().ifBlank { BuildConfig.SERPER_API_KEY }
         val customApiBaseUrl = userSettings.customApiBaseUrl.first()
+        val llmProvider     = userSettings.llmProvider.first()
+        val blockRunWalletId = userSettings.blockRunWalletId.first()
+        val blockRunProxyUrl = userSettings.blockRunProxyUrl.first()
 
         return try {
             val results = nutritionService.fetchNutrition(
                 query = query,
-                images = emptyList(),
+                images = imagePaths.mapNotNull { path -> File(path).takeIf { it.exists() }?.readBytes() },
                 apiKey = apiKey,
                 modelName = modelName,
                 serperApiKey = serperKey,
-                customApiBaseUrl = customApiBaseUrl
+                customApiBaseUrl = customApiBaseUrl,
+                llmProvider = llmProvider,
+                blockRunWalletId = blockRunWalletId,
+                blockRunProxyUrl = blockRunProxyUrl
             )
 
             val firstResult = results.firstOrNull()
             if (firstResult == null) {
-                dao.deleteById(itemId)
+                dao.update(existing.toDomain().copy(isProcessing = false, processingError = "No nutrition result returned").toEntity())
+                deleteImageFiles(imagePaths)
                 return Result.success()
             }
 
@@ -83,14 +93,17 @@ class NutritionWorker @AssistedInject constructor(
                 carbsPer100g    = first.carbsPer100g,
                 fatPer100g      = first.fatPer100g,
                 isProcessing    = false,
+                processingError  = null,
                 isSearchGrounded = first.isSearchGrounded ?: false,
                 dataSource      = first.dataSource,
                 searchSteps     = firstResult.searchSteps
             )
             dao.update(updated.toEntity())
 
-            val hcId = healthConnect.writeNutrition(updated)
-            if (hcId != null) dao.update(updated.copy(healthConnectIds = listOf(hcId)).toEntity())
+            if (userSettings.healthConnectEnabled.first() && healthConnect.isAvailable() && healthConnect.hasPermissions()) {
+                val hcId = healthConnect.writeNutrition(updated)
+                if (hcId != null) dao.update(updated.copy(healthConnectIds = listOf(hcId)).toEntity())
+            }
 
             // Extra items returned by AI
             results.drop(1).forEach { itemResult ->
@@ -117,13 +130,20 @@ class NutritionWorker @AssistedInject constructor(
             }
 
             PortioWidget().updateAll(applicationContext)
+            deleteImageFiles(imagePaths)
             Result.success()
         } catch (e: Exception) {
             // Retry up to 3 times with exponential backoff (WorkManager default)
             if (runAttemptCount < 3) Result.retry() else {
-                dao.deleteById(itemId)
+                val message = e.message?.takeIf { it.isNotBlank() } ?: "Nutrition lookup failed"
+                dao.update(existing.toDomain().copy(isProcessing = false, processingError = message).toEntity())
+                deleteImageFiles(imagePaths)
                 Result.failure()
             }
         }
+    }
+
+    private fun deleteImageFiles(paths: List<String>) {
+        paths.forEach { path -> runCatching { File(path).delete() } }
     }
 }

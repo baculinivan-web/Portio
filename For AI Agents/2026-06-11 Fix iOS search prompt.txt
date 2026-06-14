@@ -1,0 +1,7 @@
+Fixed iOS nutrition search triggering by restoring the native tool-calling protocol instead of bypassing the model.
+
+Root cause: NutritionService allowed `tool_choice=auto`, then collapsed tool results into a synthetic user prompt and disabled tools after the first tool batch. If the model skipped tool calls on the first response, Serper/OpenFoodFacts were never contacted, so nothing appeared in the Serper dashboard.
+
+The request model now supports `tool_choice="required"`. NutritionService sends the first nutrition analysis turn with required tools, executes returned `openfoodfacts_search` and `google_search` calls, appends their results as proper `role="tool"` messages with the original `tool_call_id`, and keeps the tool loop open until the model produces final JSON. If a selected provider ignores the required tool call, the app fails visibly with a tool-calling support error instead of silently returning ungrounded nutrition.
+
+Build and build-for-testing verification passed with xcodebuild. `xcodebuild test-without-building` still cannot execute tests in the local simulator because the Portio app host aborts before XCTest establishes a connection.

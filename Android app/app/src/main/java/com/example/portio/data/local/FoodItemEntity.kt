@@ -21,6 +21,7 @@ data class FoodItemEntity(
     val fatPer100g: Double = 0.0,
     val dateEaten: Long = System.currentTimeMillis(),
     val isProcessing: Boolean = false,
+    val processingError: String? = null,
     val isSearchGrounded: Boolean = false,
     val dataSource: String? = null,
     val healthConnectIds: String = "", // JSON array of record UUIDs

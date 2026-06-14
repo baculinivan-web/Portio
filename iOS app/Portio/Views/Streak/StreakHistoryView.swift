@@ -4,11 +4,11 @@ import SwiftData
 struct StreakHistoryView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    
+
     @State private var monthlyStats: [String: [Date: NutritionStats]] = [:]
     @State private var selectedDate: Date? = nil
     @State private var showingLegend = false
-    
+
     private var months: [(month: Int, year: Int)] {
         let calendar = Calendar.current
         let now = Date()
@@ -17,7 +17,7 @@ struct StreakHistoryView: View {
             return (calendar.component(.month, from: date), calendar.component(.year, from: date))
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -25,7 +25,7 @@ struct StreakHistoryView: View {
                 Rectangle()
                     .fill(.ultraThinMaterial)
                     .ignoresSafeArea()
-                
+
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
                         ForEach(months, id: \.month) { item in
@@ -73,7 +73,7 @@ struct StreakHistoryView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("About Colors")
                                 .font(.headline)
-                            
+
                             VStack(alignment: .leading, spacing: 12) {
                                 LegendRow(color: .black.opacity(0.1), text: "No items logged")
                                 LegendRow(color: .orange.opacity(0.4), text: "At least one item logged")
@@ -91,7 +91,7 @@ struct StreakHistoryView: View {
 struct LegendRow: View {
     let color: Color
     let text: String
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Circle()
@@ -102,11 +102,11 @@ struct LegendRow: View {
         }
     }
 }
-    
+
     private func loadStats(month: Int, year: Int) {
         let key = "\(year)-\(month)"
         guard monthlyStats[key] == nil else { return }
-        
+
         let aggregator = NutritionAggregator(modelContext: modelContext)
         do {
             let stats = try aggregator.fetchMonthlyStats(month: month, year: year)
@@ -117,8 +117,19 @@ struct LegendRow: View {
             }
             monthlyStats[key] = dict
         } catch {
-            print("Failed to load stats for \(key): \(error)")
+            StreakHistoryDiagnostics.log("Failed to load stats for \(key): \(error.localizedDescription)")
         }
+    }
+}
+
+private enum StreakHistoryDiagnostics {
+    private static let isEnabled = false
+
+    static func log(_ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        #if DEBUG
+        print("[StreakHistory] \(message())")
+        #endif
     }
 }
 
@@ -126,6 +137,6 @@ struct LegendRow: View {
     StreakHistoryView()
 }
 
-extension Date: Identifiable {
+extension Date: @retroactive Identifiable {
     public var id: TimeInterval { self.timeIntervalSince1970 }
 }

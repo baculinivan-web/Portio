@@ -3,6 +3,7 @@ package com.example.portio.di
 import com.example.portio.data.remote.NutritionService
 import com.example.portio.data.remote.OpenFoodFactsService
 import com.example.portio.data.remote.SerperService
+import com.example.portio.BuildConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,14 +19,22 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        })
-        .build()
+    fun provideOkHttpClient(): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+
+        if (BuildConfig.DEBUG) {
+            builder.addInterceptor(HttpLoggingInterceptor().apply {
+                redactHeader("Authorization")
+                redactHeader("X-API-KEY")
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
+        }
+
+        return builder.build()
+    }
 
     @Provides
     @Singleton

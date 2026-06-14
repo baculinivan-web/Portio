@@ -581,7 +581,7 @@
 		7C2CBB752E9BC214006BCA61 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = PortioIcanIos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Portio/Portio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -594,7 +594,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Portio needs camera access to identify food from photos.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Portio needs permission to sync your nutrition data with Apple Health.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Portio needs permission to write your logged food data to Apple Health.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Portio needs permission to save food photos to your library when you choose to export them.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Portio needs photo library access to allow you to pick food photos from your gallery.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -621,7 +621,7 @@
 		7C2CBB762E9BC214006BCA61 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = PortioIcanIos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Portio/Portio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -634,7 +634,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Portio needs camera access to identify food from photos.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Portio needs permission to sync your nutrition data with Apple Health.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Portio needs permission to write your logged food data to Apple Health.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Portio needs permission to save food photos to your library when you choose to export them.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Portio needs photo library access to allow you to pick food photos from your gallery.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

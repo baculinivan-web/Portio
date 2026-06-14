@@ -1,0 +1,5 @@
+Added iOS 26 continued processing support for nutrition analysis.
+
+New user-initiated food additions and retries now submit a BGContinuedProcessingTask when available, so analysis can continue after the app is backgrounded. The existing BGProcessingTask path remains as a fallback for older iOS versions and for cases where the continued task submission is rejected.
+
+The continued task uses a separate permitted identifier from the legacy processing task because BGTaskScheduler registrations are identifier-specific. It reports record progress through the system UI and reuses the existing FoodItem processing-claim fields so foreground and background work do not process the same item twice.

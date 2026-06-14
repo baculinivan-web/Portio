@@ -5,9 +5,9 @@ struct TrendsView: View {
     @Environment(\.modelContext) private var modelContext
     let selectedTimeframe: TimeFrame
     @State private var stats: [NutritionStats] = []
-    
-    @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
-    
+
+    @AppStorage("calorieGoal", store: UserSettings.shared) private var calorieGoal: Double = UserSettings.calorieGoal
+
     var body: some View {
         VStack(spacing: 24) {
             VStack(alignment: .leading, spacing: 24) {
@@ -17,11 +17,11 @@ struct TrendsView: View {
                     TrendComparisonView(currentData: stats, metric: \.protein, title: "Protein")
                 }
                 .padding(.horizontal)
-                
+
                 // Charts
                 VStack(spacing: 24) {
                     CalorieTrendChart(data: stats, timeframe: selectedTimeframe, calorieGoal: calorieGoal)
-                    
+
                     MacroDistributionChart(data: stats, timeframe: selectedTimeframe)
                 }
                 .padding(.horizontal)
@@ -37,14 +37,25 @@ struct TrendsView: View {
             }
         }
     }
-    
+
     private func fetchData() {
         let aggregator = NutritionAggregator(modelContext: modelContext)
         do {
             self.stats = try aggregator.aggregateStats(for: selectedTimeframe)
         } catch {
-            print("Failed to fetch stats: \(error)")
+            TrendsDiagnostics.log("Failed to fetch stats: \(error.localizedDescription)")
         }
+    }
+}
+
+private enum TrendsDiagnostics {
+    private static let isEnabled = false
+
+    static func log(_ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        #if DEBUG
+        print("[TrendsView] \(message())")
+        #endif
     }
 }
 

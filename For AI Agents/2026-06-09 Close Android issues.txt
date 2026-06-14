@@ -1,0 +1,5 @@
+Closed Android handoff issues from docs/android-issues.md.
+
+Removed stale com.example.calcal sources, fixed compile imports, reduced network logging to debug BASIC with credential redaction, disabled backup and cleartext traffic, and pinned security-crypto to stable 1.0.0.
+
+Photo logging now persists app-private image files for WorkManager and cleans them after completion/final failure. Worker failures now leave a visible failed entry instead of silently deleting the placeholder. Health Connect remains disabled until the dependency/toolchain is upgraded, and the Settings UI/README no longer claim active sync. Room schema export is enabled with a v3 migration for processingError. Onboarding now blocks missing provider/search credentials and only falls back for optional AI goal-generation failures.

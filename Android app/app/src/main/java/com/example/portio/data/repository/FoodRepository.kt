@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,7 +49,6 @@ class FoodRepository @Inject constructor(
     /**
      * Inserts a placeholder immediately, then enqueues a WorkManager job to fetch nutrition.
      * The job runs even if the app is closed — WorkManager guarantees execution.
-     * Images are not supported in background mode (no persistent storage for byte arrays).
      */
     suspend fun addItem(
         query: String,
@@ -62,9 +62,11 @@ class FoodRepository @Inject constructor(
         )
         dao.insert(placeholder.toEntity())
 
+        val imagePaths = persistImages(placeholder.id, images)
         val inputData = Data.Builder()
             .putString(NutritionWorker.KEY_ITEM_ID, placeholder.id)
             .putString(NutritionWorker.KEY_QUERY, query)
+            .putStringArray(NutritionWorker.KEY_IMAGE_PATHS, imagePaths.toTypedArray())
             .build()
 
         val request = OneTimeWorkRequestBuilder<NutritionWorker>()
@@ -77,6 +79,14 @@ class FoodRepository @Inject constructor(
             .build()
 
         WorkManager.getInstance(context).enqueue(request)
+    }
+
+    private fun persistImages(itemId: String, images: List<ByteArray>): List<String> {
+        if (images.isEmpty()) return emptyList()
+        val dir = File(context.filesDir, "food_images").apply { mkdirs() }
+        return images.mapIndexed { index, bytes ->
+            File(dir, "${itemId}_$index.jpg").also { it.writeBytes(bytes) }.absolutePath
+        }
     }
 
     suspend fun updateItem(item: FoodItem) = dao.update(item.toEntity())
@@ -94,13 +104,20 @@ class FoodRepository @Inject constructor(
         val modelName = userSettings.modelName.first().ifBlank { BuildConfig.MODEL_NAME }
         val apiKey = userSettings.openRouterApiKey.first().ifBlank { BuildConfig.OPENROUTER_API_KEY }
         val customApiBaseUrl = userSettings.customApiBaseUrl.first()
+        val llmProvider = userSettings.llmProvider.first()
+        val blockRunWalletId = userSettings.blockRunWalletId.first()
+        val blockRunProxyUrl = userSettings.blockRunProxyUrl.first()
+
         return nutritionService.fetchAIGoals(
             userStats = userStats,
             userGoals = userGoals,
             baselineTdee = baselineTdee,
             apiKey = apiKey,
             modelName = modelName,
-            customApiBaseUrl = customApiBaseUrl
+            customApiBaseUrl = customApiBaseUrl,
+            llmProvider = llmProvider,
+            blockRunWalletId = blockRunWalletId,
+            blockRunProxyUrl = blockRunProxyUrl
         )
     }
 

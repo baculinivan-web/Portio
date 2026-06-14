@@ -1,0 +1,7 @@
+Added day selection to the iOS tracker screen.
+
+The main tracker title is now the selected date instead of the app name. Tapping it opens a calendar-style day picker with entry markers, and selecting a day updates the tracker page to show that day's totals and records.
+
+When a non-today date is open, the navigation bar shows a Today button to jump back to the current day. The streak indicator still reflects whether the user has logged anything today.
+
+Follow-up: month navigation controls in the picker use large tap targets and sit on a separate row from Done so the forward-month button is not overlapped by the dismiss control.

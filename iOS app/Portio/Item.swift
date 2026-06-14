@@ -14,13 +14,16 @@ public final class FoodItem {
     public var searchSteps: [SearchStep] = []
     public var imageDatas: [Data] = []
     public var healthKitSampleUUIDs: [String] = []
+    public var processingJobId: String?
+    public var lastAttemptAt: Date?
+    public var processingErrorMessage: String?
 
     // Nutritional values for the current weight
     public var calories: Double
     public var protein: Double
     public var carbs: Double
     public var fat: Double
-    
+
     // Weight and per-100g baseline values
     public var weightGrams: Double
     public var caloriesPer100g: Double
@@ -52,14 +55,62 @@ public final class FoodItem {
         self.carbsPer100g = carbsPer100g
         self.fatPer100g = fatPer100g
     }
-    
+
     // Convenience initializer for the processing state
     public convenience init(name: String) {
         self.init(name: name, identifiedFood: "Analyzing...", cleanFoodName: name, dateEaten: .now, isProcessing: true, isSearchGrounded: false, dataSource: nil, searchSteps: [], imageDatas: [], healthKitSampleUUIDs: [],
                   calories: 0, protein: 0, carbs: 0, fat: 0,
                   weightGrams: 0, caloriesPer100g: 0, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0)
     }
-    
+
+    public var hasFailedProcessing: Bool {
+        processingErrorMessage != nil && !isProcessing
+    }
+
+    public func claimProcessingJob(id: String, at date: Date) -> Bool {
+        guard isProcessing else { return false }
+
+        if let existingJobId = processingJobId {
+            if existingJobId == id {
+                lastAttemptAt = date
+                return true
+            }
+
+            if let lastAttemptAt,
+               date.timeIntervalSince(lastAttemptAt) < Self.processingClaimTimeout {
+                return false
+            }
+        }
+
+        processingJobId = id
+        lastAttemptAt = date
+        processingErrorMessage = nil
+        return true
+    }
+
+    public func markProcessingFailed(_ message: String) {
+        isProcessing = false
+        processingJobId = nil
+        processingErrorMessage = message
+        identifiedFood = "Analysis failed"
+        cleanFoodName = name
+    }
+
+    public func markProcessingFinished() {
+        isProcessing = false
+        processingJobId = nil
+        processingErrorMessage = nil
+    }
+
+    public func resetForRetry(jobId: String?, at date: Date) {
+        isProcessing = true
+        processingJobId = jobId
+        lastAttemptAt = date
+        processingErrorMessage = nil
+        identifiedFood = "Analyzing..."
+        cleanFoodName = name
+    }
+
     public func recalculateNutrients() {
         let ratio = weightGrams / 100.0
         calories = caloriesPer100g * ratio
@@ -67,4 +118,6 @@ public final class FoodItem {
         carbs = carbsPer100g * ratio
         fat = fatPer100g * ratio
     }
+
+    private static let processingClaimTimeout: TimeInterval = 120
 }

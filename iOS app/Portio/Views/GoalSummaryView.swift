@@ -2,12 +2,12 @@ import SwiftUI
 
 struct GoalSummaryView: View {
     // This view reads the goals directly from UserSettings
-    @AppStorage("calorieGoal") private var calorieGoal: Double = UserSettings.calorieGoal
-    @AppStorage("proteinGoal") private var proteinGoal: Double = UserSettings.proteinGoal
-    @AppStorage("carbsGoal") private var carbsGoal: Double = UserSettings.carbsGoal
-    @AppStorage("fatGoal") private var fatGoal: Double = UserSettings.fatGoal
-    @AppStorage("goalExplanation") private var goalExplanation: String = UserSettings.goalExplanation
-    
+    @AppStorage("calorieGoal", store: UserSettings.shared) private var calorieGoal: Double = UserSettings.calorieGoal
+    @AppStorage("proteinGoal", store: UserSettings.shared) private var proteinGoal: Double = UserSettings.proteinGoal
+    @AppStorage("carbsGoal", store: UserSettings.shared) private var carbsGoal: Double = UserSettings.carbsGoal
+    @AppStorage("fatGoal", store: UserSettings.shared) private var fatGoal: Double = UserSettings.fatGoal
+    @AppStorage("goalExplanation", store: UserSettings.shared) private var goalExplanation: String = UserSettings.goalExplanation
+
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -28,13 +28,13 @@ struct GoalSummaryView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 20)
-                
+
                 HStack(spacing: 20) {
                     NutrientGoalView(name: "Protein", value: proteinGoal)
                     NutrientGoalView(name: "Carbs", value: carbsGoal)
                     NutrientGoalView(name: "Fat", value: fatGoal)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 15) {
                     Text("AI Recommendation")
                         .font(.title2)
@@ -47,7 +47,7 @@ struct GoalSummaryView: View {
                 .padding(.horizontal)
             }
         }
-        
+
         // Button is placed outside the ScrollView to stick to the bottom
         .safeAreaInset(edge: .bottom) {
             Button("Get Started") {
@@ -70,7 +70,7 @@ struct GoalSummaryView: View {
 private struct NutrientGoalView: View {
     let name: String
     let value: Double
-    
+
     var body: some View {
         VStack {
             Text(String(format: "%.0f g", value))

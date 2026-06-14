@@ -42,7 +42,7 @@ struct OpenRouterRequest: Encodable {
     let tools: [Tool]?
     let toolChoice: ToolChoice?
     let reasoning: Reasoning?
-    
+
     init(model: String, messages: [Message], responseFormat: ResponseFormat? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, reasoning: Reasoning? = nil) {
         self.model = model
         self.messages = messages
@@ -51,17 +51,17 @@ struct OpenRouterRequest: Encodable {
         self.toolChoice = toolChoice
         self.reasoning = reasoning
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case model, messages, tools, reasoning
         case responseFormat = "response_format"
         case toolChoice = "tool_choice"
     }
-    
+
     struct Reasoning: Encodable {
         let effort: String // "high", "medium", "low" (default high for some models)
     }
-    
+
     struct Message: Encodable {
         let role: String
         let content: MessageContent?
@@ -74,7 +74,7 @@ struct OpenRouterRequest: Encodable {
             case toolCalls = "tool_calls"
             case toolCallId = "tool_call_id"
         }
-        
+
         init(role: String, content: MessageContent? = nil, toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
             self.role = role
             self.content = content
@@ -82,22 +82,22 @@ struct OpenRouterRequest: Encodable {
             self.toolCallId = toolCallId
             self.name = name
         }
-        
+
         // Convenience init for array of parts
         init(role: String, content: [ContentPart], toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
             self.init(role: role, content: .parts(content), toolCalls: toolCalls, toolCallId: toolCallId, name: name)
         }
-        
+
         // Convenience init for simple string
         init(role: String, content: String, toolCalls: [ToolCall]? = nil, toolCallId: String? = nil, name: String? = nil) {
             self.init(role: role, content: .string(content), toolCalls: toolCalls, toolCallId: toolCallId, name: name)
         }
     }
-    
+
     enum MessageContent: Encodable {
         case string(String)
         case parts([ContentPart])
-        
+
         func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
@@ -106,19 +106,19 @@ struct OpenRouterRequest: Encodable {
             }
         }
     }
-    
+
     enum ContentPart: Encodable {
         case text(String)
         case imageUrl(String)
-        
+
         enum CodingKeys: String, CodingKey {
             case type, text, image_url
         }
-        
+
         struct ImageUrl: Encodable {
             let url: String
         }
-        
+
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             switch self {
@@ -131,11 +131,11 @@ struct OpenRouterRequest: Encodable {
             }
         }
     }
-    
+
     struct ResponseFormat: Encodable {
         let type: String
     }
-    
+
     struct Tool: Encodable {
         let type: String
         let function: FunctionDefinition
@@ -146,16 +146,18 @@ struct OpenRouterRequest: Encodable {
         let description: String
         let parameters: [String: JSONValue]
     }
-    
+
     enum ToolChoice: Encodable {
         case auto
+        case required
         case none
         case specific(String)
-        
+
         func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
             case .auto: try container.encode("auto")
+            case .required: try container.encode("required")
             case .none: try container.encode("none")
             case .specific(let name):
                 var keyedContainer = encoder.container(keyedBy: ToolChoiceKeys.self)
@@ -163,7 +165,7 @@ struct OpenRouterRequest: Encodable {
                 try keyedContainer.encode(["name": name], forKey: .function)
             }
         }
-        
+
         enum ToolChoiceKeys: String, CodingKey {
             case type, function
         }
@@ -183,21 +185,21 @@ struct FunctionCall: Codable {
 
 struct OpenRouterResponse: Decodable {
     let choices: [Choice]
-    
+
     struct Choice: Decodable {
         let message: Message
         let finishReason: String?
-        
+
         enum CodingKeys: String, CodingKey {
             case message
             case finishReason = "finish_reason"
         }
     }
-    
+
     struct Message: Decodable {
-        let content: String?
-        let toolCalls: [ToolCall]?
-        
+        var content: String?
+        var toolCalls: [ToolCall]?
+
         enum CodingKeys: String, CodingKey {
             case content
             case toolCalls = "tool_calls"
@@ -207,7 +209,7 @@ struct OpenRouterResponse: Decodable {
 
 struct OpenRouterErrorResponse: Decodable {
     let error: OpenRouterError
-    
+
     struct OpenRouterError: Decodable {
         let message: String
         let code: Int?

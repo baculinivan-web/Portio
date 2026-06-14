@@ -19,7 +19,7 @@ Log food by typing or taking a photo. The app uses an LLM with tool-calling to l
 - Nutrient imbalance and overshoot warnings
 - Home screen widget
 - iOS: HealthKit integration, Liquid Glass UI, deep links (`calcal://camera`, `calcal://add`)
-- Android: Health Connect integration, Glance App Widget
+- Android: Glance App Widget; Health Connect is disabled until the Android dependency/toolchain is upgraded
 
 ## Setup
 
@@ -42,7 +42,7 @@ Required keys:
 - Kotlin + Jetpack Compose
 - Room + DataStore
 - Hilt (DI), Retrofit + OkHttp
-- CameraX, Health Connect
+- CameraX, Glance
 - Glance App Widgets
 
 ## Architecture
@@ -98,11 +98,10 @@ flowchart TD
 
     K --> L[Parse FoodArrayResponse]
     L --> M[Update placeholder\nwith nutrition data]
-    M --> N[Sync to Health Connect]
-    N --> O[Update widget]
-    O --> P([Done])
+    M --> N[Update widget]
+    N --> O([Done])
 
-    C -- error / max 4 iterations --> Q([Delete placeholder\nshow error])
+    C -- error / max 4 iterations --> P([Mark placeholder failed\nshow error])
 ```
 
 ## Requirements

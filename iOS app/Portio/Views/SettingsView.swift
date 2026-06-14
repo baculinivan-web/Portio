@@ -12,12 +12,20 @@ struct SettingsView: View {
     @AppStorage("weightGoalMode", store: UserSettings.shared) private var weightGoalModeRaw: String = UserSettings.weightGoalMode.rawValue
     @AppStorage("isAppleHealthSyncEnabled", store: UserSettings.shared) private var isAppleHealthSyncEnabled: Bool = UserSettings.isAppleHealthSyncEnabled
     @AppStorage("goalExplanation", store: UserSettings.shared) private var goalExplanation: String = UserSettings.goalExplanation
-    @AppStorage("openRouterApiKey", store: UserSettings.shared) private var openRouterApiKey: String = UserSettings.openRouterApiKey
-    @AppStorage("serperApiKey", store: UserSettings.shared) private var serperApiKey: String = UserSettings.serperApiKey
     @AppStorage("modelName", store: UserSettings.shared) private var modelName: String = UserSettings.modelName
+    @AppStorage("customApiBaseUrl", store: UserSettings.shared) private var customApiBaseUrl: String = UserSettings.customApiBaseUrl
+    @AppStorage("llmProvider", store: UserSettings.shared) private var llmProviderRaw: String = UserSettings.llmProvider.rawValue
+    @AppStorage("blockRunProxyUrl", store: UserSettings.shared) private var blockRunProxyUrl: String = UserSettings.blockRunProxyUrl
+    @AppStorage("isCalorieCommentaryEnabled", store: UserSettings.shared) private var isCalorieCommentaryEnabled: Bool = UserSettings.isCalorieCommentaryEnabled
+    @AppStorage("calorieCommentaryLevel", store: UserSettings.shared) private var calorieCommentaryLevelRaw: String = UserSettings.calorieCommentaryLevel.rawValue
+
+    @State private var openRouterApiKey: String = UserSettings.openRouterApiKey
+    @State private var serperApiKey: String = UserSettings.serperApiKey
+    @State private var blockRunWalletId: String = UserSettings.blockRunWalletId
 
     @State private var isOpenRouterKeyVisible = false
     @State private var isSerperKeyVisible = false
+    @State private var isWalletIdVisible = false
 
     @Environment(\.modelContext) private var modelContext
 
@@ -31,7 +39,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    
+
                     NutrientEditor(label: "Calories (kcal)", value: $calorieGoal)
                     NutrientEditor(label: "Protein (g)", value: $proteinGoal)
                     NutrientEditor(label: "Carbs (g)", value: $carbsGoal)
@@ -49,25 +57,122 @@ struct SettingsView: View {
                             }
                         }
                 }
-                
+
                 Section {
-                    HStack {
-                        if isOpenRouterKeyVisible {
-                            TextField("sk-or-...", text: $openRouterApiKey)
-                        } else {
-                            SecureField("sk-or-...", text: $openRouterApiKey)
-                        }
-                        Button { isOpenRouterKeyVisible.toggle() } label: {
-                            Image(systemName: isOpenRouterKeyVisible ? "eye.slash" : "eye")
-                                .foregroundStyle(.secondary)
+                    Toggle("Show calorie remarks", isOn: $isCalorieCommentaryEnabled)
+
+                    Picker("Cringe Level", selection: $calorieCommentaryLevelRaw) {
+                        ForEach(UserSettings.CalorieCommentaryLevel.allCases) { level in
+                            Text(level.rawValue).tag(level.rawValue)
                         }
                     }
+                    .pickerStyle(.segmented)
+                    .disabled(!isCalorieCommentaryEnabled)
                 } header: {
-                    Text("OpenRouter API Key")
+                    Text("Calorie Commentary")
                 } footer: {
-                    Text("Get your free key at openrouter.ai/keys — the free tier is sufficient for normal app usage.")
+                    Text("Crazy mode is intentionally rude, unserious roast text and may include profanity. It is not health advice, not a real judgment, and only appears because you chose it.")
                 }
-                
+
+                Section("AI Provider") {
+                    Picker("Provider", selection: $llmProviderRaw) {
+                        ForEach(UserSettings.LLMProvider.allCases) { provider in
+                            Text(provider.rawValue).tag(provider.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                if llmProviderRaw == UserSettings.LLMProvider.openRouter.rawValue {
+                    Section {
+                        HStack {
+                            if isOpenRouterKeyVisible {
+                                TextField("sk-or-...", text: $openRouterApiKey)
+                            } else {
+                                SecureField("sk-or-...", text: $openRouterApiKey)
+                            }
+                            Button { isOpenRouterKeyVisible.toggle() } label: {
+                                Image(systemName: isOpenRouterKeyVisible ? "eye.slash" : "eye")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        Text("OpenRouter API Key")
+                    } footer: {
+                        Text("Get your free key at openrouter.ai/keys — the free tier is sufficient for normal app usage.")
+                    }
+
+                    Section("Model") {
+                        TextField("e.g. google/gemini-flash-1.5", text: $modelName)
+                    }
+                } else if llmProviderRaw == UserSettings.LLMProvider.custom.rawValue {
+                    Section {
+                        TextField("https://api.openai.com/v1", text: $customApiBaseUrl)
+                    } header: {
+                        Text("Base URL")
+                    }
+
+                    Section {
+                        HStack {
+                            if isOpenRouterKeyVisible {
+                                TextField("API Key", text: $openRouterApiKey)
+                            } else {
+                                SecureField("API Key", text: $openRouterApiKey)
+                            }
+                            Button { isOpenRouterKeyVisible.toggle() } label: {
+                                Image(systemName: isOpenRouterKeyVisible ? "eye.slash" : "eye")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        Text("API Key")
+                    }
+
+                    Section("Model") {
+                        TextField("e.g. gpt-4o", text: $modelName)
+                    }
+                } else if llmProviderRaw == UserSettings.LLMProvider.blockRun.rawValue {
+                    Section {
+                        TextField("https://blockrun.ai/api/v1", text: $blockRunProxyUrl)
+                    } header: {
+                        Text("API Endpoint")
+                    } footer: {
+                        Text("Default is https://blockrun.ai/api/v1. This cloud gateway connects directly to models.")
+                    }
+
+                    Section {
+                        HStack {
+                            if isWalletIdVisible {
+                                TextField("0x...", text: $blockRunWalletId)
+                            } else {
+                                SecureField("0x...", text: $blockRunWalletId)
+                            }
+                            Button { isWalletIdVisible.toggle() } label: {
+                                Image(systemName: isWalletIdVisible ? "eye.slash" : "eye")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        Text("Wallet Key / ID")
+                    } footer: {
+                        Text("Your wallet key used for Bearer authentication.")
+                    }
+
+                    Section("Model") {
+                        Picker("Model", selection: $modelName) {
+                            Text("GPT OSS 120B").tag("nvidia/gpt-oss-120b")
+                            Text("GPT OSS 20B").tag("nvidia/gpt-oss-20b")
+                            Text("DeepSeek V3.2").tag("nvidia/deepseek-v3.2")
+                            Text("Qwen3 Coder 480B").tag("nvidia/qwen3-coder-480b")
+                            Text("GLM 4.7").tag("nvidia/glm-4.7")
+                            Text("Llama 4 Maverick").tag("nvidia/llama-4-maverick")
+                            Text("Qwen3 Thinking").tag("nvidia/qwen3-next-80b-a3b-thinking")
+                            Text("Mistral Small 4").tag("nvidia/mistral-small-4-119b")
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+
                 Section {
                     HStack {
                         if isSerperKeyVisible {
@@ -85,11 +190,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Get your free key at serper.dev — 2,500 free searches/month, enough for everyday use.")
                 }
-                
-                Section("AI Model") {
-                    TextField("e.g. google/gemini-flash-1.5", text: $modelName)
-                }
-                
+
                 if !goalExplanation.isEmpty {
                     Section("Your AI Goal Recommendation") {
                         Text(goalExplanation)
@@ -110,6 +211,9 @@ struct SettingsView: View {
             .onChange(of: proteinGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
             .onChange(of: carbsGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
             .onChange(of: fatGoal) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
+            .onChange(of: openRouterApiKey) { _, newValue in UserSettings.openRouterApiKey = newValue }
+            .onChange(of: serperApiKey) { _, newValue in UserSettings.serperApiKey = newValue }
+            .onChange(of: blockRunWalletId) { _, newValue in UserSettings.blockRunWalletId = newValue }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }

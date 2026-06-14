@@ -3,14 +3,15 @@ import Testing
 @testable import Portio
 
 struct APIKeyManagerTests {
-    @Test func testGetOpenRouterAPIKey() {
-        let key = APIKeyManager.getOpenRouterAPIKey()
-        // We don't assert the value as it depends on the environment/file
-        // We just verify the API exists and doesn't crash
+    @Test func bundledPlistIsNotUsedForOpenRouterAPIKey() {
+        #expect(APIKeyManager.getOpenRouterAPIKey() == nil)
     }
-    
-    @Test func testGetSerperAPIKey() {
-        let key = APIKeyManager.getSerperAPIKey()
-        // We just verify the API exists and doesn't crash
+
+    @Test func bundledPlistIsNotUsedForSerperAPIKey() {
+        #expect(APIKeyManager.getSerperAPIKey() == nil)
+    }
+
+    @Test func bundledPlistIsNotUsedForBlockRunWalletKey() {
+        #expect(APIKeyManager.getBlockRunWalletKey() == nil)
     }
 }

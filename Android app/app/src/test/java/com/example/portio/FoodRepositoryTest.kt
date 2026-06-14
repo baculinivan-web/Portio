@@ -2,10 +2,6 @@ package com.example.portio
 
 import com.example.portio.data.local.FoodItemDao
 import com.example.portio.data.local.FoodItemEntity
-import com.example.portio.data.remote.NutritionService
-import com.example.portio.data.repository.FoodRepository
-import com.example.portio.domain.model.NutritionResponse
-import com.example.portio.health.HealthConnectManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -32,31 +28,10 @@ class FoodRepositoryTest {
             deletedItems.add(item)
             insertedItems.removeAll { it.id == item.id }
         }
+        override suspend fun deleteById(id: String) {
+            insertedItems.removeAll { it.id == id }
+        }
         override suspend fun countForDay(start: Long, end: Long): Int = insertedItems.size
-    }
-
-    private val fakeNutritionService = object : NutritionService(
-        okHttpClient = okhttp3.OkHttpClient(),
-        serperService = com.example.portio.data.remote.SerperService(okhttp3.OkHttpClient()),
-        offService = com.example.portio.data.remote.OpenFoodFactsService(okhttp3.OkHttpClient())
-    ) {
-        override suspend fun fetchNutrition(
-            query: String, images: List<ByteArray>, apiKey: String, modelName: String, serperApiKey: String
-        ): List<NutritionResponse> = listOf(
-            NutritionResponse(
-                identifiedFood = "1 apple", cleanFoodName = "Apple",
-                calories = 95.0, protein = 0.5, carbs = 25.0, fat = 0.3,
-                estimatedWeightGrams = 182.0,
-                caloriesPer100g = 52.0, proteinPer100g = 0.3, carbsPer100g = 14.0, fatPer100g = 0.2,
-                isSearchGrounded = false
-            )
-        )
-    }
-
-    private val fakeHealthConnect = object : HealthConnectManager(
-        context = androidx.test.core.app.ApplicationProvider.getApplicationContext()
-    ) {
-        override suspend fun writeNutrition(item: com.example.portio.domain.model.FoodItem): String? = null
     }
 
     @Test
