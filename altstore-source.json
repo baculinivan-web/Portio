@@ -1,0 +1,38 @@
+{
+  "name": "Portio",
+  "subtitle": "Calorie tracker for iPhone and iPad.",
+  "description": "Self-hosted AltStore source for Portio.",
+  "iconURL": "https://github.com/baculinivan-web/Portio/releases/download/v1/portio-icon.png",
+  "tintColor": "38A169",
+  "apps": [
+    {
+      "name": "Portio",
+      "bundleIdentifier": "com.ivan.Portio",
+      "developerName": "Ivan",
+      "subtitle": "Calorie tracker for iPhone and iPad.",
+      "localizedDescription": "Portio helps track meals, calories, macros, streaks, and daily nutrition goals.",
+      "iconURL": "https://github.com/baculinivan-web/Portio/releases/download/v1/portio-icon.png",
+      "tintColor": "38A169",
+      "category": "lifestyle",
+      "versions": [
+        {
+          "version": "1.0",
+          "buildVersion": "1",
+          "date": "2026-06-14",
+          "localizedDescription": "Initial AltStore build.",
+          "downloadURL": "https://github.com/baculinivan-web/Portio/releases/download/v1/Portio-1.0.ipa",
+          "size": 3158470,
+          "minOSVersion": "26.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [
+          "com.apple.developer.healthkit",
+          "com.apple.security.application-groups"
+        ],
+        "privacy": {}
+      }
+    }
+  ],
+  "news": []
+}
