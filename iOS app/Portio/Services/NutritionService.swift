@@ -35,8 +35,17 @@ class NutritionService {
     nonisolated static func initialToolChoiceForTesting(hasImages: Bool) -> OpenRouterRequest.ToolChoice {
         initialToolChoice(hasImages: hasImages)
     }
+    nonisolated static func toolChoiceForTesting(hasExecutedTools: Bool, hasImages: Bool) -> OpenRouterRequest.ToolChoice {
+        toolChoice(hasExecutedTools: hasExecutedTools, hasImages: hasImages)
+    }
     nonisolated static func canAcceptFinalResponseForTesting(hasExecutedTools: Bool, hasImages: Bool) -> Bool {
         canAcceptFinalResponse(hasExecutedTools: hasExecutedTools, hasImages: hasImages)
+    }
+    nonisolated static func extractManualToolCallForTesting(from content: String, hasExecutedTools: Bool) -> ToolCall? {
+        extractManualToolCall(from: content, hasExecutedTools: hasExecutedTools)
+    }
+    nonisolated static func shouldSendNativeToolsForTesting(hasExecutedTools: Bool, hasImages: Bool) -> Bool {
+        shouldSendNativeTools(hasExecutedTools: hasExecutedTools, hasImages: hasImages)
     }
 
     private enum ToolResult {
@@ -74,11 +83,21 @@ class NutritionService {
            CRITICAL: When using `openfoodfacts_search`, pass ONLY the brand and product name (e.g., "Coke Zero", "Snickers", "Актимуно"). DO NOT include weights, volumes, or packaging details (e.g., "0.33l", "50g", "box") in the search query, as this often causes the search to fail. The tool will return available sizes/quantities for you to select from.
         2. `google_search`: Use this if `openfoodfacts_search` returns no results, or for restaurant menu items ("Big Mac"), generic dishes ("Caesar Salad"), or specific queries requiring web synthesis.
 
+        If native tool-calling is unavailable and you need external search, output ONLY one minified JSON object in this exact shape: {"name":"google_search","parameters":{"query":"search terms"}} or {"name":"openfoodfacts_search","parameters":{"query":"product name"}}. Do not wrap it in markdown or add explanations.
+
         After tool results are available, use those results in the final JSON. If no tools were needed, output final JSON from your internal nutrition knowledge and set "isSearchGrounded" to false.
         """
 
     nonisolated private static func initialToolChoice(hasImages _: Bool) -> OpenRouterRequest.ToolChoice {
         .auto
+    }
+
+    nonisolated private static func toolChoice(hasExecutedTools: Bool, hasImages: Bool) -> OpenRouterRequest.ToolChoice {
+        hasExecutedTools ? .none : initialToolChoice(hasImages: hasImages)
+    }
+
+    nonisolated private static func shouldSendNativeTools(hasExecutedTools: Bool, hasImages: Bool) -> Bool {
+        hasExecutedTools || !hasImages
     }
 
     nonisolated private static func canAcceptFinalResponse(hasExecutedTools _: Bool, hasImages _: Bool) -> Bool {
@@ -104,6 +123,12 @@ class NutritionService {
     }
 
     nonisolated static func extractManualToolCall(from content: String) -> ToolCall? {
+        extractManualToolCall(from: content, hasExecutedTools: false)
+    }
+
+    nonisolated private static func extractManualToolCall(from content: String, hasExecutedTools: Bool) -> ToolCall? {
+        guard !hasExecutedTools else { return nil }
+
         struct ManualToolCallEnvelope: Decodable {
             let name: String
             let parameters: [String: JSONValue]
@@ -234,19 +259,6 @@ class NutritionService {
         return resultsSummary
     }
 
-    private func toolMessages(from results: [ToolResult]) -> [OpenRouterRequest.Message] {
-        results.map { result in
-            switch result {
-            case .google(let id, let content, _):
-                return .init(role: "tool", content: .string(content), toolCallId: id, name: "google_search")
-            case .off(let id, let content):
-                return .init(role: "tool", content: .string(content), toolCallId: id, name: "openfoodfacts_search")
-            case .error(let id, let content):
-                return .init(role: "tool", content: .string(content), toolCallId: id)
-            }
-        }
-    }
-
     func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
@@ -366,8 +378,8 @@ class NutritionService {
                 model: self.modelName,
                 messages: messages,
                 responseFormat: nil,
-                tools: tools,
-                toolChoice: hasExecutedTools ? .auto : Self.initialToolChoice(hasImages: !images.isEmpty),
+                tools: Self.shouldSendNativeTools(hasExecutedTools: hasExecutedTools, hasImages: !images.isEmpty) ? tools : nil,
+                toolChoice: Self.toolChoice(hasExecutedTools: hasExecutedTools, hasImages: !images.isEmpty),
                 reasoning: .init(effort: "low") // Optimize for speed
             )
 
@@ -402,7 +414,7 @@ class NutritionService {
             // Check if the model returned a tool call in the 'content' field instead of 'tool_calls'
             if (message.toolCalls == nil || message.toolCalls?.isEmpty == true),
                let content = message.content,
-               let manualToolCall = Self.extractManualToolCall(from: content) {
+               let manualToolCall = Self.extractManualToolCall(from: content, hasExecutedTools: hasExecutedTools) {
                 message.toolCalls = [manualToolCall]
             }
 
@@ -413,11 +425,26 @@ class NutritionService {
                 toolCalls: (message.toolCalls?.isEmpty == true) ? nil : message.toolCalls
             ))
 
-            if (choice.finishReason == "tool_calls" || (message.toolCalls != nil && !message.toolCalls!.isEmpty)),
+            let canExecuteToolCalls = !hasExecutedTools
+            if canExecuteToolCalls,
+               (choice.finishReason == "tool_calls" || (message.toolCalls != nil && !message.toolCalls!.isEmpty)),
                let toolCalls = message.toolCalls, !toolCalls.isEmpty {
                 let results = await executeToolCalls(toolCalls)
-                _ = summarizeToolResults(results, capturedSearchSteps: &capturedSearchSteps, didUseOFF: &didUseOFF)
-                messages.append(contentsOf: toolMessages(from: results))
+                let resultsSummary = summarizeToolResults(results, capturedSearchSteps: &capturedSearchSteps, didUseOFF: &didUseOFF)
+                messages = [
+                    .init(role: "system", content: .string(finalSystemPrompt)),
+                    .init(
+                        role: "user",
+                        content: .string("""
+                        Original food query: "\(query)"
+
+                        Gathered search data:
+                        \(resultsSummary)
+
+                        Use the gathered data above and return the final nutrition JSON now. Do not call any tools again.
+                        """)
+                    )
+                ]
                 hasExecutedTools = true
 
                 // Continue the loop to get the next response from the LLM

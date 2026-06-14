@@ -1,0 +1,7 @@
+Hardened the iOS nutrition analysis loop for complex food entries.
+
+The first text-only pass still gives the model a choice: it can answer directly from internal nutrition knowledge for generic food, or search when grounding is needed. Image-first requests no longer attach native tool definitions because some vision providers fail when image parts and native tool-calling are combined. If an image request needs search, the prompt tells the model to ask for it with the existing manual JSON tool-call envelope.
+
+After the first batch of search results, NutritionService forces the next model pass into final-answer mode with tool_choice "none" and an explicit instruction to return the nutrition JSON. Manual tool-call parsing is also disabled after tools have already run, so a model cannot accidentally trigger another search loop from content text.
+
+This prevents multi-item entries from cycling through repeated tool calls until the service falls through to the generic "server returned an invalid response" failure while preserving direct answers for common foods like apples.

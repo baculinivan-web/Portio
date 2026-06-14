@@ -80,6 +80,7 @@ struct PortioTests {
 
         #expect(prompt.contains("If the food is generic, unbranded, and you can estimate it reliably, output the final JSON immediately"))
         #expect(prompt.contains("If the item is branded, packaged, restaurant-made, regional, ambiguous, or uncertain, use tools before final JSON"))
+        #expect(prompt.contains("If native tool-calling is unavailable"))
         #expect(!prompt.contains("Do not output final JSON until after you have used the required tools"))
     }
 
@@ -108,10 +109,42 @@ struct PortioTests {
         #expect(value == #""auto""#)
     }
 
+    @Test func imageInitialPassDoesNotAttachNativeTools() {
+        #expect(!NutritionService.shouldSendNativeToolsForTesting(hasExecutedTools: false, hasImages: true))
+        #expect(NutritionService.shouldSendNativeToolsForTesting(hasExecutedTools: false, hasImages: false))
+        #expect(NutritionService.shouldSendNativeToolsForTesting(hasExecutedTools: true, hasImages: false))
+    }
+
     @Test func finalNutritionResponseWithoutToolCallsIsAccepted() {
         #expect(NutritionService.canAcceptFinalResponseForTesting(hasExecutedTools: false, hasImages: true))
         #expect(NutritionService.canAcceptFinalResponseForTesting(hasExecutedTools: false, hasImages: false))
         #expect(NutritionService.canAcceptFinalResponseForTesting(hasExecutedTools: true, hasImages: false))
+    }
+
+    @Test func nutritionPassDisablesMoreToolCallsAfterToolsWereExecuted() throws {
+        let encoded = try JSONEncoder().encode(
+            NutritionService.toolChoiceForTesting(hasExecutedTools: true, hasImages: false)
+        )
+        let value = String(data: encoded, encoding: .utf8)
+
+        #expect(value == #""none""#)
+    }
+
+    @Test func finalNutritionPassDoesNotTreatContentAsManualToolCall() {
+        let content = #"{"name":"google_search","parameters":{"query":"more nutrition facts"}}"#
+
+        #expect(
+            NutritionService.extractManualToolCallForTesting(
+                from: content,
+                hasExecutedTools: true
+            ) == nil
+        )
+        #expect(
+            NutritionService.extractManualToolCallForTesting(
+                from: content,
+                hasExecutedTools: false
+            )?.function.name == "google_search"
+        )
     }
 
     @Test func continuedProcessingTaskUsesSeparateUserInitiatedIdentifier() {
