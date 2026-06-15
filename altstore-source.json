@@ -12,6 +12,12 @@
       "subtitle": "AI meal logging, macros, streaks, and daily goals.",
       "localizedDescription": "Portio helps you track food without turning nutrition into a spreadsheet chore. Log meals manually, from text, or from photos; review calories, macros, nutrients, and daily goal progress; browse previous days; keep streaks; and configure your own AI provider/API keys in settings. The app is built for personal sideloading through AltStore and stores sensitive user-entered keys locally on the device.",
       "iconURL": "https://github.com/baculinivan-web/Portio/releases/download/v1/portio-icon.png",
+      "screenshotURLs": [
+        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/01-iphone-air-mockup.png",
+        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/02-img-2897.png",
+        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/03-img-2898.png",
+        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/04-screenshot-2026-06-15-204739.png"
+      ],
       "tintColor": "38A169",
       "category": "lifestyle",
       "versions": [
