@@ -1,0 +1,7 @@
+Stabilized iOS continued processing ownership for lock-screen activity.
+
+New AI food additions and retries now treat BGContinuedProcessingTask as the owner of user-initiated work when the system accepts the continued-processing request. The foreground worker only starts when continued processing is unavailable or rejected.
+
+Continued-processing submissions now use the fail-fast strategy instead of queueing. This avoids the AltStore/release behavior where a queued continued task could start after the foreground worker had already claimed the item, leaving no real continued task progress for the system lock-screen UI to show.
+
+The continued-processing handler is also registered during background task registration, so queued or relaunched task delivery has a handler available even before a new food submission path runs.

@@ -38,12 +38,12 @@ enum JSONValue: Codable {
 struct OpenRouterRequest: Encodable {
     let model: String
     let messages: [Message]
-    let responseFormat: ResponseFormat?
+    let responseFormat: OpenAICompatibleResponseFormat?
     let tools: [Tool]?
     let toolChoice: ToolChoice?
     let reasoning: Reasoning?
 
-    init(model: String, messages: [Message], responseFormat: ResponseFormat? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, reasoning: Reasoning? = nil) {
+    init(model: String, messages: [Message], responseFormat: OpenAICompatibleResponseFormat? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, reasoning: Reasoning? = nil) {
         self.model = model
         self.messages = messages
         self.responseFormat = responseFormat
@@ -132,10 +132,6 @@ struct OpenRouterRequest: Encodable {
         }
     }
 
-    struct ResponseFormat: Encodable {
-        let type: String
-    }
-
     struct Tool: Encodable {
         let type: String
         let function: FunctionDefinition
@@ -213,5 +209,104 @@ struct OpenRouterErrorResponse: Decodable {
     struct OpenRouterError: Decodable {
         let message: String
         let code: Int?
+    }
+}
+
+enum OpenAICompatibleRequestError: Error, Equatable, LocalizedError {
+    case transport(URLError)
+    case httpStatus(Int, retryAfterSeconds: Double?)
+    case invalidResponse
+    case invalidJSON(String)
+    case apiMessage(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .transport(let error):
+            return error.localizedDescription
+        case .httpStatus(let statusCode, _):
+            return "The AI provider returned HTTP \(statusCode)."
+        case .invalidResponse:
+            return "The AI provider returned an invalid response."
+        case .invalidJSON(let details):
+            return "The AI provider returned JSON in an unexpected shape. Details: \(details)"
+        case .apiMessage(let message):
+            return message
+        }
+    }
+}
+
+struct OpenAICompatibleRetryPolicy {
+    let maxAttempts: Int
+    let baseDelayNanoseconds: UInt64
+
+    static let `default` = OpenAICompatibleRetryPolicy(
+        maxAttempts: 3,
+        baseDelayNanoseconds: 750_000_000
+    )
+
+    func shouldRetry(_ error: OpenAICompatibleRequestError, attempt: Int) -> Bool {
+        guard attempt < maxAttempts else { return false }
+
+        switch error {
+        case .transport(let urlError):
+            return [
+                .timedOut,
+                .cannotFindHost,
+                .cannotConnectToHost,
+                .networkConnectionLost,
+                .dnsLookupFailed,
+                .notConnectedToInternet,
+                .internationalRoamingOff,
+                .callIsActive,
+                .dataNotAllowed
+            ].contains(urlError.code)
+        case .httpStatus(let statusCode, _):
+            return statusCode == 408
+                || statusCode == 409
+                || statusCode == 425
+                || statusCode == 429
+                || (500...599).contains(statusCode)
+        case .invalidResponse, .invalidJSON, .apiMessage:
+            return false
+        }
+    }
+
+    func delayNanoseconds(for error: OpenAICompatibleRequestError, attempt: Int) -> UInt64 {
+        if case .httpStatus(_, let retryAfterSeconds) = error,
+           let retryAfterSeconds,
+           retryAfterSeconds > 0 {
+            return UInt64(retryAfterSeconds * 1_000_000_000)
+        }
+
+        let exponent = max(attempt - 1, 0)
+        let multiplier = UInt64(1 << exponent)
+        return baseDelayNanoseconds * multiplier
+    }
+}
+
+struct OpenAICompatibleResponseFormat: Encodable {
+    let type: String
+    let jsonSchema: JSONSchema?
+
+    private enum CodingKeys: String, CodingKey {
+        case type
+        case jsonSchema = "json_schema"
+    }
+
+    struct JSONSchema: Encodable {
+        let name: String
+        let strict: Bool
+        let schema: [String: JSONValue]
+    }
+
+    static func jsonObject() -> Self {
+        Self(type: "json_object", jsonSchema: nil)
+    }
+
+    static func jsonSchema(name: String, schema: [String: JSONValue], strict: Bool) -> Self {
+        Self(
+            type: "json_schema",
+            jsonSchema: .init(name: name, strict: strict, schema: schema)
+        )
     }
 }

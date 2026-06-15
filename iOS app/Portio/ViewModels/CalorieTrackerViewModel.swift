@@ -41,24 +41,28 @@ class CalorieTrackerViewModel: ObservableObject {
             try? context.save()
         }
         WidgetCenter.shared.reloadAllTimelines()
-        // Schedule background task in case the app is closed before the request completes
-        BackgroundTaskManager.shared.scheduleIfNeeded()
-        _ = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
+        let continuedProcessingSubmitted = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
 
         let jobId = "foreground-\(UUID().uuidString)"
-        processItem(placeholderItem, jobId: jobId, context: context)
+        if BackgroundTaskManager.shouldStartForegroundWorker(continuedProcessingSubmitted: continuedProcessingSubmitted) {
+            // Schedule background task in case the app is closed before the foreground request completes.
+            BackgroundTaskManager.shared.scheduleIfNeeded()
+            processItem(placeholderItem, jobId: jobId, context: context)
+        }
     }
 
     func retryItem(_ item: FoodItem, context: ModelContext) {
         item.resetForRetry(jobId: nil, at: .now)
         try? context.save()
         WidgetCenter.shared.reloadAllTimelines()
-        BackgroundTaskManager.shared.scheduleIfNeeded()
-        _ = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
+        let continuedProcessingSubmitted = BackgroundTaskManager.shared.scheduleContinuedProcessingIfAvailable()
 
         let jobId = "foreground-\(UUID().uuidString)"
-        _ = item.claimProcessingJob(id: jobId, at: .now)
-        processItem(item, jobId: jobId, context: context)
+        if BackgroundTaskManager.shouldStartForegroundWorker(continuedProcessingSubmitted: continuedProcessingSubmitted) {
+            BackgroundTaskManager.shared.scheduleIfNeeded()
+            _ = item.claimProcessingJob(id: jobId, at: .now)
+            processItem(item, jobId: jobId, context: context)
+        }
     }
 
     func addManualItem(_ entry: ManualFoodEntry, context: ModelContext) {
@@ -131,6 +135,10 @@ class CalorieTrackerViewModel: ObservableObject {
                     }
                 }
 
+                try? context.save()
+                WidgetCenter.shared.reloadAllTimelines()
+            } catch is CancellationError {
+                item.processingJobId = nil
                 try? context.save()
                 WidgetCenter.shared.reloadAllTimelines()
             } catch {

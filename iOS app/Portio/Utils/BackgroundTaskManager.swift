@@ -19,6 +19,20 @@ class BackgroundTaskManager {
         "\(completed) of \(total) records processed"
     }
 
+    static func shouldStartForegroundWorker(continuedProcessingSubmitted: Bool) -> Bool {
+        !continuedProcessingSubmitted
+    }
+
+    @available(iOS 26.0, *)
+    static var continuedProcessingSubmissionStrategyForTesting: BGContinuedProcessingTaskRequest.SubmissionStrategy {
+        continuedProcessingSubmissionStrategy
+    }
+
+    @available(iOS 26.0, *)
+    private static var continuedProcessingSubmissionStrategy: BGContinuedProcessingTaskRequest.SubmissionStrategy {
+        .fail
+    }
+
     // MARK: - Registration (call once at app launch)
 
     func registerBackgroundTask() {
@@ -33,6 +47,10 @@ class BackgroundTaskManager {
             }
 
             self.handleProcessingTask(processingTask)
+        }
+
+        if #available(iOS 26.0, *) {
+            registerContinuedProcessingTaskIfNeeded()
         }
     }
 
@@ -68,7 +86,7 @@ class BackgroundTaskManager {
             title: Self.continuedProcessingTitle,
             subtitle: Self.continuedProcessingSubtitle(completed: 0, total: 1)
         )
-        request.strategy = .queue
+        request.strategy = Self.continuedProcessingSubmissionStrategy
 
         do {
             try BGTaskScheduler.shared.submit(request)
@@ -100,8 +118,7 @@ class BackgroundTaskManager {
     private func registerContinuedProcessingTaskIfNeeded() {
         guard !didRegisterContinuedProcessingTask else { return }
 
-        didRegisterContinuedProcessingTask = true
-        BGTaskScheduler.shared.register(
+        didRegisterContinuedProcessingTask = BGTaskScheduler.shared.register(
             forTaskWithIdentifier: Self.continuedProcessingTaskIdentifier,
             using: nil
         ) { task in
@@ -263,6 +280,9 @@ class BackgroundTaskManager {
                         }
                     }
                 }
+            } catch is CancellationError {
+                item.processingJobId = nil
+                BackgroundDiagnostics.log("Processing cancelled for item id=\(item.id.uuidString); keeping it pending")
             } catch {
                 BackgroundDiagnostics.log("Failed to process item id=\(item.id.uuidString): \(error.localizedDescription)")
                 item.markProcessingFailed(error.localizedDescription)

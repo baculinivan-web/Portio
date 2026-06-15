@@ -35,6 +35,7 @@ class NutritionService {
     private let apiURL: URL
     private let provider: UserSettings.LLMProvider
     private let offService = OpenFoodFactsService()
+    private let retryPolicy = OpenAICompatibleRetryPolicy.default
     nonisolated static var initialSystemPromptForTesting: String { initialSystemPrompt }
     nonisolated static func initialToolChoiceForTesting(hasImages: Bool) -> OpenRouterRequest.ToolChoice {
         initialToolChoice(hasImages: hasImages)
@@ -57,6 +58,78 @@ class NutritionService {
         case off(id: String, content: String)
         case error(id: String, content: String)
     }
+
+    private static let nutritionResponseFormat = OpenAICompatibleResponseFormat.jsonSchema(
+        name: "nutrition_response",
+        schema: [
+            "type": .string("object"),
+            "properties": .object([
+                "foods": .object([
+                    "type": .string("array"),
+                    "items": .object([
+                        "type": .string("object"),
+                        "properties": .object([
+                            "identifiedFood": .object(["type": .string("string")]),
+                            "cleanFoodName": .object(["type": .string("string")]),
+                            "calories": .object(["type": .string("number")]),
+                            "protein": .object(["type": .string("number")]),
+                            "carbs": .object(["type": .string("number")]),
+                            "fat": .object(["type": .string("number")]),
+                            "estimatedWeightGrams": .object(["type": .string("number")]),
+                            "caloriesPer100g": .object(["type": .string("number")]),
+                            "proteinPer100g": .object(["type": .string("number")]),
+                            "carbsPer100g": .object(["type": .string("number")]),
+                            "fatPer100g": .object(["type": .string("number")]),
+                            "isSearchGrounded": .object(["type": .string("boolean")]),
+                            "dataSource": .object(["type": .array([.string("string"), .string("null")])])
+                        ]),
+                        "required": .array([
+                            .string("identifiedFood"),
+                            .string("cleanFoodName"),
+                            .string("calories"),
+                            .string("protein"),
+                            .string("carbs"),
+                            .string("fat"),
+                            .string("estimatedWeightGrams"),
+                            .string("caloriesPer100g"),
+                            .string("proteinPer100g"),
+                            .string("carbsPer100g"),
+                            .string("fatPer100g"),
+                            .string("isSearchGrounded"),
+                            .string("dataSource")
+                        ]),
+                        "additionalProperties": .bool(false)
+                    ])
+                ])
+            ]),
+            "required": .array([.string("foods")]),
+            "additionalProperties": .bool(false)
+        ],
+        strict: true
+    )
+
+    private static let goalResponseFormat = OpenAICompatibleResponseFormat.jsonSchema(
+        name: "goal_response",
+        schema: [
+            "type": .string("object"),
+            "properties": .object([
+                "calories": .object(["type": .string("number")]),
+                "protein": .object(["type": .string("number")]),
+                "carbs": .object(["type": .string("number")]),
+                "fat": .object(["type": .string("number")]),
+                "explanation": .object(["type": .string("string")])
+            ]),
+            "required": .array([
+                .string("calories"),
+                .string("protein"),
+                .string("carbs"),
+                .string("fat"),
+                .string("explanation")
+            ]),
+            "additionalProperties": .bool(false)
+        ],
+        strict: true
+    )
 
     nonisolated private static let initialSystemPrompt = """
         You are a highly accurate nutritional analysis expert.
@@ -264,11 +337,261 @@ class NutritionService {
         return resultsSummary
     }
 
+    private func performChatCompletion(
+        _ body: OpenRouterRequest,
+        baseRequest: URLRequest,
+        allowResponseFormatFallback: Bool = true
+    ) async throws -> OpenRouterResponse {
+        do {
+            return try await executeChatCompletion(body, baseRequest: baseRequest)
+        } catch let error as OpenAICompatibleRequestError {
+            if allowResponseFormatFallback,
+               (body.responseFormat != nil || body.reasoning != nil),
+               shouldRetryWithoutOpenAIExtensions(after: error) {
+                NutritionDiagnostics.log("Retrying AI request without optional OpenAI-compatible extensions after \(error.localizedDescription)")
+                let fallbackBody = OpenRouterRequest(
+                    model: body.model,
+                    messages: body.messages,
+                    responseFormat: nil,
+                    tools: body.tools,
+                    toolChoice: body.toolChoice,
+                    reasoning: nil
+                )
+                do {
+                    return try await executeChatCompletion(fallbackBody, baseRequest: baseRequest)
+                } catch let fallbackError as OpenAICompatibleRequestError {
+                    throw mapOpenAICompatibleError(fallbackError)
+                }
+            }
+
+            throw mapOpenAICompatibleError(error)
+        }
+    }
+
+    private func executeChatCompletion(_ body: OpenRouterRequest, baseRequest: URLRequest) async throws -> OpenRouterResponse {
+        var lastError: OpenAICompatibleRequestError?
+
+        for attempt in 1...retryPolicy.maxAttempts {
+            var request = baseRequest
+            request.httpBody = try JSONEncoder().encode(body)
+
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw OpenAICompatibleRequestError.invalidResponse
+                }
+
+                guard httpResponse.statusCode == 200 else {
+                    let retryAfterSeconds = retryAfterSeconds(from: httpResponse)
+                    let statusError = OpenAICompatibleRequestError.httpStatus(httpResponse.statusCode, retryAfterSeconds: retryAfterSeconds)
+
+                    if retryPolicy.shouldRetry(statusError, attempt: attempt) {
+                        lastError = statusError
+                        try await sleepBeforeRetry(for: statusError, attempt: attempt)
+                        continue
+                    }
+
+                    if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                        throw statusError
+                    }
+
+                    if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
+                        throw OpenAICompatibleRequestError.apiMessage(errorResponse.error.message)
+                    }
+
+                    throw statusError
+                }
+
+                do {
+                    return try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+                } catch {
+                    throw OpenAICompatibleRequestError.invalidJSON(error.localizedDescription)
+                }
+            } catch let error as OpenAICompatibleRequestError {
+                if retryPolicy.shouldRetry(error, attempt: attempt) {
+                    lastError = error
+                    try await sleepBeforeRetry(for: error, attempt: attempt)
+                    continue
+                }
+                throw error
+            } catch let error as URLError {
+                if error.code == .cancelled {
+                    throw CancellationError()
+                }
+
+                let transportError = OpenAICompatibleRequestError.transport(error)
+                if retryPolicy.shouldRetry(transportError, attempt: attempt) {
+                    lastError = transportError
+                    try await sleepBeforeRetry(for: transportError, attempt: attempt)
+                    continue
+                }
+                throw transportError
+            }
+        }
+
+        throw lastError ?? OpenAICompatibleRequestError.invalidResponse
+    }
+
+    private func sleepBeforeRetry(for error: OpenAICompatibleRequestError, attempt: Int) async throws {
+        let delay = retryPolicy.delayNanoseconds(for: error, attempt: attempt)
+        NutritionDiagnostics.log("Retrying AI request attempt=\(attempt + 1), delayNs=\(delay)")
+        try await Task.sleep(nanoseconds: delay)
+    }
+
+    private func shouldRetryWithoutOpenAIExtensions(after error: OpenAICompatibleRequestError) -> Bool {
+        switch error {
+        case .httpStatus(let statusCode, _):
+            return statusCode == 400 || statusCode == 422
+        case .apiMessage(let message):
+            let lowercased = message.lowercased()
+            return lowercased.contains("response_format")
+                || lowercased.contains("json_schema")
+                || lowercased.contains("schema")
+                || lowercased.contains("strict")
+                || lowercased.contains("reasoning")
+        case .transport, .invalidResponse, .invalidJSON:
+            return false
+        }
+    }
+
+    private func retryAfterSeconds(from response: HTTPURLResponse) -> Double? {
+        guard let value = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        if let seconds = Double(value) {
+            return seconds
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
+        guard let date = formatter.date(from: value) else { return nil }
+        return max(date.timeIntervalSinceNow, 0)
+    }
+
+    private func mapOpenAICompatibleError(_ error: OpenAICompatibleRequestError) -> NutritionError {
+        switch error {
+        case .httpStatus(let statusCode, _):
+            if statusCode == 401 || statusCode == 403 {
+                return .invalidAPIKey
+            }
+            if statusCode == 400 || statusCode == 422 {
+                return .badRequest
+            }
+            return .apiError(error.localizedDescription)
+        case .apiMessage(let message):
+            return .apiError(message)
+        case .invalidJSON(let details):
+            return .unparsableJSON(details)
+        case .invalidResponse:
+            return .badResponse
+        case .transport:
+            return .apiError(error.localizedDescription)
+        }
+    }
+
+    private func decodeNutritionResponse(
+        from content: String,
+        baseRequest: URLRequest,
+        originalQuery: String,
+        finalSystemPrompt: String,
+        capturedSearchSteps: [SearchStep],
+        didUseOFF: Bool
+    ) async throws -> [NutritionResponse] {
+        let nutritionJSONText = Self.extractJSONObject(from: content)
+
+        do {
+            var foods = try JSONDecoder()
+                .decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
+                .foods
+            decorate(&foods, capturedSearchSteps: capturedSearchSteps, didUseOFF: didUseOFF)
+            return foods
+        } catch {
+            NutritionDiagnostics.log("Attempting final JSON repair after decode failure: \(error.localizedDescription)")
+            let repaired = try await repairNutritionJSON(
+                badContent: content,
+                baseRequest: baseRequest,
+                originalQuery: originalQuery,
+                finalSystemPrompt: finalSystemPrompt
+            )
+            var foods = try JSONDecoder()
+                .decode(FoodArrayResponse.self, from: Data(Self.extractJSONObject(from: repaired).utf8))
+                .foods
+            decorate(&foods, capturedSearchSteps: capturedSearchSteps, didUseOFF: didUseOFF)
+            return foods
+        }
+    }
+
+    private func repairNutritionJSON(
+        badContent: String,
+        baseRequest: URLRequest,
+        originalQuery: String,
+        finalSystemPrompt: String
+    ) async throws -> String {
+        let repairRequest = OpenRouterRequest(
+            model: modelName,
+            messages: [
+                .init(role: "system", content: .string(finalSystemPrompt)),
+                .init(
+                    role: "user",
+                    content: .string("""
+                    Original food query: "\(originalQuery)"
+
+                    The previous assistant response could not be decoded as the required JSON object.
+                    Convert it into the required final nutrition JSON. Return only the JSON object.
+
+                    Previous response:
+                    \(badContent)
+                    """)
+                )
+            ],
+            responseFormat: Self.nutritionResponseFormat,
+            toolChoice: OpenRouterRequest.ToolChoice.none,
+            reasoning: .init(effort: "low")
+        )
+
+        let response = try await performChatCompletion(repairRequest, baseRequest: baseRequest)
+        guard let content = response.choices.first?.message.content else {
+            throw NutritionError.badResponse
+        }
+        return content
+    }
+
+    private func decorate(_ foods: inout [NutritionResponse], capturedSearchSteps: [SearchStep], didUseOFF: Bool) {
+        if !capturedSearchSteps.isEmpty {
+            for i in 0..<foods.count {
+                if foods[i].isSearchGrounded == true {
+                    foods[i].searchSteps = capturedSearchSteps
+                }
+            }
+        }
+
+        if didUseOFF {
+            for i in 0..<foods.count {
+                if foods[i].isSearchGrounded == true {
+                    if let currentSource = foods[i].dataSource, !currentSource.contains("OFF") {
+                        foods[i].dataSource = "\(currentSource), OFF"
+                    } else if foods[i].dataSource == nil {
+                        foods[i].dataSource = "OFF"
+                    }
+                }
+            }
+        }
+    }
+
+    nonisolated private static func extractJSONObject(from content: String) -> String {
+        var jsonText = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let jsonStartIndex = jsonText.firstIndex(of: "{"),
+           let jsonEndIndex = jsonText.lastIndex(of: "}") {
+            jsonText = String(jsonText[jsonStartIndex...jsonEndIndex])
+        }
+        return jsonText
+    }
+
     func fetchNutrition(for query: String, images: [Data] = []) async throws -> [NutritionResponse] {
         try validateProviderCredentials()
 
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
+        request.timeoutInterval = 45
 
         // BlockRun (ClawRouter) uses either 'x402' for local-only auth or the wallet ID for signed requests.
         // We'll use the wallet ID if provided, otherwise x402.
@@ -384,34 +707,13 @@ class NutritionService {
             let openRouterRequest = OpenRouterRequest(
                 model: self.modelName,
                 messages: messages,
-                responseFormat: nil,
+                responseFormat: hasExecutedTools ? Self.nutritionResponseFormat : nil,
                 tools: Self.shouldSendNativeTools(hasExecutedTools: hasExecutedTools, hasImages: !images.isEmpty) ? tools : nil,
                 toolChoice: Self.toolChoice(hasExecutedTools: hasExecutedTools, hasImages: !images.isEmpty),
                 reasoning: .init(effort: "low") // Optimize for speed
             )
 
-            request.httpBody = try JSONEncoder().encode(openRouterRequest)
-
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            NutritionDiagnostics.log("OpenRouter response bytes=\(data.count)")
-
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                if let httpResponse = response as? HTTPURLResponse {
-                     NutritionDiagnostics.log("fetchNutrition failed status=\(httpResponse.statusCode), bytes=\(data.count)")
-
-                     if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
-                        throw NutritionError.apiError(errorResponse.error.message)
-                     }
-
-                     if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
-                        throw NutritionError.invalidAPIKey
-                     }
-                }
-                throw NutritionError.badResponse
-            }
-
-            let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+            let openRouterResponse = try await performChatCompletion(openRouterRequest, baseRequest: request)
             guard let choice = openRouterResponse.choices.first else {
                 throw NutritionError.badResponse
             }
@@ -458,46 +760,18 @@ class NutritionService {
                 continue
             } else {
                 // Final response
-                guard var nutritionJSONText = message.content else {
+                guard let nutritionJSONText = message.content else {
                     throw NutritionError.badResponse
                 }
 
-                if let jsonStartIndex = nutritionJSONText.firstIndex(of: "{"),
-                   let jsonEndIndex = nutritionJSONText.lastIndex(of: "}") {
-                    nutritionJSONText = String(nutritionJSONText[jsonStartIndex...jsonEndIndex])
-                }
-
-                do {
-                    let foodArrayResponse = try JSONDecoder().decode(FoodArrayResponse.self, from: Data(nutritionJSONText.utf8))
-                    var foods = foodArrayResponse.foods
-
-                    // Attach search steps to any item that is grounded
-                    if !capturedSearchSteps.isEmpty {
-                        for i in 0..<foods.count {
-                            if foods[i].isSearchGrounded == true {
-                                foods[i].searchSteps = capturedSearchSteps
-                            }
-                        }
-                    }
-
-                    // Enforce OFF data source if tool was used
-                    if didUseOFF {
-                        for i in 0..<foods.count {
-                            if foods[i].isSearchGrounded == true {
-                                // If already has "Google", append "OFF", else set to "OFF"
-                                if let currentSource = foods[i].dataSource, !currentSource.contains("OFF") {
-                                    foods[i].dataSource = "\(currentSource), OFF"
-                                } else if foods[i].dataSource == nil {
-                                    foods[i].dataSource = "OFF"
-                                }
-                            }
-                        }
-                    }
-
-                    return foods
-                } catch let decodingError {
-                    throw NutritionError.unparsableJSON(decodingError.localizedDescription)
-                }
+                return try await decodeNutritionResponse(
+                    from: nutritionJSONText,
+                    baseRequest: request,
+                    originalQuery: query,
+                    finalSystemPrompt: finalSystemPrompt,
+                    capturedSearchSteps: capturedSearchSteps,
+                    didUseOFF: didUseOFF
+                )
             }
         }
 
@@ -544,33 +818,13 @@ class NutritionService {
         let openRouterRequest = OpenRouterRequest(
             model: self.modelName,
             messages: [.init(role: "user", content: .string(prompt))],
-            responseFormat: nil
+            responseFormat: Self.goalResponseFormat,
+            reasoning: .init(effort: "low")
         )
 
         NutritionDiagnostics.log("OpenRouter goals request model=\(self.modelName)")
 
-        request.httpBody = try JSONEncoder().encode(openRouterRequest)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        NutritionDiagnostics.log("OpenRouter goals response bytes=\(data.count)")
-
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            if let httpResponse = response as? HTTPURLResponse {
-                NutritionDiagnostics.log("fetchAIGoals failed status=\(httpResponse.statusCode), bytes=\(data.count)")
-
-                if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
-                    throw NutritionError.apiError(errorResponse.error.message)
-                }
-
-                if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
-                    throw NutritionError.invalidAPIKey
-                }
-            }
-            throw NutritionError.badResponse
-        }
-
-        let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+        let openRouterResponse = try await performChatCompletion(openRouterRequest, baseRequest: request)
         guard var goalJSONText = openRouterResponse.choices.first?.message.content else {
             throw NutritionError.badResponse
         }
