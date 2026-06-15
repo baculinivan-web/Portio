@@ -20,6 +20,7 @@ enum SerperError: Error, LocalizedError {
 class SerperService {
     private let apiKey: String
     private let apiURL = URL(string: "https://google.serper.dev/search")!
+    private let retryPolicy = OpenAICompatibleRetryPolicy.default
 
     init(apiKey: String) {
         self.apiKey = apiKey
@@ -28,13 +29,14 @@ class SerperService {
     func search(query: String) async throws -> String {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
+        request.timeoutInterval = 20
         request.addValue(apiKey, forHTTPHeaderField: "X-API-KEY")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = ["q": query]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 403 {
@@ -82,13 +84,14 @@ class SerperService {
     func searchStructured(query: String) async throws -> SearchStep {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
+        request.timeoutInterval = 20
         request.addValue(apiKey, forHTTPHeaderField: "X-API-KEY")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = ["q": query]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 403 {
@@ -123,5 +126,55 @@ class SerperService {
         }
 
         return SearchStep(query: query, results: results, answerBox: answerBoxContent)
+    }
+
+    private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        var lastError: Error?
+
+        for attempt in 1...retryPolicy.maxAttempts {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw SerperError.badResponse
+                }
+
+                if httpResponse.statusCode == 403 {
+                    throw SerperError.invalidAPIKey
+                }
+
+                let statusError = OpenAICompatibleRequestError.httpStatus(
+                    httpResponse.statusCode,
+                    retryAfterSeconds: retryAfterSeconds(from: httpResponse)
+                )
+
+                if httpResponse.statusCode != 200,
+                   retryPolicy.shouldRetry(statusError, attempt: attempt) {
+                    lastError = SerperError.badResponse
+                    try await Task.sleep(nanoseconds: retryPolicy.delayNanoseconds(for: statusError, attempt: attempt))
+                    continue
+                }
+
+                return (data, response)
+            } catch let error as URLError {
+                if error.code == .cancelled {
+                    throw CancellationError()
+                }
+
+                let transportError = OpenAICompatibleRequestError.transport(error)
+                if retryPolicy.shouldRetry(transportError, attempt: attempt) {
+                    lastError = error
+                    try await Task.sleep(nanoseconds: retryPolicy.delayNanoseconds(for: transportError, attempt: attempt))
+                    continue
+                }
+                throw error
+            }
+        }
+
+        throw lastError ?? SerperError.badResponse
+    }
+
+    private func retryAfterSeconds(from response: HTTPURLResponse) -> Double? {
+        guard let value = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        return Double(value)
     }
 }

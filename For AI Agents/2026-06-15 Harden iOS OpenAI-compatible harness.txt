@@ -1,0 +1,7 @@
+Hardened the iOS OpenAI-compatible AI harness.
+
+The nutrition and goal-generation requests now use a provider-agnostic retry layer for OpenAI-compatible chat APIs. Transient transport failures, HTTP 408/409/425/429, and 5xx responses are retried with bounded exponential backoff, and Retry-After is honored when present.
+
+Final nutrition and onboarding goal responses request strict JSON schema output where supported. If a compatible provider rejects response_format/json_schema, the request falls back once without that parameter instead of failing immediately.
+
+Nutrition analysis keeps the existing tool flow, but final JSON parsing now has a repair pass before surfacing an error. Serper and OpenFoodFacts tool calls also use timeouts and transient retry behavior. Cancellation no longer marks pending food items as failed, so interrupted foreground/background work can be retried later.

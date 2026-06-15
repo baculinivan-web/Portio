@@ -21,6 +21,7 @@ enum OpenFoodFactsError: Error, LocalizedError {
 class OpenFoodFactsService {
     private let baseURL = "https://world.openfoodfacts.org"
     private let userAgent = "Portio - iOS - Version 1.0 - https://portio.app" // Identify our app
+    private let retryPolicy = OpenAICompatibleRetryPolicy.default
 
     func searchProducts(query: String) async throws -> [OFFProduct] {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -29,9 +30,10 @@ class OpenFoodFactsService {
         }
 
         var request = URLRequest(url: url)
+        request.timeoutInterval = 20
         request.addValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw OpenFoodFactsError.apiError("Server returned \((response as? HTTPURLResponse)?.statusCode ?? -1)")
@@ -43,6 +45,52 @@ class OpenFoodFactsService {
         } catch {
             throw OpenFoodFactsError.decodingError(error)
         }
+    }
+
+    private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        var lastError: Error?
+
+        for attempt in 1...retryPolicy.maxAttempts {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw OpenFoodFactsError.apiError("Server returned -1")
+                }
+
+                let statusError = OpenAICompatibleRequestError.httpStatus(
+                    httpResponse.statusCode,
+                    retryAfterSeconds: retryAfterSeconds(from: httpResponse)
+                )
+
+                if httpResponse.statusCode != 200,
+                   retryPolicy.shouldRetry(statusError, attempt: attempt) {
+                    lastError = OpenFoodFactsError.apiError("Server returned \(httpResponse.statusCode)")
+                    try await Task.sleep(nanoseconds: retryPolicy.delayNanoseconds(for: statusError, attempt: attempt))
+                    continue
+                }
+
+                return (data, response)
+            } catch let error as URLError {
+                if error.code == .cancelled {
+                    throw CancellationError()
+                }
+
+                let transportError = OpenAICompatibleRequestError.transport(error)
+                if retryPolicy.shouldRetry(transportError, attempt: attempt) {
+                    lastError = OpenFoodFactsError.networkError(error)
+                    try await Task.sleep(nanoseconds: retryPolicy.delayNanoseconds(for: transportError, attempt: attempt))
+                    continue
+                }
+                throw OpenFoodFactsError.networkError(error)
+            }
+        }
+
+        throw lastError ?? OpenFoodFactsError.apiError("Server returned -1")
+    }
+
+    private func retryAfterSeconds(from response: HTTPURLResponse) -> Double? {
+        guard let value = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        return Double(value)
     }
 }
 

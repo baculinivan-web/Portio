@@ -8,6 +8,7 @@
 import Testing
 import Foundation
 import SwiftData
+import BackgroundTasks
 @testable import Portio
 
 struct PortioTests {
@@ -130,6 +131,50 @@ struct PortioTests {
         #expect(value == #""none""#)
     }
 
+    @Test func openAICompatibleRetryPolicyRetriesTransientFailuresOnly() {
+        let policy = OpenAICompatibleRetryPolicy(maxAttempts: 3, baseDelayNanoseconds: 1)
+
+        #expect(policy.shouldRetry(.httpStatus(429, retryAfterSeconds: nil), attempt: 1))
+        #expect(policy.shouldRetry(.httpStatus(503, retryAfterSeconds: 2), attempt: 2))
+        #expect(policy.shouldRetry(.transport(URLError(.timedOut)), attempt: 1))
+        #expect(!policy.shouldRetry(.httpStatus(401, retryAfterSeconds: nil), attempt: 1))
+        #expect(!policy.shouldRetry(.httpStatus(400, retryAfterSeconds: nil), attempt: 1))
+        #expect(!policy.shouldRetry(.invalidJSON("bad shape"), attempt: 1))
+        #expect(!policy.shouldRetry(.httpStatus(503, retryAfterSeconds: nil), attempt: 3))
+    }
+
+    @Test func openAICompatibleRetryPolicyUsesRetryAfterBeforeBackoff() {
+        let policy = OpenAICompatibleRetryPolicy(maxAttempts: 3, baseDelayNanoseconds: 10)
+
+        #expect(policy.delayNanoseconds(for: .httpStatus(429, retryAfterSeconds: 2), attempt: 1) == 2_000_000_000)
+        #expect(policy.delayNanoseconds(for: .httpStatus(503, retryAfterSeconds: nil), attempt: 2) == 20)
+    }
+
+    @MainActor
+    @Test func jsonSchemaResponseFormatEncodesOpenAICompatiblePayload() throws {
+        let schema: [String: JSONValue] = [
+            "type": .string("object"),
+            "properties": .object([
+                "foods": .object([
+                    "type": .string("array")
+                ])
+            ]),
+            "required": .array([.string("foods")]),
+            "additionalProperties": .bool(false)
+        ]
+
+        let encoded = try JSONEncoder().encode(
+            OpenAICompatibleResponseFormat.jsonSchema(name: "nutrition_response", schema: schema, strict: true)
+        )
+        let json = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        let jsonSchema = try #require(json["json_schema"] as? [String: Any])
+
+        #expect(json["type"] as? String == "json_schema")
+        #expect(jsonSchema["name"] as? String == "nutrition_response")
+        #expect(jsonSchema["strict"] as? Bool == true)
+        #expect(jsonSchema["schema"] != nil)
+    }
+
     @Test func finalNutritionPassDoesNotTreatContentAsManualToolCall() {
         let content = #"{"name":"google_search","parameters":{"query":"more nutrition facts"}}"#
 
@@ -155,6 +200,16 @@ struct PortioTests {
     @Test func continuedProcessingProgressSubtitleDescribesCompletedRecords() {
         #expect(BackgroundTaskManager.continuedProcessingSubtitle(completed: 0, total: 3) == "0 of 3 records processed")
         #expect(BackgroundTaskManager.continuedProcessingSubtitle(completed: 3, total: 3) == "3 of 3 records processed")
+    }
+
+    @Test func foregroundWorkerOnlyStartsWhenContinuedProcessingIsUnavailable() {
+        #expect(!BackgroundTaskManager.shouldStartForegroundWorker(continuedProcessingSubmitted: true))
+        #expect(BackgroundTaskManager.shouldStartForegroundWorker(continuedProcessingSubmitted: false))
+    }
+
+    @available(iOS 26.0, *)
+    @Test func continuedProcessingUsesFailFastSubmissionForUserInitiatedWork() {
+        #expect(BackgroundTaskManager.continuedProcessingSubmissionStrategyForTesting == .fail)
     }
 
     @Test func foodItemDaySelectionFiltersSelectedDayNewestFirst() throws {
