@@ -76,9 +76,63 @@ struct UserSettings {
         set { shared.set(newValue, forKey: "hasCompletedOnboarding") }
     }
 
+    static var isReplayingOnboarding: Bool {
+        get { shared.bool(forKey: "isReplayingOnboarding") }
+        set { shared.set(newValue, forKey: "isReplayingOnboarding") }
+    }
+
     static var isAppleHealthSyncEnabled: Bool {
         get { shared.bool(forKey: "isAppleHealthSyncEnabled") }
         set { shared.set(newValue, forKey: "isAppleHealthSyncEnabled") }
+    }
+
+    // MARK: - Onboarding Draft
+
+    static var onboardingAge: String {
+        get { shared.string(forKey: "onboardingAge") ?? "" }
+        set { shared.set(newValue, forKey: "onboardingAge") }
+    }
+
+    static var onboardingHeightCm: String {
+        get { shared.string(forKey: "onboardingHeightCm") ?? "" }
+        set { shared.set(newValue, forKey: "onboardingHeightCm") }
+    }
+
+    static var onboardingWeightKg: String {
+        get { shared.string(forKey: "onboardingWeightKg") ?? "" }
+        set { shared.set(newValue, forKey: "onboardingWeightKg") }
+    }
+
+    static var onboardingGender: CalorieCalculator.Gender {
+        get {
+            let rawValue = shared.string(forKey: "onboardingGender") ?? CalorieCalculator.Gender.male.rawValue
+            return CalorieCalculator.Gender(rawValue: rawValue) ?? .male
+        }
+        set { shared.set(newValue.rawValue, forKey: "onboardingGender") }
+    }
+
+    static var onboardingActivityLevel: CalorieCalculator.ActivityLevel {
+        get {
+            let rawValue = shared.string(forKey: "onboardingActivityLevel") ?? CalorieCalculator.ActivityLevel.moderatelyActive.rawValue
+            return CalorieCalculator.ActivityLevel(rawValue: rawValue) ?? .moderatelyActive
+        }
+        set { shared.set(newValue.rawValue, forKey: "onboardingActivityLevel") }
+    }
+
+    static var onboardingCustomGoal: String {
+        get { shared.string(forKey: "onboardingCustomGoal") ?? "" }
+        set { shared.set(newValue, forKey: "onboardingCustomGoal") }
+    }
+
+    static func clearOnboardingProfileDraft() {
+        [
+            "onboardingAge",
+            "onboardingHeightCm",
+            "onboardingWeightKg",
+            "onboardingGender",
+            "onboardingActivityLevel",
+            "onboardingCustomGoal"
+        ].forEach { shared.removeObject(forKey: $0) }
     }
 
     // MARK: - Streak Achievement Tracking
@@ -103,7 +157,7 @@ struct UserSettings {
 
     static var llmProvider: LLMProvider {
         get {
-            let rawValue = shared.string(forKey: "llmProvider") ?? LLMProvider.openRouter.rawValue
+            let rawValue = shared.string(forKey: "llmProvider") ?? LLMProvider.custom.rawValue
             return LLMProvider(rawValue: rawValue) ?? .openRouter
         }
         set { shared.set(newValue.rawValue, forKey: "llmProvider") }

@@ -199,8 +199,15 @@ struct SettingsView: View {
 
                 Section("Recalculate") {
                     Button("Recalculate Personal Goals") {
-                        // By setting this flag to false, the onboarding view will appear
-                        // automatically when this sheet is dismissed.
+                        UserSettings.isReplayingOnboarding = true
+                        UserSettings.hasCompletedOnboarding = false
+                        dismiss()
+                    }
+                }
+
+                Section("Onboarding") {
+                    Button("Restart Onboarding") {
+                        UserSettings.isReplayingOnboarding = true
                         UserSettings.hasCompletedOnboarding = false
                         dismiss()
                     }

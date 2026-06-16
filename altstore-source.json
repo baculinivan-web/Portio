@@ -12,15 +12,40 @@
       "subtitle": "AI meal logging, macros, streaks, and daily goals.",
       "localizedDescription": "Portio helps you track food without turning nutrition into a spreadsheet chore. Log meals manually, from text, or from photos; review calories, macros, nutrients, and daily goal progress; browse previous days; keep streaks; and configure your own AI provider/API keys in settings. The app is built for personal sideloading through AltStore and stores sensitive user-entered keys locally on the device.",
       "iconURL": "https://github.com/baculinivan-web/Portio/releases/download/v1/portio-icon.png",
-      "screenshotURLs": [
-        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/01-iphone-air-mockup.png",
-        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/02-img-2897.png",
-        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/03-img-2898.png",
-        "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/04-screenshot-2026-06-15-204739.png"
+      "screenshots": [
+        {
+          "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/01-iphone-air-mockup.png",
+          "width": 1170,
+          "height": 2532
+        },
+        {
+          "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/02-img-2897.png",
+          "width": 1170,
+          "height": 2532
+        },
+        {
+          "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/03-img-2898.png",
+          "width": 1170,
+          "height": 2532
+        },
+        {
+          "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/04-screenshot-2026-06-15-204739.png",
+          "width": 1170,
+          "height": 2532
+        }
       ],
       "tintColor": "38A169",
       "category": "lifestyle",
       "versions": [
+        {
+          "version": "1.4",
+          "buildVersion": "4",
+          "date": "2026-06-16",
+          "localizedDescription": "Adds the new onboarding experience and stability improvements for smoother everyday food tracking.",
+          "downloadURL": "https://github.com/baculinivan-web/Portio/releases/download/v1.4/Portio-1.4.ipa",
+          "size": 3335233,
+          "minOSVersion": "26.0"
+        },
         {
           "version": "1.3",
           "buildVersion": "3",
