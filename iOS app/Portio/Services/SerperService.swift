@@ -23,10 +23,14 @@ class SerperService {
     private let retryPolicy = OpenAICompatibleRetryPolicy.default
 
     init(apiKey: String) {
-        self.apiKey = apiKey
+        self.apiKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func search(query: String) async throws -> String {
+        guard !apiKey.isEmpty else {
+            throw SerperError.invalidAPIKey
+        }
+
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.timeoutInterval = 20
@@ -39,7 +43,8 @@ class SerperService {
         let (data, response) = try await data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 403 {
+            if let httpResponse = response as? HTTPURLResponse,
+               httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                 throw SerperError.invalidAPIKey
             }
             throw SerperError.badResponse
@@ -82,6 +87,10 @@ class SerperService {
     }
 
     func searchStructured(query: String) async throws -> SearchStep {
+        guard !apiKey.isEmpty else {
+            throw SerperError.invalidAPIKey
+        }
+
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.timeoutInterval = 20
@@ -94,7 +103,8 @@ class SerperService {
         let (data, response) = try await data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 403 {
+            if let httpResponse = response as? HTTPURLResponse,
+               httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                 throw SerperError.invalidAPIKey
             }
             throw SerperError.badResponse
@@ -138,7 +148,7 @@ class SerperService {
                     throw SerperError.badResponse
                 }
 
-                if httpResponse.statusCode == 403 {
+                if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
                     throw SerperError.invalidAPIKey
                 }
 

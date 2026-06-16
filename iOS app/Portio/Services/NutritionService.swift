@@ -556,24 +556,30 @@ class NutritionService {
     }
 
     private func decorate(_ foods: inout [NutritionResponse], capturedSearchSteps: [SearchStep], didUseOFF: Bool) {
-        if !capturedSearchSteps.isEmpty {
-            for i in 0..<foods.count {
-                if foods[i].isSearchGrounded == true {
-                    foods[i].searchSteps = capturedSearchSteps
-                }
+        if didUseOFF {
+            for i in foods.indices {
+                foods[i].isSearchGrounded = true
+                appendDataSource("OFF", to: &foods[i])
             }
         }
 
-        if didUseOFF {
-            for i in 0..<foods.count {
-                if foods[i].isSearchGrounded == true {
-                    if let currentSource = foods[i].dataSource, !currentSource.contains("OFF") {
-                        foods[i].dataSource = "\(currentSource), OFF"
-                    } else if foods[i].dataSource == nil {
-                        foods[i].dataSource = "OFF"
-                    }
-                }
+        if !capturedSearchSteps.isEmpty {
+            for i in foods.indices {
+                foods[i].isSearchGrounded = true
+                foods[i].searchSteps = capturedSearchSteps
+                appendDataSource("Google", to: &foods[i])
             }
+        }
+    }
+
+    private func appendDataSource(_ source: String, to food: inout NutritionResponse) {
+        guard let currentSource = food.dataSource, !currentSource.isEmpty else {
+            food.dataSource = source
+            return
+        }
+
+        if !currentSource.contains(source) {
+            food.dataSource = "\(currentSource), \(source)"
         }
     }
 
@@ -888,7 +894,7 @@ struct NutritionResponse: Codable {
     let proteinPer100g: Double
     let carbsPer100g: Double
     let fatPer100g: Double
-    let isSearchGrounded: Bool?
+    var isSearchGrounded: Bool?
     var dataSource: String?
     var searchSteps: [SearchStep]?
 }

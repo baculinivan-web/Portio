@@ -192,6 +192,90 @@ struct PortioTests {
         )
     }
 
+    @Test func googleSearchResultsArePreservedWhenFinalJSONForgetsGroundingFlag() async throws {
+        var chatRequestCount = 0
+        NutritionServiceURLProtocolMock.requestHandler = { request in
+            guard let url = request.url else {
+                throw URLError(.badURL)
+            }
+
+            if url.host == "api.example.test" {
+                chatRequestCount += 1
+                if chatRequestCount == 1 {
+                    return Self.jsonResponse(
+                        for: request,
+                        body: Self.chatResponse(
+                            message: [
+                                "content": NSNull(),
+                                "tool_calls": [
+                                    [
+                                        "id": "call_google",
+                                        "type": "function",
+                                        "function": [
+                                            "name": "google_search",
+                                            "arguments": #"{"query":"big mac nutrition facts"}"#
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        )
+                    )
+                }
+
+                return Self.jsonResponse(
+                    for: request,
+                    body: Self.chatResponse(
+                        content: """
+                        {"foods":[{"identifiedFood":"Big Mac","cleanFoodName":"Big Mac","calories":590,"protein":25,"carbs":46,"fat":34,"estimatedWeightGrams":219,"caloriesPer100g":269.4,"proteinPer100g":11.4,"carbsPer100g":21,"fatPer100g":15.5,"isSearchGrounded":false,"dataSource":null}]}
+                        """
+                    )
+                )
+            }
+
+            if url.host == "google.serper.dev" {
+                #expect(request.value(forHTTPHeaderField: "X-API-KEY") == "serper-key")
+                return Self.jsonResponse(
+                    for: request,
+                    body: """
+                    {
+                      "answerBox": {"answer": "A Big Mac has 590 calories."},
+                      "organic": [
+                        {
+                          "title": "Big Mac Nutrition Facts",
+                          "link": "https://example.test/big-mac",
+                          "snippet": "Big Mac nutrition information from the menu."
+                        }
+                      ]
+                    }
+                    """
+                )
+            }
+
+            throw URLError(.unsupportedURL)
+        }
+        URLProtocol.registerClass(NutritionServiceURLProtocolMock.self)
+        defer {
+            URLProtocol.unregisterClass(NutritionServiceURLProtocolMock.self)
+            NutritionServiceURLProtocolMock.requestHandler = nil
+        }
+
+        let service = NutritionService(
+            apiKey: "test-key",
+            modelName: "test-model",
+            serperApiKey: "  serper-key  ",
+            customBaseURL: "https://api.example.test/v1",
+            provider: .custom
+        )
+
+        let foods = try await service.fetchNutrition(for: "Big Mac")
+        let food = try #require(foods.first)
+
+        #expect(food.isSearchGrounded == true)
+        #expect(food.dataSource == "Google")
+        #expect(food.searchSteps?.first?.query == "big mac nutrition facts")
+        #expect(food.searchSteps?.first?.answerBox == "A Big Mac has 590 calories.")
+    }
+
     @Test func continuedProcessingTaskUsesSeparateUserInitiatedIdentifier() {
         #expect(BackgroundTaskManager.processingTaskIdentifier == "com.ivan.Portio.nutrition-processing")
         #expect(BackgroundTaskManager.continuedProcessingTaskIdentifier == "com.ivan.Portio.nutrition-continued-processing")
@@ -279,4 +363,62 @@ struct PortioTests {
             fatPer100g: 5
         )
     }
+
+    private static func jsonResponse(for request: URLRequest, body: String, statusCode: Int = 200) -> (HTTPURLResponse, Data) {
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: statusCode,
+            httpVersion: nil,
+            headerFields: ["Content-Type": "application/json"]
+        )!
+        return (response, Data(body.utf8))
+    }
+
+    private static func chatResponse(content: String) -> String {
+        chatResponse(message: ["content": content])
+    }
+
+    private static func chatResponse(message: [String: Any]) -> String {
+        let payload: [String: Any] = [
+            "choices": [
+                [
+                    "finish_reason": "stop",
+                    "message": message
+                ]
+            ]
+        ]
+        let data = try! JSONSerialization.data(withJSONObject: payload)
+        return String(data: data, encoding: .utf8)!
+    }
+}
+
+private final class NutritionServiceURLProtocolMock: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        guard let host = request.url?.host else { return false }
+        return ["api.example.test", "google.serper.dev"].contains(host)
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        guard let requestHandler = Self.requestHandler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+
+        do {
+            let (response, data) = try requestHandler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
 }
