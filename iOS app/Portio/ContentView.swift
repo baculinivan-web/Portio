@@ -12,7 +12,6 @@ struct ContentView: View {
     @State private var foodQuery: String = ""
     @State private var isShowingSettings = false
     @State private var isShowingStreakHistory = false
-    @State private var showGoalSummary = false
     @State private var isShowingCamera = false
     @State private var isShowingManualEntry = false
     @State private var manualEntryDetent: PresentationDetent = .medium
@@ -276,13 +275,8 @@ struct ContentView: View {
             }
             .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
                 OnboardingView() {
-                    // This gets called when onboarding is finished.
                     hasCompletedOnboarding = true
-                    showGoalSummary = true // Trigger the summary sheet.
                 }
-            }
-            .sheet(isPresented: $showGoalSummary) {
-                GoalSummaryView()
             }
             .sheet(isPresented: $isShowingDayPicker) {
                 DayPickerView(selectedDate: $selectedDate, datesWithEntries: datesWithEntries)

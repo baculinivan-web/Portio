@@ -38,6 +38,15 @@
       "category": "lifestyle",
       "versions": [
         {
+          "version": "1.5",
+          "buildVersion": "5",
+          "date": "2026-06-17",
+          "localizedDescription": "Refines onboarding with an integrated analysis and results flow, smoother goal setup, and small interface polish.",
+          "downloadURL": "https://github.com/baculinivan-web/Portio/releases/download/v1.5/Portio-1.5.ipa",
+          "size": 3357256,
+          "minOSVersion": "26.0"
+        },
+        {
           "version": "1.4",
           "buildVersion": "4",
           "date": "2026-06-16",

@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import Combine
 
 struct OnboardingView: View {
     var onComplete: () -> Void
@@ -18,7 +19,13 @@ struct OnboardingView: View {
     @State private var isHealthSyncEnabled = UserSettings.isAppleHealthSyncEnabled
     @State private var commentaryLevel = UserSettings.calorieCommentaryLevel
 
-    @State private var isLoading = false
+    @State private var flowState = OnboardingFlowState.setup
+    @State private var analysisMessageIndex = 0
+    @State private var displayedCalories = 0.0
+    @State private var displayedProtein = 0.0
+    @State private var displayedCarbs = 0.0
+    @State private var displayedFat = 0.0
+    @State private var resultExplanation = ""
     @State private var errorMessage: String?
 
     @State private var openRouterApiKey = UserSettings.openRouterApiKey
@@ -36,6 +43,8 @@ struct OnboardingView: View {
     @FocusState private var focusedField: OnboardingFocusField?
 
     private let impact = UIImpactFeedbackGenerator(style: .soft)
+    private let selection = UISelectionFeedbackGenerator()
+    private let notification = UINotificationFeedbackGenerator()
     private let totalSteps = 9
 
     private var nutritionService: NutritionService {
@@ -67,7 +76,12 @@ struct OnboardingView: View {
     }
 
     private var buttonTitle: String {
-        step == totalSteps - 1 ? "Calculate my goals" : "Next"
+        if flowState == .result { return "Get started" }
+        return step == totalSteps - 1 ? "Calculate my goals" : "Next"
+    }
+
+    private var analysisMessage: String {
+        ["Analyzing...", "Counting...", "Looking numbers up..."][analysisMessageIndex]
     }
 
     private var accentColors: [Color] {
@@ -85,28 +99,44 @@ struct OnboardingView: View {
         ZStack {
             OnboardingBackdrop(step: step, accentColors: accentColors)
 
-            VStack(spacing: 0) {
-                header
+            if flowState == .setup {
+                VStack(spacing: 0) {
+                    header
 
-                TabView(selection: $step) {
-                    welcomeStep.tag(0)
-                    wheelStep(title: "Enter your age", subtitle: "This helps Portio estimate your daily energy baseline.", value: $ageValue, range: 13...90, unit: "years").tag(1)
-                    wheelStep(title: "How tall are you?", subtitle: "Centimeters keep the goal math precise.", value: $heightValue, range: 120...230, unit: "cm").tag(2)
-                    wheelStep(title: "Current weight", subtitle: "Use today's best estimate. You can change it later.", value: $weightValue, range: 35...220, unit: "kg").tag(3)
-                    genderStep.tag(4)
-                    activityStep.tag(5)
-                    goalsStep.tag(6)
-                    personalityStep.tag(7)
-                    apiStep.tag(8)
+                    TabView(selection: $step) {
+                        welcomeStep.tag(0)
+                        wheelStep(title: "Enter your age", subtitle: "This helps Portio estimate your daily energy baseline.", value: $ageValue, range: 13...90, unit: "years").tag(1)
+                        wheelStep(title: "How tall are you?", subtitle: "Centimeters keep the goal math precise.", value: $heightValue, range: 120...230, unit: "cm").tag(2)
+                        wheelStep(title: "Current weight", subtitle: "Use today's best estimate. You can change it later.", value: $weightValue, range: 35...220, unit: "kg").tag(3)
+                        genderStep.tag(4)
+                        activityStep.tag(5)
+                        goalsStep.tag(6)
+                        personalityStep.tag(7)
+                        apiStep.tag(8)
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.spring(response: 0.55, dampingFraction: 0.86), value: step)
+
+                    footer
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.spring(response: 0.55, dampingFraction: 0.86), value: step)
-
-                footer
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 18)
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            } else {
+                VStack(spacing: 0) {
+                    if flowState == .analyzing {
+                        analysisStep
+                    } else {
+                        resultStep
+                        footer
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 18)
+                .transition(.opacity.combined(with: .scale(scale: 1.02)))
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 18)
-            .padding(.bottom, 18)
         }
         .simultaneousGesture(
             DragGesture().onEnded { value in
@@ -116,7 +146,6 @@ struct OnboardingView: View {
             }
         )
         .preferredColorScheme(.dark)
-        .fullScreenCover(isPresented: $isLoading) { LoadingView() }
         .alert("Error", isPresented: .constant(errorMessage != nil), actions: {
             Button("OK") { errorMessage = nil }
         }, message: {
@@ -129,6 +158,8 @@ struct OnboardingView: View {
         }
         .onAppear {
             impact.prepare()
+            selection.prepare()
+            notification.prepare()
         }
         .onChange(of: ageValue) { _, _ in saveDraft() }
         .onChange(of: heightValue) { _, _ in saveDraft() }
@@ -171,11 +202,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 24) {
             Spacer(minLength: 210)
 
-            (
-                Text("Portio is a new way of tracking your ")
-                + Text(Image(systemName: "fork.knife"))
-                + Text(" intake. Let's go through a small setup.")
-            )
+            Text("Portio is a new way of tracking your \(Image(systemName: "fork.knife")) intake. Let's go through a small setup.")
                 .font(.system(size: 43, weight: .black, design: .rounded))
                 .lineSpacing(2)
                 .foregroundStyle(.white)
@@ -387,10 +414,89 @@ struct OnboardingView: View {
         }
     }
 
+    private var analysisStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Spacer()
+
+            Text(analysisMessage)
+                .font(.system(size: 54, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .contentTransition(.numericText(value: Double(analysisMessageIndex)))
+                .minimumScaleFactor(0.58)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("Building your daily targets")
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.58))
+                .contentTransition(.numericText(value: Double(analysisMessageIndex)))
+
+            Spacer()
+        }
+        .onAppear {
+            analysisMessageIndex = 0
+        }
+        .onReceive(Timer.publish(every: 0.95, on: .main, in: .common).autoconnect()) { _ in
+            guard flowState == .analyzing else { return }
+            withAnimation(.spring(response: 0.44, dampingFraction: 0.82)) {
+                analysisMessageIndex = (analysisMessageIndex + 1) % 3
+            }
+            selection.selectionChanged()
+            selection.prepare()
+        }
+    }
+
+    private var resultStep: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Spacer(minLength: 54)
+
+                StepTitle("Your daily targets", subtitle: "Portio has a starting point. You can tune it anytime in Settings.")
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(Int(displayedCalories))")
+                        .font(.system(size: 88, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText())
+                    Text("kcal / day")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+                .padding(.top, 4)
+
+                HStack(spacing: 10) {
+                    ResultMacroTile(name: "Protein", value: displayedProtein)
+                    ResultMacroTile(name: "Carbs", value: displayedCarbs)
+                    ResultMacroTile(name: "Fat", value: displayedFat)
+                }
+
+                if !resultExplanation.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Recommendation")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.72))
+                        Text(resultExplanation)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .lineSpacing(4)
+                            .foregroundStyle(.white.opacity(0.72))
+                    }
+                    .padding(16)
+                    .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(.white.opacity(0.11), lineWidth: 1)
+                    )
+                }
+            }
+            .padding(.vertical, 10)
+            .padding(.bottom, 132)
+        }
+        .scrollIndicators(.hidden)
+    }
+
     private var footer: some View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
-                if step > 0 {
+                if flowState == .setup && step > 0 {
                     Button {
                         tap()
                         dismissKeyboard()
@@ -486,6 +592,11 @@ struct OnboardingView: View {
     private func continueTapped() {
         dismissKeyboard()
         saveDraft()
+        if flowState == .result {
+            completeOnboarding()
+            return
+        }
+
         if step < totalSteps - 1 {
             withAnimation(.spring(response: 0.52, dampingFraction: 0.86)) {
                 step += 1
@@ -503,6 +614,11 @@ struct OnboardingView: View {
     private func tap() {
         impact.impactOccurred(intensity: 0.65)
         impact.prepare()
+    }
+
+    private func completeOnboarding() {
+        saveAllSettings()
+        onComplete()
     }
 
     private func saveDraft() {
@@ -530,7 +646,16 @@ struct OnboardingView: View {
     }
 
     private func calculateGoals() {
-        isLoading = true
+        displayedCalories = 0
+        displayedProtein = 0
+        displayedCarbs = 0
+        displayedFat = 0
+        resultExplanation = ""
+        withAnimation(.spring(response: 0.48, dampingFraction: 0.88)) {
+            flowState = .analyzing
+        }
+        selection.selectionChanged()
+        selection.prepare()
         saveAllSettings()
 
         let tdee = CalorieCalculator.calculateTDEE(weightKg: Double(weightValue), heightCm: Double(heightValue), age: ageValue, gender: gender, activityLevel: activityLevel)
@@ -551,11 +676,25 @@ struct OnboardingView: View {
                 UserSettings.fatGoal = goals.fat
                 UserSettings.goalExplanation = goals.explanation
 
-                isLoading = false
-                onComplete()
+                resultExplanation = goals.explanation
+                withAnimation(.spring(response: 0.52, dampingFraction: 0.86)) {
+                    flowState = .result
+                }
+                notification.notificationOccurred(.success)
+                notification.prepare()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    withAnimation(.spring(response: 0.9, dampingFraction: 0.82)) {
+                        displayedCalories = goals.calories
+                        displayedProtein = goals.protein
+                        displayedCarbs = goals.carbs
+                        displayedFat = goals.fat
+                    }
+                }
             } catch {
                 errorMessage = error.localizedDescription
-                isLoading = false
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.88)) {
+                    flowState = .setup
+                }
             }
         }
     }
@@ -664,6 +803,32 @@ private struct ChoiceButton: View {
     }
 }
 
+private struct ResultMacroTile: View {
+    let name: String
+    let value: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(Int(value))")
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .contentTransition(.numericText())
+            Text("\(name) g")
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.55))
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        )
+    }
+}
+
 private struct OnboardingBackdrop: View {
     let step: Int
     let accentColors: [Color]
@@ -682,27 +847,115 @@ private struct OnboardingBackdrop: View {
         }
     }
 
+    private var secondaryTint: Color {
+        switch step {
+        case 0: return Color(red: 0.92, green: 0.23, blue: 0.24)
+        case 1: return Color(red: 0.04, green: 0.78, blue: 0.92)
+        case 2: return Color(red: 0.12, green: 0.42, blue: 1.0)
+        case 3: return Color(red: 0.98, green: 0.78, blue: 0.2)
+        case 4: return Color(red: 0.86, green: 0.22, blue: 0.72)
+        case 5: return Color(red: 0.04, green: 0.84, blue: 0.72)
+        case 6: return Color(red: 1.0, green: 0.31, blue: 0.28)
+        case 7: return accentColors.last ?? Color.purple
+        default: return Color(red: 0.1, green: 0.72, blue: 0.95)
+        }
+    }
+
+    private var tertiaryTint: Color {
+        switch step {
+        case 0: return Color(red: 0.34, green: 0.0, blue: 0.92)
+        case 1: return Color(red: 0.52, green: 0.25, blue: 1.0)
+        case 2: return Color(red: 0.02, green: 0.86, blue: 0.42)
+        case 3: return Color(red: 0.72, green: 0.06, blue: 0.42)
+        case 4: return Color(red: 0.1, green: 0.64, blue: 1.0)
+        case 5: return Color(red: 0.74, green: 0.88, blue: 0.18)
+        case 6: return Color(red: 0.62, green: 0.22, blue: 1.0)
+        case 7: return pageTint
+        default: return Color(red: 0.78, green: 0.22, blue: 1.0)
+        }
+    }
+
+    private var motion: CGFloat {
+        CGFloat(step % 6) / 5
+    }
+
+    private var gradientStart: UnitPoint {
+        UnitPoint(x: 0.1 + motion * 0.38, y: 0.12)
+    }
+
+    private var gradientEnd: UnitPoint {
+        UnitPoint(x: 0.86 - motion * 0.32, y: 1.0)
+    }
+
+    private var angularCenter: UnitPoint {
+        UnitPoint(x: 0.28 + motion * 0.44, y: 0.74 - motion * 0.12)
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.black.ignoresSafeArea()
 
-            LinearGradient(
-                colors: [
-                    .clear,
-                    pageTint.opacity(0.24),
-                    (accentColors.first ?? pageTint).opacity(0.72),
-                    (accentColors.last ?? pageTint).opacity(0.95)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        .clear,
+                        pageTint.opacity(0.10),
+                        secondaryTint.opacity(0.46),
+                        tertiaryTint.opacity(0.64),
+                        (accentColors.last ?? pageTint).opacity(0.78)
+                    ],
+                    startPoint: gradientStart,
+                    endPoint: gradientEnd
+                )
+
+                AngularGradient(
+                    colors: [
+                        pageTint.opacity(0.0),
+                        pageTint.opacity(0.62),
+                        secondaryTint.opacity(0.48),
+                        tertiaryTint.opacity(0.64),
+                        (accentColors.last ?? pageTint).opacity(0.42),
+                        pageTint.opacity(0.0)
+                    ],
+                    center: angularCenter,
+                    angle: .degrees(Double(step) * 28)
+                )
+                .scaleEffect(1.55)
+                .offset(x: (motion - 0.5) * 90, y: -26 + motion * 34)
+                .blendMode(.screen)
+
+                LinearGradient(
+                    colors: [
+                        .clear,
+                        .black.opacity(0.04),
+                        (accentColors.last ?? pageTint).opacity(0.28)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .blur(radius: 28)
+            .mask(
+                LinearGradient(
+                    colors: [.clear, .white.opacity(0.1), .white, .white],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             )
-            .frame(height: 260)
-            .blur(radius: 10)
-            .offset(y: 18)
-            .ignoresSafeArea()
-            .animation(.easeInOut(duration: 0.65), value: step)
+            .frame(height: 390)
+            .padding(.horizontal, -60)
+            .padding(.bottom, -92)
+            .ignoresSafeArea(edges: .bottom)
+            .compositingGroup()
+            .animation(.spring(response: 0.86, dampingFraction: 0.88), value: step)
         }
     }
+}
+
+private enum OnboardingFlowState {
+    case setup
+    case analyzing
+    case result
 }
 
 private enum OnboardingFocusField: Hashable {
