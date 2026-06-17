@@ -1,0 +1,5 @@
+Added the iOS AI day-analysis pull reveal.
+
+The tracker screen now has a black AI analysis layer behind the main day surface. Pulling down on today's tracker reveals the analysis area, loads a short model-generated read on how the day affects the user's goal, and switches the bottom controls into one Liquid Glass prompt for asking questions about today's logged food.
+
+The new AI path uses the existing OpenAI-compatible provider settings but stays separate from food recognition prompts and tool-calling, so nutrition logging behavior remains unchanged.

@@ -71,6 +71,26 @@ struct UserSettings {
         set { shared.set(newValue.rawValue, forKey: "calorieCommentaryLevel") }
     }
 
+    static var isDayAnalysisEnabled: Bool {
+        get {
+            if shared.object(forKey: "isDayAnalysisEnabled") == nil {
+                return true
+            }
+            return shared.bool(forKey: "isDayAnalysisEnabled")
+        }
+        set { shared.set(newValue, forKey: "isDayAnalysisEnabled") }
+    }
+
+    static var isDayAnalysisAutomaticEnabled: Bool {
+        get {
+            if shared.object(forKey: "isDayAnalysisAutomaticEnabled") == nil {
+                return true
+            }
+            return shared.bool(forKey: "isDayAnalysisAutomaticEnabled")
+        }
+        set { shared.set(newValue, forKey: "isDayAnalysisAutomaticEnabled") }
+    }
+
     static var hasCompletedOnboarding: Bool {
         get { shared.bool(forKey: "hasCompletedOnboarding") }
         set { shared.set(newValue, forKey: "hasCompletedOnboarding") }

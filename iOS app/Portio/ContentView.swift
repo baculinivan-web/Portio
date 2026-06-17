@@ -9,11 +9,13 @@ struct ContentView: View {
     @Query(sort: \FoodItem.dateEaten, order: .reverse) private var items: [FoodItem]
 
     @StateObject private var viewModel = CalorieTrackerViewModel()
+    @StateObject private var dayAnalysisViewModel = DayAnalysisViewModel()
     @State private var foodQuery: String = ""
     @State private var isShowingSettings = false
     @State private var isShowingStreakHistory = false
     @State private var isShowingCamera = false
     @State private var isShowingManualEntry = false
+    @State private var isShowingDayAnalysis = false
     @State private var manualEntryDetent: PresentationDetent = .medium
     @State private var attachedImages: [UIImage] = []
     @State private var isShowingWarningAnalysis = false
@@ -34,6 +36,8 @@ struct ContentView: View {
     @AppStorage("modelName", store: UserSettings.shared) private var modelName: String = UserSettings.modelName
     @AppStorage("isCalorieCommentaryEnabled", store: UserSettings.shared) private var isCalorieCommentaryEnabled: Bool = UserSettings.isCalorieCommentaryEnabled
     @AppStorage("calorieCommentaryLevel", store: UserSettings.shared) private var calorieCommentaryLevelRaw: String = UserSettings.calorieCommentaryLevel.rawValue
+    @AppStorage("isDayAnalysisEnabled", store: UserSettings.shared) private var isDayAnalysisEnabled: Bool = UserSettings.isDayAnalysisEnabled
+    @AppStorage("isDayAnalysisAutomaticEnabled", store: UserSettings.shared) private var isDayAnalysisAutomaticEnabled: Bool = UserSettings.isDayAnalysisAutomaticEnabled
 
     @State private var isShowingBlockRunPrompt = false
     @State private var calorieCommentaryRefreshSeed = 0
@@ -100,6 +104,19 @@ struct ContentView: View {
         )
     }
 
+    private var dayAnalysisContext: DayAnalysisContext {
+        DayAnalysisContext.make(
+            selectedDate: selectedDate,
+            items: items,
+            calorieGoal: calorieGoal,
+            proteinGoal: proteinGoal,
+            carbsGoal: carbsGoal,
+            fatGoal: fatGoal,
+            weightGoalMode: UserSettings.weightGoalMode,
+            goalExplanation: UserSettings.goalExplanation
+        )
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -151,6 +168,23 @@ struct ContentView: View {
                     }
                 }
 
+                if isDayAnalysisEnabled && !completedItems.isEmpty {
+                    Section {
+                        DayAnalysisCardView(
+                            result: dayAnalysisViewModel.result,
+                            status: dayAnalysisViewModel.status,
+                            isAutomaticEnabled: isDayAnalysisAutomaticEnabled
+                        ) {
+                            isShowingDayAnalysis = true
+                            dayAnalysisViewModel.loadIfNeeded(context: dayAnalysisContext)
+                        }
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity.combined(with: .scale(scale: 0.97))
+                        ))
+                    }
+                }
+
                 Section(header: Text("Entries")) {
                     if selectedDayItems.isEmpty {
                         Text("No entries for this day")
@@ -170,7 +204,9 @@ struct ContentView: View {
             }
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: triggeredWarnings)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: calorieCommentary)
+            .animation(.spring(response: 0.45, dampingFraction: 0.84), value: dayAnalysisViewModel.result)
             .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
             .scrollDismissesKeyboard(.interactively)
             .navigationDestination(for: FoodItem.self) { item in
                 FoodItemDetailView(item: item)
@@ -250,6 +286,7 @@ struct ContentView: View {
             })
             .onAppear {
                 refreshCalorieCommentary()
+                updateDayAnalysis(for: dayAnalysisContext)
 
                 if hasCompletedOnboarding && !hasShownBlockRunPrompt {
                     isShowingBlockRunPrompt = true
@@ -288,6 +325,14 @@ struct ContentView: View {
                 }
                 .presentationDetents([.medium, .large], selection: $manualEntryDetent)
             }
+            .sheet(isPresented: $isShowingDayAnalysis) {
+                DayAnalysisSheetView(
+                    viewModel: dayAnalysisViewModel,
+                    context: dayAnalysisContext
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
             .sheet(isPresented: $isShowingWarningAnalysis) {
                 NutrientWarningDetailView(
                     triggeredWarnings: triggeredWarnings,
@@ -309,6 +354,19 @@ struct ContentView: View {
                     refreshCalorieCommentary()
                 }
             }
+            .onChange(of: dayAnalysisContext) { _, newContext in
+                updateDayAnalysis(for: newContext)
+            }
+            .onChange(of: isDayAnalysisEnabled) { _, isEnabled in
+                if isEnabled {
+                    updateDayAnalysis(for: dayAnalysisContext)
+                }
+            }
+            .onChange(of: isDayAnalysisAutomaticEnabled) { _, isEnabled in
+                if isEnabled {
+                    updateDayAnalysis(for: dayAnalysisContext)
+                }
+            }
         }
     }
 
@@ -321,6 +379,15 @@ struct ContentView: View {
         default:
             break
         }
+    }
+
+    private func updateDayAnalysis(for context: DayAnalysisContext) {
+        guard isDayAnalysisEnabled else { return }
+
+        dayAnalysisViewModel.resetIfNeeded(for: context)
+
+        guard isDayAnalysisAutomaticEnabled, !context.entries.isEmpty else { return }
+        dayAnalysisViewModel.loadIfNeeded(context: context)
     }
 
     private func addItem() {

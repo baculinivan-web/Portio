@@ -131,6 +131,25 @@ class NutritionService {
         strict: true
     )
 
+    private static let dayAnalysisResponseFormat = OpenAICompatibleResponseFormat.jsonSchema(
+        name: "day_analysis_response",
+        schema: [
+            "type": .string("object"),
+            "properties": .object([
+                "summary": .object(["type": .string("string")]),
+                "avoid": .object(["type": .string("string")]),
+                "replacement": .object(["type": .string("string")])
+            ]),
+            "required": .array([
+                .string("summary"),
+                .string("avoid"),
+                .string("replacement")
+            ]),
+            "additionalProperties": .bool(false)
+        ],
+        strict: true
+    )
+
     nonisolated private static let initialSystemPrompt = """
         You are a highly accurate nutritional analysis expert.
         Analyze the food query and images provided by the user to identify each distinct food item.
@@ -198,6 +217,26 @@ class NutritionService {
         } else {
             self.apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
         }
+    }
+
+    private func configuredChatRequest(timeoutInterval: TimeInterval = 45) throws -> URLRequest {
+        try validateProviderCredentials()
+
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "POST"
+        request.timeoutInterval = timeoutInterval
+
+        if UserSettings.llmProvider == .blockRun {
+            let authKey = UserSettings.blockRunWalletId.isEmpty ? "x402" : UserSettings.blockRunWalletId
+            request.addValue("Bearer \(authKey)", forHTTPHeaderField: "Authorization")
+        } else {
+            request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("https://portio.app", forHTTPHeaderField: "HTTP-Referer")
+        request.addValue("Portio", forHTTPHeaderField: "X-Title")
+        return request
     }
 
     nonisolated static func extractManualToolCall(from content: String) -> ToolCall? {
@@ -845,6 +884,73 @@ class NutritionService {
         } catch let decodingError {
             throw NutritionError.unparsableJSON(decodingError.localizedDescription)
         }
+    }
+
+    func fetchDayAnalysis(context: DayAnalysisContext) async throws -> DayAnalysisResult {
+        let request = try configuredChatRequest(timeoutInterval: 35)
+        let openRouterRequest = OpenRouterRequest(
+            model: self.modelName,
+            messages: [
+                .init(
+                    role: "system",
+                    content: .string("""
+                    You are Portio's nutrition coach. Analyze only the provided daily food log, goals, and totals.
+                    Write natural, short text like an iOS app insight, not a report. Do not diagnose medical conditions.
+                    Do not use markdown, headings, bullet lists, numbered lists, bold text, asterisks, backticks, or tables.
+                    """)
+                ),
+                .init(role: "user", content: .string(DayAnalysisPromptBuilder.summaryPrompt(for: context)))
+            ],
+            responseFormat: Self.dayAnalysisResponseFormat,
+            toolChoice: OpenRouterRequest.ToolChoice.none,
+            reasoning: .init(effort: "low")
+        )
+
+        let response = try await performChatCompletion(openRouterRequest, baseRequest: request)
+        guard let content = response.choices.first?.message.content else {
+            throw NutritionError.badResponse
+        }
+
+        do {
+            return try JSONDecoder().decode(
+                DayAnalysisResult.self,
+                from: Data(Self.extractJSONObject(from: content).utf8)
+            ).plainText
+        } catch {
+            throw NutritionError.unparsableJSON(error.localizedDescription)
+        }
+    }
+
+    func askDayAnalysis(question: String, context: DayAnalysisContext, history: [DayAnalysisMessage]) async throws -> String {
+        let request = try configuredChatRequest(timeoutInterval: 35)
+        let openRouterRequest = OpenRouterRequest(
+            model: self.modelName,
+            messages: [
+                .init(
+                    role: "system",
+                    content: .string("""
+                    You are Portio's nutrition coach. Answer only from the provided daily log, goals, totals, and recent chat.
+                    Keep the answer concise, plain text, and practical. Do not use markdown.
+                    Do not use headings, bullet lists, bold text, asterisks, backticks, or tables.
+                    Numbered points are allowed when helpful, using only "1. ...", "2. ...", "3. ...".
+                    Treat the first assistant message in recent chat as what you already said. Do not repeat it.
+                    """)
+                ),
+                .init(
+                    role: "user",
+                    content: .string(DayAnalysisPromptBuilder.chatPrompt(question: question, context: context, history: history))
+                )
+            ],
+            toolChoice: OpenRouterRequest.ToolChoice.none,
+            reasoning: .init(effort: "low")
+        )
+
+        let response = try await performChatCompletion(openRouterRequest, baseRequest: request)
+        guard let content = response.choices.first?.message.content?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !content.isEmpty else {
+            throw NutritionError.badResponse
+        }
+        return DayAnalysisTextSanitizer.plainText(content)
     }
 
     private func validateProviderCredentials() throws {
