@@ -18,6 +18,8 @@ struct SettingsView: View {
     @AppStorage("blockRunProxyUrl", store: UserSettings.shared) private var blockRunProxyUrl: String = UserSettings.blockRunProxyUrl
     @AppStorage("isCalorieCommentaryEnabled", store: UserSettings.shared) private var isCalorieCommentaryEnabled: Bool = UserSettings.isCalorieCommentaryEnabled
     @AppStorage("calorieCommentaryLevel", store: UserSettings.shared) private var calorieCommentaryLevelRaw: String = UserSettings.calorieCommentaryLevel.rawValue
+    @AppStorage("isDayAnalysisEnabled", store: UserSettings.shared) private var isDayAnalysisEnabled: Bool = UserSettings.isDayAnalysisEnabled
+    @AppStorage("isDayAnalysisAutomaticEnabled", store: UserSettings.shared) private var isDayAnalysisAutomaticEnabled: Bool = UserSettings.isDayAnalysisAutomaticEnabled
 
     @State private var openRouterApiKey: String = UserSettings.openRouterApiKey
     @State private var serperApiKey: String = UserSettings.serperApiKey
@@ -72,6 +74,16 @@ struct SettingsView: View {
                     Text("Calorie Commentary")
                 } footer: {
                     Text("Crazy mode is intentionally rude, unserious roast text and may include profanity. It is not health advice, not a real judgment, and only appears because you chose it.")
+                }
+
+                Section {
+                    Toggle("AI day analysis", isOn: $isDayAnalysisEnabled)
+                    Toggle("Run automatically", isOn: $isDayAnalysisAutomaticEnabled)
+                        .disabled(!isDayAnalysisEnabled)
+                } header: {
+                    Text("AI Analysis")
+                } footer: {
+                    Text("When automatic analysis is off, the card stays manual and runs only after you tap it.")
                 }
 
                 Section("AI Provider") {
