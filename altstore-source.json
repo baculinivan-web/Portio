@@ -19,6 +19,11 @@
           "height": 2532
         },
         {
+          "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/05-img-3114.png",
+          "width": 1170,
+          "height": 2532
+        },
+        {
           "imageURL": "https://baculinivan-web.github.io/Portio/altstore-assets/screenshots/02-img-2897.png",
           "width": 1170,
           "height": 2532
@@ -37,6 +42,15 @@
       "tintColor": "38A169",
       "category": "lifestyle",
       "versions": [
+        {
+          "version": "1.6",
+          "buildVersion": "6",
+          "date": "2026-06-17",
+          "localizedDescription": "Adds AI day analysis and a calorie chat experience for smarter daily nutrition feedback.",
+          "downloadURL": "https://github.com/baculinivan-web/Portio/releases/download/v1.6/Portio-1.6.ipa",
+          "size": 3478325,
+          "minOSVersion": "26.0"
+        },
         {
           "version": "1.5",
           "buildVersion": "5",
